@@ -9,7 +9,11 @@ import type {
   Piece,
   TetrominoType,
 } from "~/types";
-import { TETRAMINOS } from "~/constants";
+import {
+  TETRAMINOS,
+  WALL_KICK_DATA_I,
+  WALL_KICK_DATA_JLSTZ,
+} from "~/constants";
 
 const COLS = 10;
 const ROWS = 20;
@@ -21,6 +25,7 @@ const GAME_INPUT_KEYS = [
   "ArrowLeft",
   "ArrowRight",
   "Space",
+  "KeyZ",
 ];
 
 function drawBoard({
@@ -52,6 +57,7 @@ function drawBoard({
 function spawnPiece(getNext: () => TetrominoType): Piece {
   const tetrominoType = getNext();
   return {
+    tetrominoType,
     tetromino: TETRAMINOS[tetrominoType],
     x: Math.floor((COLS - PIECE_SIZE) / 2), // centered
     y: 0,
@@ -64,15 +70,18 @@ function canPieceMove({
   board,
   deltaX = 0,
   deltaY = 0,
+  newRotation,
 }: {
   piece: GameState["currentPiece"];
   board: GameState["board"];
   deltaX?: number;
   deltaY?: number;
+  newRotation?: number;
 }): boolean {
   const newX = piece.x + deltaX;
   const newY = piece.y + deltaY;
-  const cells = piece.tetromino.rotations[piece.rotation];
+  const rotation = newRotation ?? piece.rotation;
+  const cells = piece.tetromino.rotations[rotation];
 
   for (let row = 0; row < PIECE_SIZE; row++) {
     for (let col = 0; col < PIECE_SIZE; col++) {
@@ -90,6 +99,48 @@ function canPieceMove({
   }
 
   return true;
+}
+
+function tryRotatePiece({
+  piece,
+  board,
+  direction,
+}: {
+  piece: GameState["currentPiece"];
+  board: GameState["board"];
+  direction: 1 | -1; // 1 for clockwise, -1 for counterclockwise
+}) {
+  const currentRotation = piece.rotation;
+  const newRotation = (piece.rotation + direction + 4) % 4; // +4 to ensure a positive value
+  const pieceType = piece.tetrominoType;
+
+  if (pieceType === "O") return true; // no effect on O / square pieces
+
+  const wallKickData =
+    pieceType === "I" ? WALL_KICK_DATA_I : WALL_KICK_DATA_JLSTZ;
+
+  const kicks = wallKickData[currentRotation]?.[newRotation] || [];
+
+  for (const [offsetX, offsetY] of kicks) {
+    if (
+      canPieceMove({
+        piece,
+        board,
+        deltaX: offsetX,
+        deltaY: offsetY,
+        newRotation,
+      })
+    ) {
+      // apply rotation
+      piece.rotation = newRotation;
+      piece.x += offsetX;
+      piece.y += offsetY;
+
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function drawTetromino({
@@ -220,13 +271,6 @@ function placePiece({
   return true;
 }
 
-function rotatePiece(piece: GameState["currentPiece"]) {
-  // this is rudimentary. It needs a check to see if the piece can rotate without hitting the boundaries of the board or other pieces.
-  // Also need to implement wall kicks. https://tetris.wiki/Wall_kick
-  const newRotation = (piece.rotation + 1) % 4;
-  piece.rotation = newRotation;
-}
-
 function handleKeyDown({
   event,
   gameState,
@@ -236,6 +280,8 @@ function handleKeyDown({
   gameState: GameState;
   getNextPiece: () => TetrominoType;
 }) {
+  console.log(event.code);
+
   if (!GAME_INPUT_KEYS.includes(event.code)) return;
 
   event.preventDefault();
@@ -280,7 +326,18 @@ function handleKeyDown({
       }
       break;
     case "Space":
-      rotatePiece(gameState.currentPiece);
+      tryRotatePiece({
+        piece: gameState.currentPiece,
+        board: gameState.board,
+        direction: 1, // clockwise rotation
+      });
+      break;
+    case "KeyZ":
+      tryRotatePiece({
+        piece: gameState.currentPiece,
+        board: gameState.board,
+        direction: -1, // counter-clockwise rotation
+      });
       break;
     default:
       break;

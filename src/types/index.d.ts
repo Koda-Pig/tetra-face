@@ -18,6 +18,7 @@ export type Tetromino = {
 
 export type Piece = {
   tetromino: Tetromino;
+  tetrominoType: TetrominoType;
   x: number; // grid position on the 10 x 20 board
   y: number; // grid position on the 10 x 20 board
   rotation: number; // 0, 1, 2, 3

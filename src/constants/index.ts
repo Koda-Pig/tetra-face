@@ -243,3 +243,63 @@ export const TETRAMINOS: Record<TetrominoType, Tetromino> = {
     color: "purple",
   },
 };
+
+// Wall kick data
+// Note that there are two sets of wall kick data:
+// one set is for the I piece, and the other set is for all the other pieces.
+// reason for this is that the I piece has a unique rotation behavior that requires a different set of wall kick data.
+// more info here: https://tetris.wiki/Wall_kick
+
+// Wall kick data for most pieces (JLSTZ) source: https://tetris.wiki/Super_Rotation_System
+export const WALL_KICK_DATA_JLSTZ: Record<
+  number,
+  Record<number, [number, number][]>
+> = {
+  // prettier-ignore
+  0: {
+    1: [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]], // 0→R
+    3: [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]]     // 0→L
+  },
+  // prettier-ignore
+  1: {
+    0: [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],     // R→0
+    2: [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]]      // R→2
+  },
+  // prettier-ignore
+  2: {
+    1: [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],    // 2→R
+    3: [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]]  // 2→L
+  },
+  // prettier-ignore
+  3: {
+    2: [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],  // L→2
+    0: [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]]   // L→0
+  },
+};
+
+// Wall kick data for I piece
+export const WALL_KICK_DATA_I: Record<
+  number,
+  Record<number, [number, number][]>
+> = {
+  // prettier-ignore
+  0: {
+    1: [[0, 0], [-2, 0], [1, 0], [-2, -1], [1, 2]],   // 0→R
+    3: [[0, 0], [-1, 0], [2, 0], [-1, 2], [2, -1]]    // 0→L
+  },
+  // prettier-ignore
+  1: {
+    0: [[0, 0], [2, 0], [-1, 0], [2, 1], [-1, -2]],   // R→0
+    2: [[0, 0], [-1, 0], [2, 0], [-1, 2], [2, -1]]    // R→2
+  },
+  // prettier-ignore
+  2: {
+    1: [[0, 0], [1, 0], [-2, 0], [1, -2], [-2, 1]],   // 2→R
+    3: [[0, 0], [2, 0], [-1, 0], [2, 1], [-1, -2]]    // 2→L
+  },
+  // prettier-ignore
+  3: {
+    2: [[0, 0], [-2, 0], [1, 0], [-2, -1], [1, 2]],   // L→2
+    0: [[0, 0], [1, 0], [-2, 0], [1, -2], [-2, 1]]    // L→0
+  },
+};

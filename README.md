@@ -30,12 +30,13 @@ You can check out the [create-t3-app GitHub repository](https://github.com/t3-os
 
 - [x] Implement the 7-bag randomizer method for selecting tetrominos
 - [x] Implement collision detection for moving the tetrominos
-- [ ] Implement collision detection for rotating the tetrominos
-- [ ] Implement the wall kicks for rotating tetrominos
-- [ ] Implement the soft drop
+- [x] Implement collision detection for rotating the tetrominos
+- [x] Implement the wall kicks for rotating tetrominos
+- [x] Implement the soft drop
 - [ ] Implement the hard drop
 - [ ] Implement the line clear
 - [ ] Implement the game over
 - [ ] Implement the game reset
-- [ ] Implement the game pause / resume
+- [ ] Implement the game pause / resume. Consider the way unity handles this with a time scale. Noted here: https://github.com/Koda-Pig/hadeez/blob/f2a531ec9eda007310b538d309b30b79327c4277/README.md?plain=1#L38
 - [ ] Implement the game restart
+- [x] Implement counter clockwise rotation (currently only clockwise with space key)
