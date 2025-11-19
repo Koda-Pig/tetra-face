@@ -243,7 +243,7 @@ export default function GameCanvas() {
 
   return (
     <div>
-      <canvas ref={canvasRef} width={400} height={800}></canvas>
+      <canvas ref={canvasRef} width={300} height={600}></canvas>
     </div>
   );
 }
