@@ -112,7 +112,12 @@ function update({
   if (gameState.dropTimer >= gameState.dropIntervalSeconds) {
     gameState.dropTimer = 0;
 
-    if (canPieceMoveDown(gameState.currentPiece)) {
+    if (
+      canPieceMoveDown({
+        piece: gameState.currentPiece,
+        board: gameState.board,
+      })
+    ) {
       gameState.currentPiece.y++;
     } else {
       placePiece({ piece: gameState.currentPiece, board: gameState.board });
@@ -153,7 +158,13 @@ function getTimestamp() {
   return window?.performance?.now();
 }
 
-function canPieceMoveDown(piece: GameState["currentPiece"]): boolean {
+function canPieceMoveDown({
+  piece,
+  board,
+}: {
+  piece: GameState["currentPiece"];
+  board: GameState["board"];
+}): boolean {
   const newY = piece.y + 1;
 
   for (let row = 0; row < PIECE_SIZE; row++) {
@@ -162,9 +173,13 @@ function canPieceMoveDown(piece: GameState["currentPiece"]): boolean {
       const cells = piece.tetromino.rotations[piece.rotation];
       if (cells![row]![col] === FILLED_CELL) {
         const boardY = newY + row;
+        const boardX = piece.x + col;
 
         // check bottom boundary
         if (boardY >= ROWS) return false;
+
+        // check collision with other pieces
+        if (boardY >= 0 && board[boardY]![boardX]!.occupied) return false;
       }
     }
   }
@@ -172,7 +187,13 @@ function canPieceMoveDown(piece: GameState["currentPiece"]): boolean {
   return true;
 }
 
-function canPieceMoveLeft(piece: GameState["currentPiece"]): boolean {
+function canPieceMoveLeft({
+  piece,
+  board,
+}: {
+  piece: GameState["currentPiece"];
+  board: GameState["board"];
+}): boolean {
   const newX = piece.x - 1;
 
   for (let row = 0; row < PIECE_SIZE; row++) {
@@ -181,9 +202,15 @@ function canPieceMoveLeft(piece: GameState["currentPiece"]): boolean {
       const cells = piece.tetromino.rotations[piece.rotation];
       if (cells![row]![col] === FILLED_CELL) {
         const boardX = newX + col;
+        const boardY = piece.y + row;
 
         // check left boundary
         if (boardX < 0) return false;
+
+        // check collision with other pieces
+        if (boardY >= 0 && boardY < ROWS && board[boardY]![boardX]!.occupied) {
+          return false;
+        }
       }
     }
   }
@@ -191,7 +218,13 @@ function canPieceMoveLeft(piece: GameState["currentPiece"]): boolean {
   return true;
 }
 
-function canPieceMoveRight(piece: GameState["currentPiece"]): boolean {
+function canPieceMoveRight({
+  piece,
+  board,
+}: {
+  piece: GameState["currentPiece"];
+  board: GameState["board"];
+}): boolean {
   const newX = piece.x + 1;
 
   for (let row = 0; row < PIECE_SIZE; row++) {
@@ -200,9 +233,15 @@ function canPieceMoveRight(piece: GameState["currentPiece"]): boolean {
       const cells = piece.tetromino.rotations[piece.rotation];
       if (cells![row]![col] === FILLED_CELL) {
         const boardX = newX + col;
+        const boardY = piece.y + row;
 
         // check right boundary
         if (boardX >= COLS) return false;
+
+        // check collision with other pieces
+        if (boardY >= 0 && boardY < ROWS && board[boardY]![boardX]!.occupied) {
+          return false;
+        }
       }
     }
   }
@@ -262,7 +301,12 @@ function handleKeyDown({
     case "ArrowUp":
       break;
     case "ArrowDown":
-      if (canPieceMoveDown(gameState.currentPiece)) {
+      if (
+        canPieceMoveDown({
+          piece: gameState.currentPiece,
+          board: gameState.board,
+        })
+      ) {
         gameState.currentPiece.y++;
       } else {
         placePiece({ piece: gameState.currentPiece, board: gameState.board });
@@ -270,12 +314,22 @@ function handleKeyDown({
       }
       break;
     case "ArrowLeft":
-      if (canPieceMoveLeft(gameState.currentPiece)) {
+      if (
+        canPieceMoveLeft({
+          piece: gameState.currentPiece,
+          board: gameState.board,
+        })
+      ) {
         gameState.currentPiece.x--;
       }
       break;
     case "ArrowRight":
-      if (canPieceMoveRight(gameState.currentPiece)) {
+      if (
+        canPieceMoveRight({
+          piece: gameState.currentPiece,
+          board: gameState.board,
+        })
+      ) {
         gameState.currentPiece.x++;
       }
       break;
@@ -346,19 +400,21 @@ export default function GameCanvas() {
         Math.min(1, (gameLoop.now - gameLoop.lastTime) / 1000);
       while (gameLoop.deltaTime > gameLoop.step) {
         gameLoop.deltaTime = gameLoop.deltaTime - gameLoop.step;
+        // logic update
         update({
           gameState,
           step: gameLoop.step,
           getNextPiece,
-        }); // logic
+        });
       }
+      // draw the game
       render({
         ctx,
         canvas,
         cellWidth,
         cellHeight,
         gameState,
-      }); // draw the game
+      });
       gameLoop.lastTime = gameLoop.now;
       gameLoop.animationId = requestAnimationFrame(animate);
     }
@@ -384,9 +440,7 @@ export default function GameCanvas() {
     }
 
     window.addEventListener("keydown", handleKeyDownWrapper);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDownWrapper);
-    };
+    return () => window.removeEventListener("keydown", handleKeyDownWrapper);
   }, [getNextPiece]);
 
   return (

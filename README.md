@@ -29,6 +29,8 @@ You can check out the [create-t3-app GitHub repository](https://github.com/t3-os
 ### Gameplay
 
 - [x] Implement the 7-bag randomizer method for selecting tetrominos
+- [x] Implement collision detection for moving the tetrominos
+- [ ] Implement collision detection for rotating the tetrominos
 - [ ] Implement the wall kicks for rotating tetrominos
 - [ ] Implement the soft drop
 - [ ] Implement the hard drop
