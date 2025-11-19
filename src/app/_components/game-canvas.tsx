@@ -59,6 +59,39 @@ function spawnPiece(getNext: () => TetrominoType): Piece {
   };
 }
 
+function canPieceMove({
+  piece,
+  board,
+  deltaX = 0,
+  deltaY = 0,
+}: {
+  piece: GameState["currentPiece"];
+  board: GameState["board"];
+  deltaX?: number;
+  deltaY?: number;
+}): boolean {
+  const newX = piece.x + deltaX;
+  const newY = piece.y + deltaY;
+  const cells = piece.tetromino.rotations[piece.rotation];
+
+  for (let row = 0; row < PIECE_SIZE; row++) {
+    for (let col = 0; col < PIECE_SIZE; col++) {
+      if (cells![row]![col] !== FILLED_CELL) continue;
+
+      const boardX = newX + col;
+      const boardY = newY + row;
+
+      // Boundary checks
+      if (boardX < 0 || boardX >= COLS || boardY >= ROWS) return false;
+
+      // Collision checks
+      if (boardY >= 0 && board[boardY]![boardX]!.occupied) return false;
+    }
+  }
+
+  return true;
+}
+
 function drawTetromino({
   ctx,
   tetromino,
@@ -113,9 +146,10 @@ function update({
     gameState.dropTimer = 0;
 
     if (
-      canPieceMoveDown({
+      canPieceMove({
         piece: gameState.currentPiece,
         board: gameState.board,
+        deltaY: 1,
       })
     ) {
       gameState.currentPiece.y++;
@@ -156,97 +190,6 @@ function render({
 function getTimestamp() {
   if (!window) return new Date().getTime();
   return window?.performance?.now();
-}
-
-function canPieceMoveDown({
-  piece,
-  board,
-}: {
-  piece: GameState["currentPiece"];
-  board: GameState["board"];
-}): boolean {
-  const newY = piece.y + 1;
-
-  for (let row = 0; row < PIECE_SIZE; row++) {
-    for (let col = 0; col < PIECE_SIZE; col++) {
-      // filled cell
-      const cells = piece.tetromino.rotations[piece.rotation];
-      if (cells![row]![col] === FILLED_CELL) {
-        const boardY = newY + row;
-        const boardX = piece.x + col;
-
-        // check bottom boundary
-        if (boardY >= ROWS) return false;
-
-        // check collision with other pieces
-        if (boardY >= 0 && board[boardY]![boardX]!.occupied) return false;
-      }
-    }
-  }
-
-  return true;
-}
-
-function canPieceMoveLeft({
-  piece,
-  board,
-}: {
-  piece: GameState["currentPiece"];
-  board: GameState["board"];
-}): boolean {
-  const newX = piece.x - 1;
-
-  for (let row = 0; row < PIECE_SIZE; row++) {
-    for (let col = 0; col < PIECE_SIZE; col++) {
-      // filled cell
-      const cells = piece.tetromino.rotations[piece.rotation];
-      if (cells![row]![col] === FILLED_CELL) {
-        const boardX = newX + col;
-        const boardY = piece.y + row;
-
-        // check left boundary
-        if (boardX < 0) return false;
-
-        // check collision with other pieces
-        if (boardY >= 0 && boardY < ROWS && board[boardY]![boardX]!.occupied) {
-          return false;
-        }
-      }
-    }
-  }
-
-  return true;
-}
-
-function canPieceMoveRight({
-  piece,
-  board,
-}: {
-  piece: GameState["currentPiece"];
-  board: GameState["board"];
-}): boolean {
-  const newX = piece.x + 1;
-
-  for (let row = 0; row < PIECE_SIZE; row++) {
-    for (let col = 0; col < PIECE_SIZE; col++) {
-      // filled cell
-      const cells = piece.tetromino.rotations[piece.rotation];
-      if (cells![row]![col] === FILLED_CELL) {
-        const boardX = newX + col;
-        const boardY = piece.y + row;
-
-        // check right boundary
-        if (boardX >= COLS) return false;
-
-        // check collision with other pieces
-        if (boardY >= 0 && boardY < ROWS && board[boardY]![boardX]!.occupied) {
-          return false;
-        }
-      }
-    }
-  }
-
-  return true;
 }
 
 function placePiece({
@@ -302,9 +245,10 @@ function handleKeyDown({
       break;
     case "ArrowDown":
       if (
-        canPieceMoveDown({
+        canPieceMove({
           piece: gameState.currentPiece,
           board: gameState.board,
+          deltaY: 1,
         })
       ) {
         gameState.currentPiece.y++;
@@ -315,9 +259,10 @@ function handleKeyDown({
       break;
     case "ArrowLeft":
       if (
-        canPieceMoveLeft({
+        canPieceMove({
           piece: gameState.currentPiece,
           board: gameState.board,
+          deltaX: -1,
         })
       ) {
         gameState.currentPiece.x--;
@@ -325,9 +270,10 @@ function handleKeyDown({
       break;
     case "ArrowRight":
       if (
-        canPieceMoveRight({
+        canPieceMove({
           piece: gameState.currentPiece,
           board: gameState.board,
+          deltaX: 1,
         })
       ) {
         gameState.currentPiece.x++;
