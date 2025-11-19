@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { GameState, GameLoop, Tetromino } from "~/types";
+import type { GameState, GameLoop, Tetromino, Piece } from "~/types";
 import { TETRAMINOS } from "~/constants";
 
 const COLS = 10;
@@ -16,21 +16,41 @@ const GAME_INPUT_KEYS = [
   "Space",
 ];
 
-function drawGrid({
+function drawBoard({
   ctx,
+  board,
   cellWidth,
   cellHeight,
 }: {
   ctx: CanvasRenderingContext2D;
+  board: GameState["board"];
   cellWidth: number;
   cellHeight: number;
 }) {
-  for (let i = 0; i < COLS; i++) {
-    for (let j = 0; j < ROWS; j++) {
+  for (let row = 0; row < ROWS; row++) {
+    for (let col = 0; col < COLS; col++) {
+      const cell = board[row]![col]!;
+      if (cell.occupied) {
+        ctx.fillStyle = cell.color ?? "transparent";
+        ctx.fillRect(col * cellWidth, row * cellHeight, cellWidth, cellHeight);
+      }
+
+      // draw grid
       ctx.strokeStyle = "gray";
-      ctx.strokeRect(i * cellWidth, j * cellHeight, cellWidth, cellHeight);
+      ctx.strokeRect(col * cellWidth, row * cellHeight, cellWidth, cellHeight);
     }
   }
+}
+
+function spawnPiece(): Piece {
+  // need to randomize the X value, and also which tetromino is spawned.
+  // important to note that the 7-bag randomizer method is used. See: https://tetris.wiki/Random_Generator
+  return {
+    tetromino: TETRAMINOS.T,
+    x: 0,
+    y: 0,
+    rotation: 0,
+  };
 }
 
 function drawTetromino({
@@ -80,6 +100,9 @@ function update({ gameState, step }: { gameState: GameState; step: number }) {
 
     if (canPieceMoveDown(gameState.currentPiece)) {
       gameState.currentPiece.y++;
+    } else {
+      placePiece({ piece: gameState.currentPiece, board: gameState.board });
+      gameState.currentPiece = spawnPiece();
     }
   }
 }
@@ -100,8 +123,6 @@ function render({
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  drawGrid({ ctx, cellWidth, cellHeight });
-
   drawTetromino({
     ctx,
     rotation: gameState.currentPiece.rotation,
@@ -109,6 +130,8 @@ function render({
     x: gameState.currentPiece.x * cellWidth,
     y: gameState.currentPiece.y * cellHeight,
   });
+
+  drawBoard({ ctx, board: gameState.board, cellWidth, cellHeight });
 }
 
 function getTimestamp() {
@@ -173,7 +196,37 @@ function canPieceMoveRight(piece: GameState["currentPiece"]): boolean {
   return true;
 }
 
+function placePiece({
+  piece,
+  board,
+}: {
+  piece: GameState["currentPiece"];
+  board: GameState["board"];
+}) {
+  for (let row = 0; row < PIECE_SIZE; row++) {
+    for (let col = 0; col < PIECE_SIZE; col++) {
+      const cells = piece.tetromino.rotations[piece.rotation];
+
+      if (cells![row]![col] !== FILLED_CELL) continue;
+
+      const boardY = piece.y + row;
+      const boardX = piece.x + col;
+
+      if (boardY >= 0 && boardY < ROWS && boardX >= 0 && boardX < COLS) {
+        board[boardY]![boardX] = {
+          occupied: true,
+          color: piece.tetromino.color,
+        };
+      }
+    }
+  }
+
+  return true;
+}
+
 function rotatePiece(piece: GameState["currentPiece"]) {
+  // this is rudimentary. It needs a check to see if the piece can rotate without hitting the boundaries of the board or other pieces.
+  // Also need to implement wall kicks. https://tetris.wiki/Wall_kick
   const newRotation = (piece.rotation + 1) % 4;
   piece.rotation = newRotation;
 }
@@ -193,6 +246,12 @@ function handleKeyDown({
     case "ArrowUp":
       break;
     case "ArrowDown":
+      if (canPieceMoveDown(gameState.currentPiece)) {
+        gameState.currentPiece.y++;
+      } else {
+        placePiece({ piece: gameState.currentPiece, board: gameState.board });
+        gameState.currentPiece = spawnPiece();
+      }
       break;
     case "ArrowLeft":
       if (canPieceMoveLeft(gameState.currentPiece)) {
@@ -222,14 +281,16 @@ export default function GameCanvas() {
     step: 1 / 60,
   });
   const gameStateRef = useRef<GameState>({
-    currentPiece: {
-      tetromino: TETRAMINOS.I,
-      x: 0,
-      y: 0,
-      rotation: 0,
-    },
+    currentPiece: spawnPiece(),
     dropTimer: 0,
     dropIntervalSeconds: 1,
+    board: Array(ROWS)
+      .fill(null)
+      .map(() =>
+        Array(COLS)
+          .fill(null)
+          .map(() => ({ occupied: false })),
+      ),
   });
 
   // game loop
@@ -242,7 +303,7 @@ export default function GameCanvas() {
       console.error("Failed to get canvas context");
       return;
     }
-    const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+    const ctx = canvas.getContext("2d")!;
 
     const cellWidth = canvas.width / COLS;
     const cellHeight = canvas.height / ROWS;
@@ -277,8 +338,9 @@ export default function GameCanvas() {
     gameLoopRef.current.animationId = requestAnimationFrame(animate);
 
     return () => {
-      if (!gameLoopRef.current.animationId) return;
-      cancelAnimationFrame(gameLoopRef.current.animationId);
+      const animationId = gameLoopRef.current.animationId ?? 0;
+      if (!animationId) return;
+      cancelAnimationFrame(animationId);
     };
   }, [canvasRef]);
 

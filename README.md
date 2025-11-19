@@ -29,3 +29,17 @@ To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the fo
 - [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
 
 You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+
+## TODO
+
+### Gameplay
+
+- [ ] Implement the 7-bag randomizer method for selecting tetrominos
+- [ ] Implement the wall kicks for rotating tetrominos
+- [ ] Implement the soft drop
+- [ ] Implement the hard drop
+- [ ] Implement the line clear
+- [ ] Implement the game over
+- [ ] Implement the game reset
+- [ ] Implement the game pause / resume
+- [ ] Implement the game restart
