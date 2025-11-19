@@ -1,76 +1,20 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { GameState, Tetromino, TetrominoType } from "~/types";
+import type { GameState, GameLoop, Tetromino } from "~/types";
+import { TETRAMINOS } from "~/constants";
 
 const COLS = 10;
 const ROWS = 20;
-
-const TETRAMINOS: Record<TetrominoType, Tetromino> = {
-  I: {
-    cells: [
-      [1, 1, 1, 1],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-    ],
-    color: "lightblue",
-  },
-  J: {
-    cells: [
-      [0, 1, 0, 0],
-      [0, 1, 0, 0],
-      [1, 1, 0, 0],
-      [0, 0, 0, 0],
-    ],
-    color: "darkblue",
-  },
-  L: {
-    cells: [
-      [1, 0, 0, 0],
-      [1, 0, 0, 0],
-      [1, 1, 0, 0],
-      [0, 0, 0, 0],
-    ],
-    color: "orange",
-  },
-  O: {
-    cells: [
-      [1, 1, 0, 0],
-      [1, 1, 0, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-    ],
-    color: "yellow",
-  },
-  S: {
-    cells: [
-      [0, 1, 1, 0],
-      [1, 1, 0, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-    ],
-    color: "green",
-  },
-  Z: {
-    cells: [
-      [1, 1, 0, 0],
-      [0, 1, 1, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-    ],
-    color: "red",
-  },
-  T: {
-    cells: [
-      [0, 1, 0, 0],
-      [1, 1, 1, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-    ],
-    color: "purple",
-  },
-};
+const PIECE_SIZE = 4;
+const FILLED_CELL = 1;
+const GAME_INPUT_KEYS = [
+  "ArrowUp",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
+  "Space",
+];
 
 function drawGrid({
   ctx,
@@ -92,6 +36,7 @@ function drawGrid({
 function drawTetromino({
   ctx,
   tetromino,
+  rotation,
   x,
   y,
 }: {
@@ -99,12 +44,14 @@ function drawTetromino({
   tetromino: Tetromino;
   x: number;
   y: number;
+  rotation: number;
 }) {
-  const { cells, color } = tetromino;
+  const { rotations, color } = tetromino;
   const cellWidth = ctx.canvas.width / COLS;
   const cellHeight = ctx.canvas.height / ROWS;
-  for (let i = 0; i < cells.length; i++) {
-    const row = cells[i];
+  const cells = rotations[rotation];
+  for (let i = 0; i < cells!.length; i++) {
+    const row = cells![i];
 
     if (!row) {
       console.error("Row is undefined, something went wrong");
@@ -112,7 +59,7 @@ function drawTetromino({
     }
 
     for (let j = 0; j < row.length; j++) {
-      if (row[j] === 1) {
+      if (row[j] === FILLED_CELL) {
         ctx.fillStyle = color;
         ctx.fillRect(
           x + j * cellWidth,
@@ -127,9 +74,13 @@ function drawTetromino({
 
 function update({ gameState, step }: { gameState: GameState; step: number }) {
   gameState.dropTimer += step;
+
   if (gameState.dropTimer >= gameState.dropIntervalSeconds) {
     gameState.dropTimer = 0;
-    gameState.currentPiece.y++;
+
+    if (canPieceMoveDown(gameState.currentPiece)) {
+      gameState.currentPiece.y++;
+    }
   }
 }
 
@@ -153,23 +104,112 @@ function render({
 
   drawTetromino({
     ctx,
+    rotation: gameState.currentPiece.rotation,
     tetromino: gameState.currentPiece.tetromino,
     x: gameState.currentPiece.x * cellWidth,
     y: gameState.currentPiece.y * cellHeight,
   });
 }
 
-type GameLoop = {
-  now: number;
-  animationId: number | null;
-  lastTime: number;
-  deltaTime: number;
-  step: number;
-};
-
 function getTimestamp() {
   if (!window) return new Date().getTime();
   return window?.performance?.now();
+}
+
+function canPieceMoveDown(piece: GameState["currentPiece"]): boolean {
+  const newY = piece.y + 1;
+
+  for (let row = 0; row < PIECE_SIZE; row++) {
+    for (let col = 0; col < PIECE_SIZE; col++) {
+      // filled cell
+      const cells = piece.tetromino.rotations[piece.rotation];
+      if (cells![row]![col] === FILLED_CELL) {
+        const boardY = newY + row;
+
+        // check bottom boundary
+        if (boardY >= ROWS) return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+function canPieceMoveLeft(piece: GameState["currentPiece"]): boolean {
+  const newX = piece.x - 1;
+
+  for (let row = 0; row < PIECE_SIZE; row++) {
+    for (let col = 0; col < PIECE_SIZE; col++) {
+      // filled cell
+      const cells = piece.tetromino.rotations[piece.rotation];
+      if (cells![row]![col] === FILLED_CELL) {
+        const boardX = newX + col;
+
+        // check left boundary
+        if (boardX < 0) return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+function canPieceMoveRight(piece: GameState["currentPiece"]): boolean {
+  const newX = piece.x + 1;
+
+  for (let row = 0; row < PIECE_SIZE; row++) {
+    for (let col = 0; col < PIECE_SIZE; col++) {
+      // filled cell
+      const cells = piece.tetromino.rotations[piece.rotation];
+      if (cells![row]![col] === FILLED_CELL) {
+        const boardX = newX + col;
+
+        // check right boundary
+        if (boardX >= COLS) return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+function rotatePiece(piece: GameState["currentPiece"]) {
+  const newRotation = (piece.rotation + 1) % 4;
+  piece.rotation = newRotation;
+}
+
+function handleKeyDown({
+  event,
+  gameState,
+}: {
+  event: KeyboardEvent;
+  gameState: GameState;
+}) {
+  if (!GAME_INPUT_KEYS.includes(event.code)) return;
+
+  event.preventDefault();
+
+  switch (event.code) {
+    case "ArrowUp":
+      break;
+    case "ArrowDown":
+      break;
+    case "ArrowLeft":
+      if (canPieceMoveLeft(gameState.currentPiece)) {
+        gameState.currentPiece.x--;
+      }
+      break;
+    case "ArrowRight":
+      if (canPieceMoveRight(gameState.currentPiece)) {
+        gameState.currentPiece.x++;
+      }
+      break;
+    case "Space":
+      rotatePiece(gameState.currentPiece);
+      break;
+    default:
+      break;
+  }
 }
 
 export default function GameCanvas() {
@@ -189,9 +229,10 @@ export default function GameCanvas() {
       rotation: 0,
     },
     dropTimer: 0,
-    dropIntervalSeconds: 0.75,
+    dropIntervalSeconds: 1,
   });
 
+  // game loop
   useEffect(() => {
     if (!canvasRef.current || !gameStateRef.current) return;
 
@@ -240,6 +281,18 @@ export default function GameCanvas() {
       cancelAnimationFrame(gameLoopRef.current.animationId);
     };
   }, [canvasRef]);
+
+  // event listeners
+  useEffect(() => {
+    function handleKeyDownWrapper(event: KeyboardEvent) {
+      handleKeyDown({ event, gameState: gameStateRef.current });
+    }
+
+    window.addEventListener("keydown", handleKeyDownWrapper);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDownWrapper);
+    };
+  }, []);
 
   return (
     <div>
