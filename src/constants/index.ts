@@ -1,5 +1,15 @@
 import type { Tetromino, TetrominoType } from "~/types";
 
+export const TETRAMINO_BAG: TetrominoType[] = [
+  "I",
+  "J",
+  "L",
+  "O",
+  "S",
+  "Z",
+  "T",
+];
+
 export const TETRAMINOS: Record<TetrominoType, Tetromino> = {
   I: {
     rotations: [

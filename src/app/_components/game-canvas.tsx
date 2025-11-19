@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { GameState, GameLoop, Tetromino, Piece } from "~/types";
+import { useBag } from "~/hooks/useBag";
+import type {
+  GameState,
+  GameLoop,
+  Tetromino,
+  Piece,
+  TetrominoType,
+} from "~/types";
 import { TETRAMINOS } from "~/constants";
 
 const COLS = 10;
@@ -42,12 +49,11 @@ function drawBoard({
   }
 }
 
-function spawnPiece(): Piece {
-  // need to randomize the X value, and also which tetromino is spawned.
-  // important to note that the 7-bag randomizer method is used. See: https://tetris.wiki/Random_Generator
+function spawnPiece(getNext: () => TetrominoType): Piece {
+  const tetrominoType = getNext();
   return {
-    tetromino: TETRAMINOS.T,
-    x: 0,
+    tetromino: TETRAMINOS[tetrominoType],
+    x: Math.floor((COLS - PIECE_SIZE) / 2), // centered
     y: 0,
     rotation: 0,
   };
@@ -92,7 +98,15 @@ function drawTetromino({
   }
 }
 
-function update({ gameState, step }: { gameState: GameState; step: number }) {
+function update({
+  gameState,
+  step,
+  getNextPiece,
+}: {
+  gameState: GameState;
+  step: number;
+  getNextPiece: () => TetrominoType;
+}) {
   gameState.dropTimer += step;
 
   if (gameState.dropTimer >= gameState.dropIntervalSeconds) {
@@ -102,7 +116,7 @@ function update({ gameState, step }: { gameState: GameState; step: number }) {
       gameState.currentPiece.y++;
     } else {
       placePiece({ piece: gameState.currentPiece, board: gameState.board });
-      gameState.currentPiece = spawnPiece();
+      gameState.currentPiece = spawnPiece(getNextPiece);
     }
   }
 }
@@ -234,9 +248,11 @@ function rotatePiece(piece: GameState["currentPiece"]) {
 function handleKeyDown({
   event,
   gameState,
+  getNextPiece,
 }: {
   event: KeyboardEvent;
   gameState: GameState;
+  getNextPiece: () => TetrominoType;
 }) {
   if (!GAME_INPUT_KEYS.includes(event.code)) return;
 
@@ -250,7 +266,7 @@ function handleKeyDown({
         gameState.currentPiece.y++;
       } else {
         placePiece({ piece: gameState.currentPiece, board: gameState.board });
-        gameState.currentPiece = spawnPiece();
+        gameState.currentPiece = spawnPiece(getNextPiece);
       }
       break;
     case "ArrowLeft":
@@ -276,22 +292,30 @@ export default function GameCanvas() {
   const gameLoopRef = useRef<GameLoop>({
     now: 0,
     animationId: null,
-    lastTime: getTimestamp(),
+    lastTime: 0,
     deltaTime: 0,
     step: 1 / 60,
   });
-  const gameStateRef = useRef<GameState>({
-    currentPiece: spawnPiece(),
-    dropTimer: 0,
-    dropIntervalSeconds: 1,
-    board: Array(ROWS)
-      .fill(null)
-      .map(() =>
-        Array(COLS)
-          .fill(null)
-          .map(() => ({ occupied: false })),
-      ),
-  });
+  const gameStateRef = useRef<GameState | null>(null);
+  const getNextPiece = useBag();
+
+  // initialize the game state
+  useEffect(() => {
+    // nullish coalescing assignment https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing_assignment
+    gameStateRef.current ??= {
+      currentPiece: spawnPiece(getNextPiece),
+      dropTimer: 0,
+      dropIntervalSeconds: 1,
+      board: Array(ROWS)
+        .fill(null)
+        .map(() =>
+          Array(COLS)
+            .fill(null)
+            .map(() => ({ occupied: false })),
+        ),
+    };
+    gameLoopRef.current.lastTime = getTimestamp();
+  }, [getNextPiece]);
 
   // game loop
   useEffect(() => {
@@ -322,7 +346,11 @@ export default function GameCanvas() {
         Math.min(1, (gameLoop.now - gameLoop.lastTime) / 1000);
       while (gameLoop.deltaTime > gameLoop.step) {
         gameLoop.deltaTime = gameLoop.deltaTime - gameLoop.step;
-        update({ gameState, step: gameLoop.step }); // logic
+        update({
+          gameState,
+          step: gameLoop.step,
+          getNextPiece,
+        }); // logic
       }
       render({
         ctx,
@@ -342,19 +370,24 @@ export default function GameCanvas() {
       if (!animationId) return;
       cancelAnimationFrame(animationId);
     };
-  }, [canvasRef]);
+  }, [canvasRef, getNextPiece]);
 
   // event listeners
   useEffect(() => {
+    if (!gameStateRef.current) return;
     function handleKeyDownWrapper(event: KeyboardEvent) {
-      handleKeyDown({ event, gameState: gameStateRef.current });
+      handleKeyDown({
+        event,
+        gameState: gameStateRef.current!,
+        getNextPiece,
+      });
     }
 
     window.addEventListener("keydown", handleKeyDownWrapper);
     return () => {
       window.removeEventListener("keydown", handleKeyDownWrapper);
     };
-  }, []);
+  }, [getNextPiece]);
 
   return (
     <div>

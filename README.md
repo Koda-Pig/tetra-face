@@ -7,12 +7,6 @@ The idea for this project is to create a multiplayer game where users can log in
 Refer to this for the Tetris rules:
 https://tetris.wiki/Tetris_Guideline
 
-Need to replace Math.random() with the proper randomized method for selecting terominos (7-bag)
-https://tetris.wiki/Random_Generator
-
-Ref for creating a decent game loop in JS (account for delta time, etc)
-https://jakesgordon.com/writing/javascript-game-foundations-the-game-loop/
-
 ## Tech stack docs
 
 - [Next.js](https://nextjs.org)
@@ -34,7 +28,7 @@ You can check out the [create-t3-app GitHub repository](https://github.com/t3-os
 
 ### Gameplay
 
-- [ ] Implement the 7-bag randomizer method for selecting tetrominos
+- [x] Implement the 7-bag randomizer method for selecting tetrominos
 - [ ] Implement the wall kicks for rotating tetrominos
 - [ ] Implement the soft drop
 - [ ] Implement the hard drop
