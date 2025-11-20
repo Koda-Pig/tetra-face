@@ -30,6 +30,7 @@ export type GameState = {
   dropIntervalSeconds: number; // drop every 1 second (adjust for difficulty)
   board: BoardCell[][]; // 2D array representing placed pieces (ROWS x COLS)
   linesCleared: number;
+  isGameOver: boolean;
 };
 
 export type GameLoop = {

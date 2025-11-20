@@ -1,5 +1,6 @@
 import type { Tetromino, TetrominoType } from "~/types";
 
+export const INITIAL_DROP_INTERAL_SECONDS = 1;
 export const COLS = 10;
 export const TOTAL_ROWS = 40;
 // The main playfield players see and play on

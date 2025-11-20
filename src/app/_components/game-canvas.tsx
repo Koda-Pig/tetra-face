@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Button } from "~/components/ui/button";
+import { cn } from "~/lib/utils";
 import { useBag } from "~/hooks/useBag";
 import type {
   GameState,
@@ -22,6 +24,7 @@ import {
   PIECE_SIZE,
   FILLED_CELL,
   GAME_INPUT_KEYS,
+  INITIAL_DROP_INTERAL_SECONDS,
 } from "~/constants";
 
 function drawBoard({
@@ -142,6 +145,43 @@ function tryRotatePiece({
   return false;
 }
 
+function isGameOver(gameState: GameState) {
+  // check the 3 conditions for game over
+
+  const piece = gameState.currentPiece;
+
+  // 1. Block Out - check if newly spawned piece overlaps existing blocks
+  if (!canPieceMove({ piece, board: gameState.board })) {
+    return true;
+  }
+
+  // 2. Lock out: check if any blocks exist above the visible area
+  for (let row = 0; row < HIDDEN_ROWS - 2; row++) {
+    // minus two because we're targeting rows 0 - 17, leaving the last 2 hidden rows as the spawn area
+    for (let col = 0; col < COLS; col++) {
+      if (gameState.board[row]![col]!.occupied) {
+        return true;
+      }
+    }
+  }
+
+  // 3. Top out: check if any blocks exist above the total board
+  // This can happen if blocks are pushed above the TOTAL_ROWS
+  // in practice, this will only happen in multiplayer mode when
+  // garbage blocks are added to a players board
+  for (let row = 0; row < gameState.board.length; row++) {
+    if (row >= TOTAL_ROWS) {
+      for (let col = 0; col < COLS; col++) {
+        if (gameState.board[row]![col]!.occupied) {
+          return true; // blocks pushed above buffer zone
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
 function drawTetromino({
   ctx,
   tetromino,
@@ -188,29 +228,39 @@ function update({
   gameState,
   step,
   getNextPiece,
+  onStateChange,
 }: {
   gameState: GameState;
   step: number;
   getNextPiece: () => TetrominoType;
+  onStateChange?: (gameState: GameState) => void;
 }) {
   gameState.dropTimer += step;
 
-  if (gameState.dropTimer >= gameState.dropIntervalSeconds) {
-    gameState.dropTimer = 0;
+  if (gameState.dropTimer < gameState.dropIntervalSeconds) {
+    return;
+  }
 
-    if (
-      canPieceMove({
-        piece: gameState.currentPiece,
-        board: gameState.board,
-        deltaY: 1,
-      })
-    ) {
-      gameState.currentPiece.y++;
-    } else {
-      placePiece({ piece: gameState.currentPiece, board: gameState.board });
-      const linesCleared = clearLines(gameState.board);
-      gameState.linesCleared += linesCleared;
-      gameState.currentPiece = spawnPiece(getNextPiece);
+  gameState.dropTimer = 0; // reset drop timer
+
+  if (
+    canPieceMove({
+      piece: gameState.currentPiece,
+      board: gameState.board,
+      deltaY: 1,
+    })
+  ) {
+    gameState.currentPiece.y++;
+  } else {
+    placePiece({ piece: gameState.currentPiece, board: gameState.board });
+    const linesCleared = clearLines(gameState.board);
+    gameState.linesCleared += linesCleared;
+    gameState.currentPiece = spawnPiece(getNextPiece);
+
+    if (isGameOver(gameState)) {
+      gameState.isGameOver = true;
+      onStateChange?.(gameState);
+      return;
     }
   }
 }
@@ -320,14 +370,21 @@ function clearLines(board: GameState["board"]): number {
   return linesCleared;
 }
 
+function restartGame() {
+  // quick and dirty. needs improvement
+  window.location.reload();
+}
+
 function handleKeyDown({
   event,
   gameState,
   getNextPiece,
+  onStateChange,
 }: {
   event: KeyboardEvent;
   gameState: GameState;
   getNextPiece: () => TetrominoType;
+  onStateChange?: (gameState: GameState) => void;
 }) {
   if (!GAME_INPUT_KEYS.includes(event.code)) return;
 
@@ -344,6 +401,12 @@ function handleKeyDown({
       const linesCleared = clearLines(gameState.board);
       gameState.linesCleared += linesCleared;
       gameState.currentPiece = spawnPiece(getNextPiece);
+
+      if (isGameOver(gameState)) {
+        gameState.isGameOver = true;
+        onStateChange?.(gameState);
+        return;
+      }
       break;
     case "ArrowDown":
       if (
@@ -359,6 +422,12 @@ function handleKeyDown({
         const linesCleared = clearLines(gameState.board);
         gameState.linesCleared += linesCleared;
         gameState.currentPiece = spawnPiece(getNextPiece);
+
+        if (isGameOver(gameState)) {
+          gameState.isGameOver = true;
+          onStateChange?.(gameState);
+          return;
+        }
       }
       break;
     case "ArrowLeft":
@@ -411,7 +480,12 @@ export default function GameCanvas() {
     deltaTime: 0,
     step: 1 / 60,
   });
+  // we're not using useState for this because we don't want to trigger re-renders while the game is playing
   const gameStateRef = useRef<GameState | null>(null);
+  const [isGameOver, setIsGameOver] = useState(false);
+  const syncUIState = useCallback((gameState: GameState) => {
+    setIsGameOver(gameState.isGameOver);
+  }, []);
   const getNextPiece = useBag();
 
   // initialize the game state
@@ -420,8 +494,9 @@ export default function GameCanvas() {
     gameStateRef.current ??= {
       currentPiece: spawnPiece(getNextPiece),
       dropTimer: 0,
-      dropIntervalSeconds: 1,
+      dropIntervalSeconds: INITIAL_DROP_INTERAL_SECONDS,
       linesCleared: 0,
+      isGameOver: false,
       board: Array(TOTAL_ROWS)
         .fill(null)
         .map(() =>
@@ -456,6 +531,19 @@ export default function GameCanvas() {
         return;
       }
 
+      if (gameState.isGameOver) {
+        // one more render for the bois
+        render({
+          ctx,
+          canvas,
+          cellWidth,
+          cellHeight,
+          gameState,
+        });
+        // exit out
+        return;
+      }
+
       gameLoop.now = getTimestamp();
       gameLoop.deltaTime =
         gameLoop.deltaTime +
@@ -467,6 +555,7 @@ export default function GameCanvas() {
           gameState,
           step: gameLoop.step,
           getNextPiece,
+          onStateChange: syncUIState,
         });
       }
       // draw the game
@@ -495,11 +584,13 @@ export default function GameCanvas() {
   // event listeners
   useEffect(() => {
     if (!gameStateRef.current) return;
+    // use a wrapper so we can remove the event listener
     function handleKeyDownWrapper(event: KeyboardEvent) {
       handleKeyDown({
         event,
         gameState: gameStateRef.current!,
         getNextPiece,
+        onStateChange: syncUIState,
       });
     }
 
@@ -508,8 +599,33 @@ export default function GameCanvas() {
   }, [getNextPiece]);
 
   return (
-    <div>
-      <canvas ref={canvasRef} width={300} height={600}></canvas>
+    <div className="relative h-[600px] w-[300px]">
+      <canvas
+        ref={canvasRef}
+        width={300}
+        height={600}
+        className={cn(isGameOver && "opacity-30")}
+      ></canvas>
+
+      <div
+        className={cn(
+          "absolute inset-0 grid place-items-center",
+          isGameOver ? "opacity-100" : "pointer-events-none opacity-0",
+        )}
+      >
+        <div className="text-center">
+          <p className="text-shadow mb-8 text-5xl leading-14 text-shadow-[0_0_4px_black,0_0_8px_black]">
+            GAME
+            <br />
+            OVER
+            <br />
+            BITCH
+          </p>
+          <Button onClick={restartGame} size="lg" className="text-lg">
+            Restart
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
