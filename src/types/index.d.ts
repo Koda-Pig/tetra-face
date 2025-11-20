@@ -29,6 +29,7 @@ export type GameState = {
   dropTimer: number; // accumulated time since last drop
   dropIntervalSeconds: number; // drop every 1 second (adjust for difficulty)
   board: BoardCell[][]; // 2D array representing placed pieces (ROWS x COLS)
+  linesCleared: number;
 };
 
 export type GameLoop = {

@@ -48,10 +48,14 @@ pnpm run dev
 - [x] Implement the wall kicks for rotating tetrominos
 - [x] Implement the soft drop
 - [x] Implement the hard drop
-- [ ] Implement the line clear
+- [x] Implement the line clear
 - [ ] Implement the game over
 - [ ] Implement the game reset
 - [ ] Implement the game pause / resume. Consider the way unity handles this with a time scale. Noted here: https://github.com/Koda-Pig/hadeez/blob/f2a531ec9eda007310b538d309b30b79327c4277/README.md?plain=1#L38
 - [ ] Implement the game restart
 - [x] Implement counter clockwise rotation (currently only clockwise with space key)
-- [ ] fix TS build issues
+- [ ] add visual effect when row is cleared
+
+### Other
+
+- [ ] Deploy web app

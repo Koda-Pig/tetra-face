@@ -119,7 +119,7 @@ function tryRotatePiece({
   const wallKickData =
     pieceType === "I" ? WALL_KICK_DATA_I : WALL_KICK_DATA_JLSTZ;
 
-  const kicks = wallKickData[currentRotation]?.[newRotation] || [];
+  const kicks = wallKickData[currentRotation]?.[newRotation] ?? [];
 
   for (const [offsetX, offsetY] of kicks) {
     if (
@@ -206,6 +206,8 @@ function update({
       gameState.currentPiece.y++;
     } else {
       placePiece({ piece: gameState.currentPiece, board: gameState.board });
+      const linesCleared = clearLines(gameState.board);
+      gameState.linesCleared += linesCleared;
       gameState.currentPiece = spawnPiece(getNextPiece);
     }
   }
@@ -295,6 +297,27 @@ function hardDrop({
   piece.y += dropDistance;
 }
 
+function clearLines(board: GameState["board"]): number {
+  let linesCleared = 0;
+
+  // check from bottom up
+  for (let row = ROWS - 1; row >= 0; row--) {
+    // check if row is full
+    const isRowFull = board[row]!.every((cell) => cell.occupied);
+    if (isRowFull) {
+      board.splice(row, 1); // remove row
+      board.unshift(
+        Array(COLS)
+          .fill(null)
+          .map(() => ({ occupied: false })),
+      ); // add empty row at top
+      linesCleared++;
+      row++; // check same row index again since a row was removed
+    }
+  }
+  return linesCleared;
+}
+
 function handleKeyDown({
   event,
   gameState,
@@ -316,6 +339,8 @@ function handleKeyDown({
       });
       // place piece immediately
       placePiece({ piece: gameState.currentPiece, board: gameState.board });
+      const linesCleared = clearLines(gameState.board);
+      gameState.linesCleared += linesCleared;
       gameState.currentPiece = spawnPiece(getNextPiece);
       break;
     case "ArrowDown":
@@ -329,6 +354,8 @@ function handleKeyDown({
         gameState.currentPiece.y++;
       } else {
         placePiece({ piece: gameState.currentPiece, board: gameState.board });
+        const linesCleared = clearLines(gameState.board);
+        gameState.linesCleared += linesCleared;
         gameState.currentPiece = spawnPiece(getNextPiece);
       }
       break;
@@ -392,6 +419,7 @@ export default function GameCanvas() {
       currentPiece: spawnPiece(getNextPiece),
       dropTimer: 0,
       dropIntervalSeconds: 1,
+      linesCleared: 0,
       board: Array(ROWS)
         .fill(null)
         .map(() =>
@@ -451,11 +479,11 @@ export default function GameCanvas() {
       gameLoop.animationId = requestAnimationFrame(animate);
     }
 
-    gameLoopRef.current.animationId = requestAnimationFrame(animate);
+    const animationId = requestAnimationFrame(animate);
+
+    gameLoopRef.current.animationId = animationId;
 
     return () => {
-      const animationId = gameLoopRef.current.animationId ?? 0;
-      if (!animationId) return;
       cancelAnimationFrame(animationId);
     };
   }, [canvasRef, getNextPiece]);
