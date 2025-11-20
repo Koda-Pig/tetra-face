@@ -55,6 +55,7 @@ pnpm run dev
 - [ ] Implement the game restart
 - [x] Implement counter clockwise rotation (currently only clockwise with space key)
 - [ ] add visual effect when row is cleared
+- [ ] ensure implementation matches guidelines: https://tetris.fandom.com/wiki/Tetris_Guideline
 
 ### Other
 

@@ -479,12 +479,14 @@ export default function GameCanvas() {
       gameLoop.animationId = requestAnimationFrame(animate);
     }
 
-    const animationId = requestAnimationFrame(animate);
-
-    gameLoopRef.current.animationId = animationId;
+    const gameLoop = gameLoopRef.current;
+    gameLoop.animationId = requestAnimationFrame(animate);
 
     return () => {
-      cancelAnimationFrame(animationId);
+      if (gameLoop.animationId) {
+        cancelAnimationFrame(gameLoop.animationId);
+        gameLoop.animationId = null;
+      }
     };
   }, [canvasRef, getNextPiece]);
 
