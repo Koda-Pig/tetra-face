@@ -271,6 +271,30 @@ function placePiece({
   return true;
 }
 
+function hardDrop({
+  piece,
+  board,
+}: {
+  piece: GameState["currentPiece"];
+  board: GameState["board"];
+}) {
+  let dropDistance = 0;
+
+  // keep moving down until you can't
+  while (
+    canPieceMove({
+      piece,
+      board,
+      deltaY: dropDistance + 1,
+    })
+  ) {
+    dropDistance++;
+  }
+
+  // apply new position
+  piece.y += dropDistance;
+}
+
 function handleKeyDown({
   event,
   gameState,
@@ -280,14 +304,19 @@ function handleKeyDown({
   gameState: GameState;
   getNextPiece: () => TetrominoType;
 }) {
-  console.log(event.code);
-
   if (!GAME_INPUT_KEYS.includes(event.code)) return;
 
   event.preventDefault();
 
   switch (event.code) {
     case "ArrowUp":
+      hardDrop({
+        piece: gameState.currentPiece,
+        board: gameState.board,
+      });
+      // place piece immediately
+      placePiece({ piece: gameState.currentPiece, board: gameState.board });
+      gameState.currentPiece = spawnPiece(getNextPiece);
       break;
     case "ArrowDown":
       if (
