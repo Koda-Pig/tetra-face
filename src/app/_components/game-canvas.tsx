@@ -13,20 +13,16 @@ import {
   TETRAMINOS,
   WALL_KICK_DATA_I,
   WALL_KICK_DATA_JLSTZ,
+  COLS,
+  TOTAL_ROWS,
+  VISIBLE_ROWS,
+  HIDDEN_ROWS,
+  SPAWN_ROW_I,
+  SPAWN_ROW_OTHER,
+  PIECE_SIZE,
+  FILLED_CELL,
+  GAME_INPUT_KEYS,
 } from "~/constants";
-
-const COLS = 10;
-const ROWS = 20;
-const PIECE_SIZE = 4;
-const FILLED_CELL = 1;
-const GAME_INPUT_KEYS = [
-  "ArrowUp",
-  "ArrowDown",
-  "ArrowLeft",
-  "ArrowRight",
-  "Space",
-  "KeyZ",
-];
 
 function drawBoard({
   ctx,
@@ -39,9 +35,10 @@ function drawBoard({
   cellWidth: number;
   cellHeight: number;
 }) {
-  for (let row = 0; row < ROWS; row++) {
+  for (let row = 0; row < VISIBLE_ROWS; row++) {
     for (let col = 0; col < COLS; col++) {
-      const cell = board[row]![col]!;
+      const actualRow = row + HIDDEN_ROWS;
+      const cell = board[actualRow]![col]!;
       if (cell.occupied) {
         ctx.fillStyle = cell.color ?? "transparent";
         ctx.fillRect(col * cellWidth, row * cellHeight, cellWidth, cellHeight);
@@ -56,11 +53,13 @@ function drawBoard({
 
 function spawnPiece(getNext: () => TetrominoType): Piece {
   const tetrominoType = getNext();
+  const spawnYPos = tetrominoType === "I" ? SPAWN_ROW_I : SPAWN_ROW_OTHER;
+
   return {
     tetrominoType,
     tetromino: TETRAMINOS[tetrominoType],
     x: Math.floor((COLS - PIECE_SIZE) / 2), // centered
-    y: 0,
+    y: spawnYPos,
     rotation: 0,
   };
 }
@@ -91,7 +90,7 @@ function canPieceMove({
       const boardY = newY + row;
 
       // Boundary checks
-      if (boardX < 0 || boardX >= COLS || boardY >= ROWS) return false;
+      if (boardX < 0 || boardX >= COLS || boardY >= TOTAL_ROWS) return false;
 
       // Collision checks
       if (boardY >= 0 && board[boardY]![boardX]!.occupied) return false;
@@ -158,8 +157,9 @@ function drawTetromino({
 }) {
   const { rotations, color } = tetromino;
   const cellWidth = ctx.canvas.width / COLS;
-  const cellHeight = ctx.canvas.height / ROWS;
+  const cellHeight = ctx.canvas.height / VISIBLE_ROWS;
   const cells = rotations[rotation];
+
   for (let i = 0; i < cells!.length; i++) {
     const row = cells![i];
 
@@ -170,13 +170,15 @@ function drawTetromino({
 
     for (let j = 0; j < row.length; j++) {
       if (row[j] === FILLED_CELL) {
-        ctx.fillStyle = color;
-        ctx.fillRect(
-          x + j * cellWidth,
-          y + i * cellHeight,
-          cellWidth,
-          cellHeight,
-        );
+        const canvasY = (y + i - HIDDEN_ROWS) * cellHeight; // adjust for hidden rows
+        const canvasX = (x + j) * cellWidth;
+
+        const isWithinVisibleArea = y + i >= HIDDEN_ROWS;
+
+        if (isWithinVisibleArea) {
+          ctx.fillStyle = color;
+          ctx.fillRect(canvasX, canvasY, cellWidth, cellHeight);
+        }
       }
     }
   }
@@ -233,8 +235,8 @@ function render({
     ctx,
     rotation: gameState.currentPiece.rotation,
     tetromino: gameState.currentPiece.tetromino,
-    x: gameState.currentPiece.x * cellWidth,
-    y: gameState.currentPiece.y * cellHeight,
+    x: gameState.currentPiece.x,
+    y: gameState.currentPiece.y,
   });
 
   drawBoard({ ctx, board: gameState.board, cellWidth, cellHeight });
@@ -261,7 +263,7 @@ function placePiece({
       const boardY = piece.y + row;
       const boardX = piece.x + col;
 
-      if (boardY >= 0 && boardY < ROWS && boardX >= 0 && boardX < COLS) {
+      if (boardY >= 0 && boardY < TOTAL_ROWS && boardX >= 0 && boardX < COLS) {
         board[boardY]![boardX] = {
           occupied: true,
           color: piece.tetromino.color,
@@ -301,7 +303,7 @@ function clearLines(board: GameState["board"]): number {
   let linesCleared = 0;
 
   // check from bottom up
-  for (let row = ROWS - 1; row >= 0; row--) {
+  for (let row = TOTAL_ROWS - 1; row >= 0; row--) {
     // check if row is full
     const isRowFull = board[row]!.every((cell) => cell.occupied);
     if (isRowFull) {
@@ -420,7 +422,7 @@ export default function GameCanvas() {
       dropTimer: 0,
       dropIntervalSeconds: 1,
       linesCleared: 0,
-      board: Array(ROWS)
+      board: Array(TOTAL_ROWS)
         .fill(null)
         .map(() =>
           Array(COLS)
@@ -444,7 +446,7 @@ export default function GameCanvas() {
     const ctx = canvas.getContext("2d")!;
 
     const cellWidth = canvas.width / COLS;
-    const cellHeight = canvas.height / ROWS;
+    const cellHeight = canvas.height / VISIBLE_ROWS;
 
     function animate() {
       const gameLoop = gameLoopRef.current;
