@@ -35,6 +35,15 @@ export type GameState = {
   level: number;
 };
 
+export type UIState = {
+  isGameOver: boolean;
+  score: number;
+  scoreFlash: boolean;
+  levelFlash: boolean;
+  level: number;
+  isPaused: boolean;
+};
+
 export type GameLoop = {
   now: number;
   animationId: number | null;

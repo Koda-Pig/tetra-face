@@ -10,6 +10,7 @@ import type {
   GameLoop,
   Tetromino,
   Piece,
+  UIState,
   TetrominoType,
 } from "~/types";
 import {
@@ -448,15 +449,30 @@ function handleKeyDown({
   gameState,
   getNextPiece,
   onStateChange,
+  pauseMultiplierRef,
+  setUiState,
 }: {
   event: KeyboardEvent;
   gameState: GameState;
   getNextPiece: () => TetrominoType;
   onStateChange?: (gameState: GameState) => void;
+  pauseMultiplierRef: React.RefObject<number>;
+  setUiState: React.Dispatch<React.SetStateAction<UIState>>;
 }) {
   if (!GAME_INPUT_KEYS.includes(event.code)) return;
 
   event.preventDefault();
+
+  const isPaused = pauseMultiplierRef.current === 0;
+
+  if (event.code === "Escape") {
+    pauseMultiplierRef.current = isPaused ? 1 : 0;
+    setUiState((prev) => ({ ...prev, isPaused: !isPaused }));
+    return;
+  }
+
+  // no key pressing when paused
+  if (isPaused) return;
 
   switch (event.code) {
     case "ArrowUp":
@@ -540,17 +556,20 @@ export default function GameCanvas() {
     deltaTime: 0,
     step: 1 / 60,
   });
+  const pauseMultiplierRef = useRef(1); //  0 = paused
   // we're not using useState for this because we don't want to trigger re-renders while the game is playing
   const gameStateRef = useRef<GameState | null>(null);
-  const [uiState, setUiState] = useState({
+  const [uiState, setUiState] = useState<UIState>({
     isGameOver: false,
     score: 0,
     scoreFlash: false,
     levelFlash: false,
     level: 0,
+    isPaused: false,
   });
   const syncUIState = useCallback((gameState: GameState) => {
     setUiState((prev) => ({
+      ...prev,
       isGameOver: gameState.isGameOver,
       score: gameState.score,
       level: gameState.level,
@@ -590,15 +609,16 @@ export default function GameCanvas() {
       return;
     }
     const ctx = canvas.getContext("2d")!;
-
     const cellWidth = canvas.width / COLS;
     const cellHeight = canvas.height / VISIBLE_ROWS;
 
     function animate() {
       const gameLoop = gameLoopRef.current;
+      const pauseMultiplier = pauseMultiplierRef.current;
 
-      if (!gameLoop) {
-        console.error("Game loop is not initialized");
+      if (!gameLoop || pauseMultiplier === undefined) {
+        const problemVar = !gameLoop ? gameLoop : pauseMultiplier;
+        console.error(`${problemVar} is not initialized`);
         return;
       }
 
@@ -623,7 +643,7 @@ export default function GameCanvas() {
         // logic update
         update({
           gameState,
-          step: gameLoop.step,
+          step: gameLoop.step * pauseMultiplier,
           getNextPiece,
           onStateChange: syncUIState,
         });
@@ -661,6 +681,8 @@ export default function GameCanvas() {
         gameState: gameStateRef.current!,
         getNextPiece,
         onStateChange: syncUIState,
+        pauseMultiplierRef,
+        setUiState,
       });
     }
 
@@ -675,7 +697,9 @@ export default function GameCanvas() {
           ref={canvasRef}
           width={300}
           height={600}
-          className={cn(uiState.isGameOver && "opacity-30")}
+          className={cn(
+            (uiState.isGameOver || uiState.isPaused) && "opacity-30",
+          )}
         ></canvas>
         <GameStat
           label="score"
@@ -696,20 +720,30 @@ export default function GameCanvas() {
       <div
         className={cn(
           "absolute inset-0 grid place-items-center",
-          uiState.isGameOver ? "opacity-100" : "pointer-events-none opacity-0",
+          uiState.isGameOver || uiState.isPaused
+            ? "opacity-100"
+            : "pointer-events-none opacity-0",
         )}
       >
         <div className="text-center">
           <p className="text-shadow mb-8 text-5xl leading-14 text-shadow-[0_0_4px_black,0_0_8px_black]">
-            GAME
-            <br />
-            OVER
-            <br />
-            BITCH
+            {uiState.isPaused ? (
+              <span>PAUSED</span>
+            ) : (
+              <span>
+                GAME
+                <br />
+                OVER
+                <br />
+                BITCH
+              </span>
+            )}
           </p>
-          <Button onClick={restartGame} size="lg" className="text-lg">
-            Restart
-          </Button>
+          {uiState.isGameOver && (
+            <Button onClick={restartGame} size="lg" className="text-lg">
+              Restart
+            </Button>
+          )}
         </div>
       </div>
     </div>

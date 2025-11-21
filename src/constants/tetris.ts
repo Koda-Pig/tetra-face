@@ -19,6 +19,7 @@ export const GAME_INPUT_KEYS = [
   "ArrowRight",
   "Space",
   "KeyZ",
+  "Escape",
 ];
 
 // prettier-ignore
