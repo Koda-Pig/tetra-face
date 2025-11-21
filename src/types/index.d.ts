@@ -32,6 +32,7 @@ export type GameState = {
   linesCleared: number;
   isGameOver: boolean;
   score: number;
+  level: number;
 };
 
 export type GameLoop = {

@@ -1,6 +1,5 @@
 import type { Tetromino, TetrominoType } from "~/types";
 
-export const INITIAL_DROP_INTERAL_SECONDS = 1;
 export const COLS = 10;
 export const TOTAL_ROWS = 40;
 // The main playfield players see and play on
@@ -318,3 +317,30 @@ export const WALL_KICK_DATA_I: Record<
     0: [[0, 0], [1, 0], [-2, 0], [1, -2], [-2, 1]]    // L→0
   },
 };
+
+export const FLASH_TRANSITION_DURATION_MS = 200;
+
+export const INITIAL_GAME_STATE = {
+  dropTimer: 0,
+  linesCleared: 0,
+  score: 0,
+  isGameOver: false,
+  level: 0,
+  board: Array(TOTAL_ROWS)
+    .fill(null)
+    .map(() =>
+      Array(COLS)
+        .fill(null)
+        .map(() => ({ occupied: false })),
+    ),
+};
+
+export const LINE_CLEAR_SCORES = {
+  0: 0,
+  1: 100,
+  2: 300,
+  3: 500,
+  4: 800,
+};
+
+export const LINES_PER_LEVEL = 10;

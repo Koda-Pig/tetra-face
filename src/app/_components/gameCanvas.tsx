@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 import { useBag } from "~/hooks/useBag";
+import GameStat from "./gameStat";
 import type {
   GameState,
   GameLoop,
@@ -24,18 +25,11 @@ import {
   PIECE_SIZE,
   FILLED_CELL,
   GAME_INPUT_KEYS,
-  INITIAL_DROP_INTERAL_SECONDS,
+  FLASH_TRANSITION_DURATION_MS,
+  INITIAL_GAME_STATE,
+  LINES_PER_LEVEL,
+  LINE_CLEAR_SCORES,
 } from "~/constants";
-
-const FLASH_TRANSITION_DURATION_MS = 200;
-
-const LINE_CLEAR_SCORES = {
-  0: 0,
-  1: 100,
-  2: 300,
-  3: 500,
-  4: 800,
-};
 
 /* SCORING SYSTEM
  * Basic Line Clears:
@@ -52,6 +46,26 @@ const LINE_CLEAR_SCORES = {
  * T-Spin Triple: 1600 × level
  * Mini T-Spin variations exist with lower scores
  */
+
+function calcDropSpeed(level: number): number {
+  let frames;
+  if (level === 0) frames = 48;
+  else if (level === 1) frames = 43;
+  else if (level === 2) frames = 38;
+  else if (level === 3) frames = 33;
+  else if (level === 4) frames = 28;
+  else if (level === 5) frames = 23;
+  else if (level === 6) frames = 18;
+  else if (level === 7) frames = 13;
+  else if (level === 8) frames = 8;
+  else if (level === 9) frames = 6;
+  else if (level >= 10 && level <= 12) frames = 5;
+  else if (level >= 13 && level <= 15) frames = 4;
+  else if (level >= 16 && level <= 18) frames = 3;
+  else if (level >= 19 && level <= 28) frames = 2;
+  else frames = 1; // level 29+ (killscreen)
+  return frames / 60; // convert to seconds
+}
 
 function drawBoard({
   ctx,
@@ -299,6 +313,13 @@ function lockPieceAndSpawnNext({
   const linesCleared = clearLines(gameState.board);
   gameState.linesCleared += linesCleared;
   gameState.currentPiece = spawnPiece(getNextPiece);
+  const oldLevel = gameState.level;
+  const newLevel = Math.floor(gameState.linesCleared / LINES_PER_LEVEL);
+
+  if (newLevel > oldLevel) {
+    gameState.level = newLevel;
+    gameState.dropIntervalSeconds = calcDropSpeed(newLevel);
+  }
 
   if (isGameOver(gameState)) {
     gameState.isGameOver = true;
@@ -306,7 +327,7 @@ function lockPieceAndSpawnNext({
     const lineClearScore =
       LINE_CLEAR_SCORES[linesCleared as keyof typeof LINE_CLEAR_SCORES];
 
-    gameState.score += lineClearScore;
+    gameState.score += lineClearScore * (gameState.level + 1); // +1 for zero index;
   }
 
   onStateChange?.(gameState);
@@ -525,12 +546,16 @@ export default function GameCanvas() {
     isGameOver: false,
     score: 0,
     scoreFlash: false,
+    levelFlash: false,
+    level: 0,
   });
   const syncUIState = useCallback((gameState: GameState) => {
     setUiState((prev) => ({
       isGameOver: gameState.isGameOver,
       score: gameState.score,
+      level: gameState.level,
       scoreFlash: prev.score !== gameState.score, // flash when score changes
+      levelFlash: prev.level !== gameState.level,
     }));
 
     // remove flash after animation
@@ -547,19 +572,9 @@ export default function GameCanvas() {
   useEffect(() => {
     // nullish coalescing assignment https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing_assignment
     gameStateRef.current ??= {
+      ...INITIAL_GAME_STATE,
       currentPiece: spawnPiece(getNextPiece),
-      dropTimer: 0,
-      dropIntervalSeconds: INITIAL_DROP_INTERAL_SECONDS,
-      linesCleared: 0,
-      score: 0,
-      isGameOver: false,
-      board: Array(TOTAL_ROWS)
-        .fill(null)
-        .map(() =>
-          Array(COLS)
-            .fill(null)
-            .map(() => ({ occupied: false })),
-        ),
+      dropIntervalSeconds: calcDropSpeed(0),
     };
     gameLoopRef.current.lastTime = getTimestamp();
   }, [getNextPiece]);
@@ -662,15 +677,20 @@ export default function GameCanvas() {
           height={600}
           className={cn(uiState.isGameOver && "opacity-30")}
         ></canvas>
-        <div
-          style={{ transitionDuration: `${FLASH_TRANSITION_DURATION_MS}ms` }}
-          className={cn(
-            "score font-xl bg-background/50 absolute top-1 right-1 z-10 grid aspect-square h-10 w-auto place-items-center rounded-sm px-2 py-1 text-center text-xl",
-            uiState.scoreFlash && "score-flash",
-          )}
-        >
-          <p>{uiState.score}</p>
-        </div>
+        <GameStat
+          label="score"
+          value={uiState.score}
+          flashTrigger={uiState.scoreFlash}
+          alignment="right"
+          transitionDuration={FLASH_TRANSITION_DURATION_MS}
+        />
+        <GameStat
+          label="level"
+          value={uiState.level}
+          flashTrigger={uiState.levelFlash}
+          alignment="left"
+          transitionDuration={FLASH_TRANSITION_DURATION_MS}
+        />
       </div>
 
       <div

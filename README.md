@@ -55,9 +55,9 @@ pnpm run dev
   - [x] line clear scoring
   - [ ] T-Spin scoring
 - [ ] Implement the game reset
-- [ ] Add leveling system
+- [x] Add leveling system
 - [ ] Implement the game pause / resume. Consider the way unity handles this with a time scale. Noted here: https://github.com/Koda-Pig/hadeez/blob/f2a531ec9eda007310b538d309b30b79327c4277/README.md?plain=1#L38
-- [ ] add visual effect when row is cleared
+- [x] add visual effect when row is cleared
 - [ ] ensure implementation matches guidelines: https://tetris.fandom.com/wiki/Tetris_Guideline
 
 ### Other
