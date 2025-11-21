@@ -76,9 +76,8 @@ pnpm run dev
 - T-Spin Triple: 1600 × level
 - Mini T-Spin variations exist with lower scores
 
-### Other
+### Multiplayer
 
-- [ ] Deploy web app
 - [ ] set up multiplayer
   - [ ] sockets or webrpc? (better for browser to browser which may be ideal for this )
   - [ ] if sockets, then https://www.npmjs.com/package/ws or socket.io
@@ -86,3 +85,16 @@ pnpm run dev
 - [ ] fireship sockets: https://youtu.be/1BfCnjr_Vjg
 - [ ] wds sockets: https://youtu.be/ZKEqqIO7n-k
 - [ ]
+
+### Auth
+
+Only discord auth set up for now.
+
+- [ ] attach user id to game session
+- [ ] add google auth using next auth. https://next-auth.js.org/providers/google
+
+### Deployment
+
+- [ ] Deploy web app
+
+### Other
