@@ -31,6 +31,7 @@ export type GameState = {
   board: BoardCell[][]; // 2D array representing placed pieces (ROWS x COLS)
   linesCleared: number;
   isGameOver: boolean;
+  score: number;
 };
 
 export type GameLoop = {

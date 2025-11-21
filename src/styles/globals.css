@@ -127,3 +127,24 @@
     cursor: pointer;
   }
 }
+
+.score {
+  /* transition duration set via JS to match with timeout  */
+  transition-timing-function: ease-out;
+  border: 2px solid transparent;
+  transition-property: border-color, background-color;
+
+  p {
+    transition-duration: inherit;
+    transition-timing-function: inherit;
+    transition-property: scale;
+  }
+}
+
+.score-flash {
+  border-color: var(--color-background);
+  background-color: var(--color-foreground);
+  p {
+    scale: 1.2;
+  }
+}

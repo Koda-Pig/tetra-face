@@ -1,6 +1,6 @@
 import Link from "next/link";
 // import { LatestPost } from "~/app/_components/post";
-import GameSection from "~/app/_components/game-section";
+import GameSection from "~/app/_components/gameSection";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 

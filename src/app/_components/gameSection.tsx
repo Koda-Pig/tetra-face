@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import GameCanvas from "./game-canvas";
+import GameCanvas from "./gameCanvas";
 import { Button } from "~/components/ui/button";
 
 export default function GameSection() {
@@ -9,7 +9,7 @@ export default function GameSection() {
 
   return (
     <div className="my-8">
-      <div className="bg-foreground text-background fixed top-0 right-0 left-0 w-full px-6 py-3">
+      <div className="bg-background/90 text-foreground fixed top-0 right-0 left-0 w-full px-6 py-3">
         <p className="mb-3 text-center text-lg font-semibold">Controls</p>
         <div className="flex justify-center">
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm">

@@ -27,6 +27,32 @@ import {
   INITIAL_DROP_INTERAL_SECONDS,
 } from "~/constants";
 
+const FLASH_TRANSITION_DURATION_MS = 200;
+
+const LINE_CLEAR_SCORES = {
+  0: 0,
+  1: 100,
+  2: 300,
+  3: 500,
+  4: 800,
+};
+
+/* SCORING SYSTEM
+ * Basic Line Clears:
+ *
+ * Single: 100 × level
+ * Double: 300 × level
+ * Triple: 500 × level
+ * Tetris (4 lines): 800 × level
+ *
+ * T-Spins:
+ *
+ * T-Spin Single: 800 × level
+ * T-Spin Double: 1200 × level
+ * T-Spin Triple: 1600 × level
+ * Mini T-Spin variations exist with lower scores
+ */
+
 function drawBoard({
   ctx,
   board,
@@ -253,16 +279,37 @@ function update({
     gameState.currentPiece.y++;
   } else {
     placePiece({ piece: gameState.currentPiece, board: gameState.board });
-    const linesCleared = clearLines(gameState.board);
-    gameState.linesCleared += linesCleared;
-    gameState.currentPiece = spawnPiece(getNextPiece);
-
-    if (isGameOver(gameState)) {
-      gameState.isGameOver = true;
-      onStateChange?.(gameState);
-      return;
-    }
+    lockPieceAndSpawnNext({
+      gameState,
+      getNextPiece,
+      onStateChange,
+    });
   }
+}
+
+function lockPieceAndSpawnNext({
+  gameState,
+  getNextPiece,
+  onStateChange,
+}: {
+  gameState: GameState;
+  getNextPiece: () => TetrominoType;
+  onStateChange?: (gameState: GameState) => void;
+}) {
+  const linesCleared = clearLines(gameState.board);
+  gameState.linesCleared += linesCleared;
+  gameState.currentPiece = spawnPiece(getNextPiece);
+
+  if (isGameOver(gameState)) {
+    gameState.isGameOver = true;
+  } else {
+    const lineClearScore =
+      LINE_CLEAR_SCORES[linesCleared as keyof typeof LINE_CLEAR_SCORES];
+
+    gameState.score += lineClearScore;
+  }
+
+  onStateChange?.(gameState);
 }
 
 function render({
@@ -398,15 +445,11 @@ function handleKeyDown({
       });
       // place piece immediately
       placePiece({ piece: gameState.currentPiece, board: gameState.board });
-      const linesCleared = clearLines(gameState.board);
-      gameState.linesCleared += linesCleared;
-      gameState.currentPiece = spawnPiece(getNextPiece);
-
-      if (isGameOver(gameState)) {
-        gameState.isGameOver = true;
-        onStateChange?.(gameState);
-        return;
-      }
+      lockPieceAndSpawnNext({
+        gameState,
+        getNextPiece,
+        onStateChange,
+      });
       break;
     case "ArrowDown":
       if (
@@ -419,15 +462,11 @@ function handleKeyDown({
         gameState.currentPiece.y++;
       } else {
         placePiece({ piece: gameState.currentPiece, board: gameState.board });
-        const linesCleared = clearLines(gameState.board);
-        gameState.linesCleared += linesCleared;
-        gameState.currentPiece = spawnPiece(getNextPiece);
-
-        if (isGameOver(gameState)) {
-          gameState.isGameOver = true;
-          onStateChange?.(gameState);
-          return;
-        }
+        lockPieceAndSpawnNext({
+          gameState,
+          getNextPiece,
+          onStateChange,
+        });
       }
       break;
     case "ArrowLeft":
@@ -482,9 +521,25 @@ export default function GameCanvas() {
   });
   // we're not using useState for this because we don't want to trigger re-renders while the game is playing
   const gameStateRef = useRef<GameState | null>(null);
-  const [isGameOver, setIsGameOver] = useState(false);
+  const [uiState, setUiState] = useState({
+    isGameOver: false,
+    score: 0,
+    scoreFlash: false,
+  });
   const syncUIState = useCallback((gameState: GameState) => {
-    setIsGameOver(gameState.isGameOver);
+    setUiState((prev) => ({
+      isGameOver: gameState.isGameOver,
+      score: gameState.score,
+      scoreFlash: prev.score !== gameState.score, // flash when score changes
+    }));
+
+    // remove flash after animation
+    if (gameState.score > 0) {
+      setTimeout(
+        () => setUiState((prev) => ({ ...prev, scoreFlash: false })),
+        FLASH_TRANSITION_DURATION_MS,
+      );
+    }
   }, []);
   const getNextPiece = useBag();
 
@@ -496,6 +551,7 @@ export default function GameCanvas() {
       dropTimer: 0,
       dropIntervalSeconds: INITIAL_DROP_INTERAL_SECONDS,
       linesCleared: 0,
+      score: 0,
       isGameOver: false,
       board: Array(TOTAL_ROWS)
         .fill(null)
@@ -540,7 +596,6 @@ export default function GameCanvas() {
           cellHeight,
           gameState,
         });
-        // exit out
         return;
       }
 
@@ -600,17 +655,28 @@ export default function GameCanvas() {
 
   return (
     <div className="relative h-[600px] w-[300px]">
-      <canvas
-        ref={canvasRef}
-        width={300}
-        height={600}
-        className={cn(isGameOver && "opacity-30")}
-      ></canvas>
+      <div className={cn("relative")}>
+        <canvas
+          ref={canvasRef}
+          width={300}
+          height={600}
+          className={cn(uiState.isGameOver && "opacity-30")}
+        ></canvas>
+        <div
+          style={{ transitionDuration: `${FLASH_TRANSITION_DURATION_MS}ms` }}
+          className={cn(
+            "score font-xl bg-background/50 absolute top-1 right-1 z-10 grid aspect-square h-10 w-auto place-items-center rounded-sm px-2 py-1 text-center text-xl",
+            uiState.scoreFlash && "score-flash",
+          )}
+        >
+          <p>{uiState.score}</p>
+        </div>
+      </div>
 
       <div
         className={cn(
           "absolute inset-0 grid place-items-center",
-          isGameOver ? "opacity-100" : "pointer-events-none opacity-0",
+          uiState.isGameOver ? "opacity-100" : "pointer-events-none opacity-0",
         )}
       >
         <div className="text-center">
