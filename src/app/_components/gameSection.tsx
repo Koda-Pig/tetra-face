@@ -24,7 +24,7 @@ export default function GameSection({ session }: { session: Session | null }) {
     <div className="my-8">
       {gameMode !== null && <GameplayControls />}
 
-      <div className="fixed top-4 left-4 grid gap-2">
+      <div className="fixed right-4 bottom-4 grid gap-2">
         <Button onClick={() => setGameMode(null)}>
           <ArrowLeftFromLine />
           <p>back home</p>
@@ -57,34 +57,34 @@ export default function GameSection({ session }: { session: Session | null }) {
           </div>
 
           <div className="flex h-full flex-col">
-            <div className="mb-auto grid grid-cols-2">
+            <div className="mb-4 grid grid-cols-2">
               <Image
                 src="/SB.png"
                 alt="sPoNGeBOb"
                 width={90}
                 height={90}
-                className="w-full max-w-full scale-[-1_1]"
+                className="scale-[-1_1]"
               />
               <Image
                 src="/SB.png"
                 alt="sPoNGeBOb"
                 width={90}
                 height={90}
-                className="w-full max-w-full"
+                className=""
               />
               <Image
                 src="/SB.png"
                 alt="sPoNGeBOb"
                 width={90}
                 height={90}
-                className="w-full max-w-full scale-[-1]"
+                className="scale-[-1]"
               />
               <Image
                 src="/SB.png"
                 alt="sPoNGeBOb"
                 width={90}
                 height={90}
-                className="w-full max-w-full scale-[1-1]"
+                className="scale-[1-1]"
               />
             </div>
             <Tooltip>
@@ -106,7 +106,9 @@ export default function GameSection({ session }: { session: Session | null }) {
           </div>
         </div>
       )}
-      {gameMode === "single-player" && <GameCanvas />}
+      {session?.user?.id && gameMode === "single-player" && (
+        <GameCanvas userId={session.user.id} />
+      )}
       {gameMode === "versus" && <GameVersus />}
     </div>
   );

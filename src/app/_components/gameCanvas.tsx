@@ -269,7 +269,7 @@ function handleKeyDown({
   }
 }
 
-export default function GameCanvas() {
+export default function GameCanvas({ userId }: { userId: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<GameLoop>({
     now: 0,
@@ -316,6 +316,7 @@ export default function GameCanvas() {
       ...INITIAL_GAME_STATE,
       currentPiece: spawnPiece(getNextPiece),
       dropIntervalSeconds: calcDropSpeed(0),
+      userId,
     };
     gameLoopRef.current.lastTime = getTimestamp();
   }, [getNextPiece]);

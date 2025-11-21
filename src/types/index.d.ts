@@ -33,6 +33,7 @@ export type GameState = {
   isGameOver: boolean;
   score: number;
   level: number;
+  userId: string;
 };
 
 export type UIState = {
