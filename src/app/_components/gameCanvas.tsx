@@ -33,22 +33,6 @@ import {
   INITIAL_GAME_STATE,
 } from "~/constants";
 
-/* SCORING SYSTEM
- * Basic Line Clears:
- *
- * Single: 100 × level
- * Double: 300 × level
- * Triple: 500 × level
- * Tetris (4 lines): 800 × level
- *
- * T-Spins:
- *
- * T-Spin Single: 800 × level
- * T-Spin Double: 1200 × level
- * T-Spin Triple: 1600 × level
- * Mini T-Spin variations exist with lower scores
- */
-
 function drawBoard({
   ctx,
   board,

@@ -2,51 +2,112 @@
 
 import { useState } from "react";
 import GameCanvas from "./gameCanvas";
+import GameplayControls from "./gameplayControls";
+import GameVersus from "./gameVersus";
 import { Button } from "~/components/ui/button";
+import { ArrowLeftFromLine, LogOut } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
+import type { Session } from "next-auth";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 
-export default function GameSection() {
-  const [isGameStarted, setIsGameStarted] = useState(false);
+export default function GameSection({ session }: { session: Session | null }) {
+  const [gameMode, setGameMode] = useState<"single-player" | "versus" | null>(
+    null,
+  );
 
   return (
     <div className="my-8">
-      <div className="bg-background/90 text-foreground fixed top-0 right-0 left-0 w-full px-6 py-3">
-        <p className="mb-3 text-center text-lg font-semibold">Controls</p>
-        <div className="flex justify-center">
-          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
-            <div className="flex items-center gap-2">
-              <span className="font-bold">Move:</span>
-              <span className="font-mono">← →</span>
+      {gameMode !== null && <GameplayControls />}
+
+      <div className="fixed top-4 left-4 grid gap-2">
+        <Button onClick={() => setGameMode(null)}>
+          <ArrowLeftFromLine />
+          <p>back home</p>
+        </Button>
+        <Button asChild>
+          <Link href="/api/auth/signout" className="">
+            <LogOut />
+            <p>sign out</p>
+          </Link>
+        </Button>
+      </div>
+
+      {gameMode === null && (
+        <div className="grid h-full grid-cols-2 items-center gap-4">
+          <div>
+            <Image
+              src="/SB.png"
+              alt="sPoNGeBOb"
+              width={180}
+              height={180}
+              className="mb-4"
+            />
+            <Button
+              size="lg"
+              className="w-full"
+              onClick={() => setGameMode("single-player")}
+            >
+              Single player
+            </Button>
+          </div>
+
+          <div className="flex h-full flex-col">
+            <div className="mb-auto grid grid-cols-2">
+              <Image
+                src="/SB.png"
+                alt="sPoNGeBOb"
+                width={90}
+                height={90}
+                className="w-full max-w-full scale-[-1_1]"
+              />
+              <Image
+                src="/SB.png"
+                alt="sPoNGeBOb"
+                width={90}
+                height={90}
+                className="w-full max-w-full"
+              />
+              <Image
+                src="/SB.png"
+                alt="sPoNGeBOb"
+                width={90}
+                height={90}
+                className="w-full max-w-full scale-[-1]"
+              />
+              <Image
+                src="/SB.png"
+                alt="sPoNGeBOb"
+                width={90}
+                height={90}
+                className="w-full max-w-full scale-[1-1]"
+              />
             </div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold">Soft Drop:</span>
-              <span className="font-mono">↓</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold">Hard Drop:</span>
-              <span className="font-mono">↑</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold">Rotate:</span>
-              <span className="font-mono">Space / Z</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold">Pause:</span>
-              <span className="font-mono">Escape</span>
-            </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="lg"
+                  onClick={() => {
+                    if (!session) return;
+                    setGameMode("versus");
+                  }}
+                >
+                  Versus
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {session ? "good luck!" : <p>sign in first</p>}
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
-      </div>
-      {isGameStarted ? (
-        <GameCanvas />
-      ) : (
-        <Button
-          size="lg"
-          variant="secondary"
-          onClick={() => setIsGameStarted(true)}
-        >
-          Start Game
-        </Button>
       )}
+      {gameMode === "single-player" && <GameCanvas />}
+      {gameMode === "versus" && <GameVersus />}
     </div>
   );
 }

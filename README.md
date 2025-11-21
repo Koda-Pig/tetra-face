@@ -60,6 +60,29 @@ pnpm run dev
 - [x] add visual effect when row is cleared
 - [ ] ensure implementation matches guidelines: https://tetris.fandom.com/wiki/Tetris_Guideline
 
+#### SCORING SYSTEM
+
+- Basic Line Clears:
+-
+- Single: 100 × level
+- Double: 300 × level
+- Triple: 500 × level
+- Tetris (4 lines): 800 × level
+-
+- T-Spins:
+-
+- T-Spin Single: 800 × level
+- T-Spin Double: 1200 × level
+- T-Spin Triple: 1600 × level
+- Mini T-Spin variations exist with lower scores
+
 ### Other
 
 - [ ] Deploy web app
+- [ ] set up multiplayer
+  - [ ] sockets or webrpc? (better for browser to browser which may be ideal for this )
+  - [ ] if sockets, then https://www.npmjs.com/package/ws or socket.io
+  - [ ] use socket.io `room`?
+- [ ] fireship sockets: https://youtu.be/1BfCnjr_Vjg
+- [ ] wds sockets: https://youtu.be/ZKEqqIO7n-k
+- [ ]
