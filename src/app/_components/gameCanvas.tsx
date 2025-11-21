@@ -634,7 +634,7 @@ export default function GameCanvas() {
         gameLoop.animationId = null;
       }
     };
-  }, [canvasRef, getNextPiece]);
+  }, [canvasRef, getNextPiece, syncUIState]);
 
   // event listeners
   useEffect(() => {
@@ -651,7 +651,7 @@ export default function GameCanvas() {
 
     window.addEventListener("keydown", handleKeyDownWrapper);
     return () => window.removeEventListener("keydown", handleKeyDownWrapper);
-  }, [getNextPiece]);
+  }, [getNextPiece, syncUIState]);
 
   return (
     <div className="relative h-[600px] w-[300px]">
