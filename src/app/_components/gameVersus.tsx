@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { useSocket } from "~/hooks/useSocket";
 import type { GameRoom } from "~/types";
 import type { Session } from "next-auth";
-import GameCanvas from "./gameCanvas";
+// import HostGame from "./hostGame";
+// import OpponentGame from "./opponentGame";
 
 export default function GameVersus({ session }: { session: Session | null }) {
   const { socket, isConnected } = useSocket();
@@ -95,7 +96,7 @@ export default function GameVersus({ session }: { session: Session | null }) {
         <div>
           <h2 className="text-center text-xl font-bold">Player 1</h2>
           {/* host */}
-          <GameCanvas userId={session?.user.id} />
+          {/* <HostGame userId={session?.user.id} /> */}
         </div>
         <div>
           <h2 className="text-center text-xl font-bold">Player 2</h2>
@@ -105,7 +106,6 @@ export default function GameVersus({ session }: { session: Session | null }) {
       </div>
 
       {/* right panel: socket testing */}
-
       <div className="flex-1">
         <div className="w-80 rounded bg-gray-500 p-4">
           <h3 className="mb-4 font-bold">Socket Testing</h3>

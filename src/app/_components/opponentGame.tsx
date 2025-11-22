@@ -269,7 +269,7 @@ function handleKeyDown({
   }
 }
 
-export default function GameCanvas({ userId }: { userId: string }) {
+export default function OpponentGame({ userId }: { userId: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<GameLoop>({
     now: 0,
