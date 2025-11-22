@@ -79,12 +79,45 @@ pnpm run dev
 ### Multiplayer
 
 - [ ] set up multiplayer
-  - [ ] sockets or webrpc? (better for browser to browser which may be ideal for this )
-  - [ ] if sockets, then https://www.npmjs.com/package/ws or socket.io
-  - [ ] use socket.io `room`?
+  - [ ] use socket.io
+  - [ ] set up `room` for game sessions?
+  - [ ] Host creates room, invite single player to join.
 - [ ] fireship sockets: https://youtu.be/1BfCnjr_Vjg
 - [ ] wds sockets: https://youtu.be/ZKEqqIO7n-k
-- [ ]
+- [ ]https://youtu.be/d80sB_zYuOs - wilth next js
+
+Should send as little as possible data over the socket. Don't want to do the whole game. Offload that to the frontend. So the 'host' of the game essentially runs 2 game frames, one with the input of the player, and the other the inputs from the versus.
+
+**What MUST be sent, and can't be rendered/ updated from the hosts side:**
+
+- new pieces (type, rotation (or is that always the same?))
+
+```ts
+{
+  type: "piece-spawned",
+  piece: "T" | "L" | "J" | "S" | "Z" | "I" | "O",
+  timestamp: Date.now()
+}
+```
+
+- piece is locked in (piece type + position + rotation)
+
+```ts
+{
+  type: "piece-locked",
+  finalPosition: { x: 3, y: 18, rotation: 1 },
+  boardChanges: [
+    { row: 18, col: 3, color: "#ff0000" },
+    { row: 18, col: 4, color: "#ff0000" },
+    // etc...
+  ],
+  timestamp: Date.now()
+}
+```
+
+- cleared line(s)
+
+You know what, f all that. Just send the players raw inputs for now, that will get it working.
 
 ### Auth
 

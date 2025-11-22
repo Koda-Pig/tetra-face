@@ -319,7 +319,7 @@ export default function GameCanvas({ userId }: { userId: string }) {
       userId,
     };
     gameLoopRef.current.lastTime = getTimestamp();
-  }, [getNextPiece]);
+  }, [getNextPiece, userId]);
 
   // game loop
   useEffect(() => {

@@ -7,7 +7,7 @@ import type { TetrominoType } from "~/types";
 
 // generator function for the 7-bag randomizer method
 // (I've been JS-ing for nearly 10 years and have literally never used a generator before)
-export function* randomTetrominoGenerator() {
+function* randomTetrominoGenerator() {
   let bag: TetrominoType[] = [];
 
   while (true) {

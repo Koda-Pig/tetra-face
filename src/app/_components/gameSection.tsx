@@ -109,7 +109,7 @@ export default function GameSection({ session }: { session: Session | null }) {
       {session?.user?.id && gameMode === "single-player" && (
         <GameCanvas userId={session.user.id} />
       )}
-      {gameMode === "versus" && <GameVersus />}
+      {gameMode === "versus" && <GameVersus session={session} />}
     </div>
   );
 }
