@@ -181,9 +181,9 @@ export default function GameVersus({ session }: { session: Session | null }) {
               <p className="text-sm">
                 ID: {currentRoom.id}
                 <Button
-                  onClick={() => {
-                    navigator.clipboard.writeText(currentRoom.id);
-                  }}
+                  onClick={() =>
+                    void navigator.clipboard.writeText(currentRoom.id)
+                  }
                   title="copy"
                   size="icon-sm"
                   className="ml-2"
