@@ -303,6 +303,7 @@ export default function BaseGame({
     level: 0,
     isPaused: false,
   });
+  const [restartTrigger, setRestartTrigger] = useState(0);
 
   const syncUIState = useCallback((gameState: GameState) => {
     setUiState((prev) => ({
@@ -376,6 +377,7 @@ export default function BaseGame({
     const gameLoop = gameLoopRef.current;
     gameLoop.deltaTime = 0;
     gameLoop.lastTime = getTimestamp();
+    setRestartTrigger((prev) => prev + 1);
   }
 
   // game loop
@@ -449,7 +451,7 @@ export default function BaseGame({
         gameLoop.animationId = null;
       }
     };
-  }, [canvasRef, getNextPiece, syncUIState]);
+  }, [canvasRef, getNextPiece, syncUIState, restartTrigger]);
 
   // Host game event listeners (keyboard events)
   useEffect(() => {
