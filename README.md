@@ -119,6 +119,8 @@ Should send as little as possible data over the socket. Don't want to do the who
 
 You know what, f all that. Just send the players raw inputs for now, that will get it working.
 
+need a way for other player to confirm game ready.
+
 ### Auth
 
 Only discord auth set up for now.

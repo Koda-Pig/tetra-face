@@ -22,6 +22,7 @@ export function initializeSocket(httpServer: HttpServer) {
 
     socket.on("create-room", (userId: string) => {
       const roomId = `room_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+      // const roomId = `room_${Math.random().toString(6).slice(0, 1)}`;
 
       const newRoom: GameRoom = {
         id: roomId,

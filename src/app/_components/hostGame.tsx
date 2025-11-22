@@ -5,6 +5,7 @@ import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 import { useBag } from "~/hooks/useBag";
 import GameStat from "./gameStat";
+import type { Socket } from "socket.io-client";
 import {
   canPieceMove,
   calcDropSpeed,
@@ -181,10 +182,6 @@ function handleKeyDown({
   pauseMultiplierRef: React.RefObject<number>;
   setUiState: React.Dispatch<React.SetStateAction<UIState>>;
 }) {
-  if (!GAME_INPUT_KEYS.includes(event.code)) return;
-
-  event.preventDefault();
-
   const isPaused = pauseMultiplierRef.current === 0;
 
   if (event.code === "Escape") {
@@ -269,7 +266,15 @@ function handleKeyDown({
   }
 }
 
-export default function HostGame({ userId }: { userId: string }) {
+export default function HostGame({
+  userId,
+  socket,
+  roomId,
+}: {
+  userId: string;
+  socket?: Socket;
+  roomId?: string;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<GameLoop>({
     now: 0,
@@ -399,6 +404,23 @@ export default function HostGame({ userId }: { userId: string }) {
     if (!gameStateRef.current) return;
     // use a wrapper so we can remove the event listener
     function handleKeyDownWrapper(event: KeyboardEvent) {
+      // Emit keystroke to opponent BEFORE processing locally
+      if (!GAME_INPUT_KEYS.includes(event.code)) return;
+
+      event.preventDefault();
+      // FIRST try to send the keystroke to the opponent
+      // not sure if this is the best way to do it but lets see.
+      if (socket && roomId) {
+        const gameAction = {
+          roomId,
+          action: {
+            type: "keystroke",
+            keyCode: event.code,
+            timestamp: getTimestamp(),
+          },
+        };
+        socket.emit("game-action", gameAction);
+      }
       handleKeyDown({
         event,
         gameState: gameStateRef.current!,
@@ -423,7 +445,7 @@ export default function HostGame({ userId }: { userId: string }) {
           className={cn(
             (uiState.isGameOver || uiState.isPaused) && "opacity-30",
           )}
-        ></canvas>
+        />
         <GameStat
           label="score"
           value={uiState.score}
