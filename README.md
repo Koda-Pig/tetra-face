@@ -78,13 +78,12 @@ pnpm run dev
 
 ### Multiplayer
 
-- [ ] set up multiplayer
-  - [ ] use socket.io
-  - [ ] set up `room` for game sessions?
-  - [ ] Host creates room, invite single player to join.
-- [ ] fireship sockets: https://youtu.be/1BfCnjr_Vjg
-- [ ] wds sockets: https://youtu.be/ZKEqqIO7n-k
-- [ ]https://youtu.be/d80sB_zYuOs - wilth next js
+This is set up in a rudimentary way. Just the very basics right now.
+
+- [x] set up multiplayer
+  - [x] use socket.io
+  - [x] set up `room` for game sessions?
+  - [x] Host creates room, invite single player to join.
 
 Should send as little as possible data over the socket. Don't want to do the whole game. Offload that to the frontend. So the 'host' of the game essentially runs 2 game frames, one with the input of the player, and the other the inputs from the versus.
 
@@ -126,7 +125,7 @@ need a way for other player to confirm game ready.
 Only discord auth set up for now.
 
 - [ ] attach user id to game session
-- [ ] discord auth: https://discord.com/developers/applications
+- [x] discord auth: https://discord.com/developers/applications
 - [ ] add google auth using next auth. https://next-auth.js.org/providers/google
 
 ### Deployment
