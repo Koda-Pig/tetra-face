@@ -57,7 +57,7 @@ export const TETRAMINOS: Record<TetrominoType, Tetromino> = {
         [0, 1, 0, 0],
       ],
     ],
-    color: "lightblue",
+    color: "#8CE4FF",
   },
   J: {
     rotations: [
@@ -90,7 +90,7 @@ export const TETRAMINOS: Record<TetrominoType, Tetromino> = {
         [0, 0, 0, 0],
       ],
     ],
-    color: "darkblue",
+    color: "#0F4C75",
   },
   L: {
     rotations: [
@@ -123,7 +123,7 @@ export const TETRAMINOS: Record<TetrominoType, Tetromino> = {
         [0, 0, 0, 0],
       ],
     ],
-    color: "orange",
+    color: "#FF6C0C",
   },
   O: {
     rotations: [
@@ -222,7 +222,7 @@ export const TETRAMINOS: Record<TetrominoType, Tetromino> = {
         [0, 0, 0, 0],
       ],
     ],
-    color: "red",
+    color: "#FF5656",
   },
   T: {
     rotations: [
@@ -255,7 +255,7 @@ export const TETRAMINOS: Record<TetrominoType, Tetromino> = {
         [0, 0, 0, 0],
       ],
     ],
-    color: "purple",
+    color: "#8C00FF",
   },
 };
 

@@ -94,9 +94,6 @@ export default function GameVersus({ session }: { session: Session | null }) {
         // If it's a keystroke action, update the opponent's current key
         if (data.action.type === "keystroke" && data.action.keyCode) {
           setOpponentKeyPress(data.action.keyCode);
-
-          // Clear the key press after a short delay, hopefully stops too many key presses from being sent
-          setTimeout(() => setOpponentKeyPress(null), 100);
         }
       },
     );

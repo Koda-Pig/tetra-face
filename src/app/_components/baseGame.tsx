@@ -55,7 +55,7 @@ function drawBoard({
       }
 
       // draw grid
-      ctx.strokeStyle = "gray";
+      ctx.strokeStyle = "#292933";
       ctx.strokeRect(col * cellWidth, row * cellHeight, cellWidth, cellHeight);
     }
   }
@@ -153,7 +153,7 @@ function render({
   cellHeight: number;
   gameState: GameState;
 }) {
-  ctx.fillStyle = "black";
+  ctx.fillStyle = "#16161d";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   drawTetromino({
