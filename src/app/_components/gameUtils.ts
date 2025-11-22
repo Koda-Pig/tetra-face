@@ -265,7 +265,3 @@ export function clearLines(board: GameState["board"]): number {
   }
   return linesCleared;
 }
-export function restartGame() {
-  // quick and dirty. needs improvement
-  window.location.reload();
-}

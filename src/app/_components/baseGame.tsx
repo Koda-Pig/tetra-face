@@ -13,7 +13,6 @@ import {
   lockPieceAndSpawnNext,
   tryRotatePiece,
   placePiece,
-  restartGame,
   hardDrop,
   getTimestamp,
 } from "./gameUtils";
@@ -29,6 +28,7 @@ import {
   VISIBLE_ROWS,
   HIDDEN_ROWS,
   FILLED_CELL,
+  TOTAL_ROWS,
   GAME_INPUT_KEYS,
   FLASH_TRANSITION_DURATION_MS,
   INITIAL_GAME_STATE,
@@ -340,6 +340,43 @@ export default function BaseGame({
     };
     gameLoopRef.current.lastTime = getTimestamp();
   }, [getNextPiece, userId]);
+
+  function restartGame() {
+    if (!gameStateRef.current) return;
+
+    // 1. Reset game state (reuse existing object to maintain references)
+    Object.assign(gameStateRef.current, {
+      ...INITIAL_GAME_STATE,
+      currentPiece: spawnPiece(getNextPiece),
+      dropIntervalSeconds: calcDropSpeed(0),
+      userId,
+      board: Array(TOTAL_ROWS)
+        .fill(null)
+        .map(() =>
+          Array(COLS)
+            .fill(null)
+            .map(() => ({ occupied: false })),
+        ),
+    });
+
+    // 2. Reset pause state
+    pauseMultiplierRef.current = 1;
+
+    // 3. Reset UI state completely
+    setUiState({
+      isGameOver: false,
+      score: 0,
+      scoreFlash: false,
+      levelFlash: false,
+      level: 0,
+      isPaused: false,
+    });
+
+    // 4. Reset game loop timing
+    const gameLoop = gameLoopRef.current;
+    gameLoop.deltaTime = 0;
+    gameLoop.lastTime = getTimestamp();
+  }
 
   // game loop
   useEffect(() => {
