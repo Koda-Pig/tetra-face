@@ -4,14 +4,20 @@ import { useState, useEffect } from "react";
 import { useSocket } from "~/hooks/useSocket";
 import type { GameRoom } from "~/types";
 import type { Session } from "next-auth";
+import { Terminal } from "lucide-react";
 // import HostGame from "./hostGame";
-// import OpponentGame from "./opponentGame";
+import OpponentGame from "./opponentGame";
+import { Drawer, DrawerContent, DrawerTrigger } from "~/components/ui/drawer";
+import { Button } from "~/components/ui/button";
 
+// host perspective
 export default function GameVersus({ session }: { session: Session | null }) {
   const { socket, isConnected } = useSocket();
   const [currentRoom, setCurrentRoom] = useState<GameRoom | null>(null);
   const [roomIdToJoin, setRoomIdToJoin] = useState("");
   const [messages, setMessages] = useState<string[]>([]);
+  // const [opponentKeyPress, setOpponentKeyPress] = useState<string | null>(null); // this should come from
+  const [opponentKeyPress] = useState<string | null>(null); // this should come from
 
   const addMessage = (message: string) => {
     setMessages((prev) => [
@@ -52,6 +58,7 @@ export default function GameVersus({ session }: { session: Session | null }) {
     }
   };
 
+  // socket logic
   useEffect(() => {
     if (!socket || !session?.user?.id) return;
 
@@ -101,92 +108,107 @@ export default function GameVersus({ session }: { session: Session | null }) {
         <div>
           <h2 className="text-center text-xl font-bold">Player 2</h2>
           {/* opponent */}
-          {/* <GameCanvas /> */}
+          <OpponentGame
+            userId={session?.user.id}
+            currentKey={opponentKeyPress}
+          />
         </div>
       </div>
 
-      {/* right panel: socket testing */}
-      <div className="flex-1">
-        <div className="w-80 rounded bg-gray-500 p-4">
-          <h3 className="mb-4 font-bold">Socket Testing</h3>
+      {/* socket testing */}
+      <Drawer>
+        <DrawerTrigger asChild>
+          <Button className="absolute bottom-4 left-1/2 -translate-x-1/2">
+            <Terminal />
+            <p>Socket Testing</p>
+          </Button>
+        </DrawerTrigger>
+        <DrawerContent>
+          <div className="flex-1">
+            <div className="w-80 rounded bg-gray-500 p-4">
+              <h3 className="mb-4 font-bold">Socket Testing</h3>
 
-          {/* Connection Status */}
-          <div className="mb-4">
-            <p
-              className={`font-semibold ${isConnected ? "text-green-600" : "text-red-600"}`}
-            >
-              {isConnected ? "✅ Connected" : "❌ Disconnected"}
-            </p>
-            {session?.user && (
-              <p className="text-sm">User: {session.user.name}</p>
-            )}
-          </div>
+              {/* Connection Status */}
+              <div className="mb-4">
+                <p
+                  className={`font-semibold ${isConnected ? "text-green-600" : "text-red-600"}`}
+                >
+                  {isConnected ? "✅ Connected" : "❌ Disconnected"}
+                </p>
+                {session?.user && (
+                  <p className="text-sm">User: {session.user.name}</p>
+                )}
+              </div>
 
-          {/* Room Controls */}
-          <div className="mb-4 space-y-2">
-            <button
-              onClick={createRoom}
-              disabled={!isConnected || !session?.user}
-              className="w-full rounded bg-blue-500 px-4 py-2 disabled:bg-gray-300"
-            >
-              Create Room
-            </button>
+              {/* Room Controls */}
+              <div className="mb-4 space-y-2">
+                <button
+                  onClick={createRoom}
+                  disabled={!isConnected || !session?.user}
+                  className="w-full rounded bg-blue-500 px-4 py-2 disabled:bg-gray-300"
+                >
+                  Create Room
+                </button>
 
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={roomIdToJoin}
-                onChange={(e) => setRoomIdToJoin(e.target.value)}
-                placeholder="Room ID"
-                className="flex-1 rounded border px-2 py-1"
-              />
-              <button
-                onClick={joinRoom}
-                disabled={
-                  !isConnected || !session?.user || !roomIdToJoin.trim()
-                }
-                className="rounded bg-green-500 px-4 py-2 disabled:bg-gray-300"
-              >
-                Join
-              </button>
-            </div>
-          </div>
-
-          {/* Current Room Info */}
-          {currentRoom && (
-            <div className="mb-4 rounded bg-blue-500 p-2">
-              <h4 className="font-semibold">Current Room</h4>
-              <p className="text-sm">ID: {currentRoom.id}</p>
-              <p className="text-sm">Players: {currentRoom.players.length}/2</p>
-              <ul className="text-xs">
-                {currentRoom.players.map((player, idx) => (
-                  <li key={idx}>
-                    {player.userId} {player.ready ? "✅" : "⏳"}
-                  </li>
-                ))}
-              </ul>
-              <button
-                onClick={sendTestGameAction}
-                className="mt-2 rounded bg-purple-500 px-2 py-1 text-sm"
-              >
-                Send Test Action
-              </button>
-            </div>
-          )}
-
-          {/* Message Log */}
-          <div>
-            <h4 className="mb-2 font-semibold">Event Log</h4>
-            <div className="bg-background h-40 overflow-y-auto rounded border p-2 text-xs">
-              {messages.map((msg, idx) => (
-                <div key={idx} className="mb-1">
-                  {msg}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={roomIdToJoin}
+                    onChange={(e) => setRoomIdToJoin(e.target.value)}
+                    placeholder="Room ID"
+                    className="flex-1 rounded border px-2 py-1"
+                  />
+                  <button
+                    onClick={joinRoom}
+                    disabled={
+                      !isConnected || !session?.user || !roomIdToJoin.trim()
+                    }
+                    className="rounded bg-green-500 px-4 py-2 disabled:bg-gray-300"
+                  >
+                    Join
+                  </button>
                 </div>
-              ))}
+              </div>
+
+              {/* Current Room Info */}
+              {currentRoom && (
+                <div className="mb-4 rounded bg-blue-500 p-2">
+                  <h4 className="font-semibold">Current Room</h4>
+                  <p className="text-sm">ID: {currentRoom.id}</p>
+                  <p className="text-sm">
+                    Players: {currentRoom.players.length}/2
+                  </p>
+                  <ul className="text-xs">
+                    {currentRoom.players.map((player, idx) => (
+                      <li key={idx}>
+                        {player.userId} {player.ready ? "✅" : "⏳"}
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    onClick={sendTestGameAction}
+                    className="mt-2 rounded bg-purple-500 px-2 py-1 text-sm"
+                  >
+                    Send Test Action
+                  </button>
+                </div>
+              )}
+
+              {/* Message Log */}
+              <div>
+                <h4 className="mb-2 font-semibold">Event Log</h4>
+                <div className="bg-background h-40 overflow-y-auto rounded border p-2 text-xs">
+                  {messages.map((msg, idx) => (
+                    <div key={idx} className="mb-1">
+                      {msg}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }

@@ -167,27 +167,25 @@ function render({
 }
 
 function handleKeyDown({
-  event,
+  currentKey,
   gameState,
   getNextPiece,
   onStateChange,
   pauseMultiplierRef,
   setUiState,
 }: {
-  event: KeyboardEvent;
+  currentKey: string;
   gameState: GameState;
   getNextPiece: () => TetrominoType;
   onStateChange?: (gameState: GameState) => void;
   pauseMultiplierRef: React.RefObject<number>;
   setUiState: React.Dispatch<React.SetStateAction<UIState>>;
 }) {
-  if (!GAME_INPUT_KEYS.includes(event.code)) return;
-
-  event.preventDefault();
+  if (!GAME_INPUT_KEYS.includes(currentKey)) return;
 
   const isPaused = pauseMultiplierRef.current === 0;
 
-  if (event.code === "Escape") {
+  if (currentKey === "Escape") {
     pauseMultiplierRef.current = isPaused ? 1 : 0;
     setUiState((prev) => ({ ...prev, isPaused: !isPaused }));
     return;
@@ -196,7 +194,7 @@ function handleKeyDown({
   // no key pressing when paused
   if (isPaused) return;
 
-  switch (event.code) {
+  switch (currentKey) {
     case "ArrowUp":
       hardDrop({
         piece: gameState.currentPiece,
@@ -269,7 +267,13 @@ function handleKeyDown({
   }
 }
 
-export default function OpponentGame({ userId }: { userId: string }) {
+export default function OpponentGame({
+  userId,
+  currentKey,
+}: {
+  userId: string;
+  currentKey: string | null;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<GameLoop>({
     now: 0,
@@ -397,21 +401,17 @@ export default function OpponentGame({ userId }: { userId: string }) {
   // event listeners
   useEffect(() => {
     if (!gameStateRef.current) return;
+    if (!currentKey) return;
     // use a wrapper so we can remove the event listener
-    function handleKeyDownWrapper(event: KeyboardEvent) {
-      handleKeyDown({
-        event,
-        gameState: gameStateRef.current!,
-        getNextPiece,
-        onStateChange: syncUIState,
-        pauseMultiplierRef,
-        setUiState,
-      });
-    }
-
-    window.addEventListener("keydown", handleKeyDownWrapper);
-    return () => window.removeEventListener("keydown", handleKeyDownWrapper);
-  }, [getNextPiece, syncUIState]);
+    handleKeyDown({
+      currentKey,
+      gameState: gameStateRef.current!,
+      getNextPiece,
+      onStateChange: syncUIState,
+      pauseMultiplierRef,
+      setUiState,
+    });
+  }, [getNextPiece, syncUIState, currentKey]);
 
   return (
     <div className="relative h-[600px] w-[300px]">
