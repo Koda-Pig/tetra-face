@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSocket } from "~/hooks/useSocket";
 import type { GameRoom } from "~/types";
 import type { Session } from "next-auth";
@@ -11,14 +11,18 @@ import { Drawer, DrawerContent, DrawerTrigger } from "~/components/ui/drawer";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 
+type OpponentGameRef = {
+  handleKeyPress: (keyCode: string) => void;
+};
+
 // host perspective
 export default function GameVersus({ session }: { session: Session | null }) {
   const { socket, isConnected } = useSocket();
   const [currentRoom, setCurrentRoom] = useState<GameRoom | null>(null);
   const [roomIdToJoin, setRoomIdToJoin] = useState("");
   const [messages, setMessages] = useState<string[]>([]);
-  const [opponentKeyPress, setOpponentKeyPress] = useState<string | null>(null);
   const [isRoomHost, setIsRoomHost] = useState<boolean>(false);
+  const opponentGameRef = useRef<OpponentGameRef>(null);
   const bothPlayersReady =
     currentRoom?.players.length === 2 &&
     currentRoom?.players?.every((player) => player.ready);
@@ -115,7 +119,7 @@ export default function GameVersus({ session }: { session: Session | null }) {
 
         // If it's a keystroke action, update the opponent's current key
         if (data.action.type === "keystroke" && data.action.keyCode) {
-          setOpponentKeyPress(data.action.keyCode);
+          opponentGameRef.current?.handleKeyPress(data.action.keyCode);
         }
       },
     );
@@ -162,8 +166,8 @@ export default function GameVersus({ session }: { session: Session | null }) {
             </h2>
             {/* opponent */}
             <OpponentGame
+              ref={opponentGameRef}
               userId={`${session?.user.id}-opponent`}
-              currentKey={opponentKeyPress}
             />
           </div>
         </div>

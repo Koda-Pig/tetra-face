@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 import { useBag } from "~/hooks/useBag";
@@ -273,93 +280,27 @@ interface BaseGameProps {
   // Input handling props - only one should be provided
   socket?: Socket;
   roomId?: string;
-  currentKey?: string | null;
   singlePlayer?: boolean;
 }
 
-export default function BaseGame({
-  userId,
-  socket,
-  roomId,
-  currentKey,
-  singlePlayer = false,
-}: BaseGameProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const gameLoopRef = useRef<GameLoop>({
-    now: 0,
-    animationId: null,
-    lastTime: 0,
-    deltaTime: 0,
-    step: 1 / 60,
-  });
-  const pauseMultiplierRef = useRef(1); //  0 = paused
-  // we're not using useState for this because we don't want to trigger re-renders while the game is playing
-  const gameStateRef = useRef<GameState | null>(null);
-  const [uiState, setUiState] = useState<UIState>({
-    isGameOver: false,
-    score: 0,
-    scoreFlash: false,
-    levelFlash: false,
-    level: 0,
-    isPaused: false,
-  });
-  const [restartTrigger, setRestartTrigger] = useState(0);
+interface BaseGameRef {
+  handleKeyPress: (keyCode: string) => void;
+}
 
-  const syncUIState = useCallback((gameState: GameState) => {
-    setUiState((prev) => ({
-      ...prev,
-      isGameOver: gameState.isGameOver,
-      score: gameState.score,
-      level: gameState.level,
-      scoreFlash: prev.score !== gameState.score, // flash when score changes
-      levelFlash: prev.level !== gameState.level,
-    }));
-
-    // remove flash after animation
-    if (gameState.score > 0) {
-      setTimeout(
-        () => setUiState((prev) => ({ ...prev, scoreFlash: false })),
-        FLASH_TRANSITION_DURATION_MS,
-      );
-    }
-  }, []);
-
-  const getNextPiece = useBag();
-
-  // Determine if this is a host game (has socket/roomId) or opponent game (has currentKey)
-  const isHostGame = Boolean(socket && roomId) || singlePlayer;
-  const isOpponentGame = currentKey !== undefined;
-
-  // initialize the game state
-  useEffect(() => {
-    // nullish coalescing assignment https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing_assignment
-    gameStateRef.current ??= {
-      ...INITIAL_GAME_STATE,
-      board: createEmptyBoard(),
-      currentPiece: spawnPiece(getNextPiece),
-      dropIntervalSeconds: calcDropSpeed(0),
-      userId,
-    };
-    gameLoopRef.current.lastTime = getTimestamp();
-  }, [getNextPiece, userId]);
-
-  function restartGame() {
-    if (!gameStateRef.current) return;
-
-    // 1. Reset game state (reuse existing object to maintain references)
-    Object.assign(gameStateRef.current, {
-      ...INITIAL_GAME_STATE,
-      currentPiece: spawnPiece(getNextPiece),
-      dropIntervalSeconds: calcDropSpeed(0),
-      userId,
-      board: createEmptyBoard(),
+const BaseGame = forwardRef<BaseGameRef, BaseGameProps>(
+  ({ userId, socket, roomId, singlePlayer = false }, ref) => {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const gameLoopRef = useRef<GameLoop>({
+      now: 0,
+      animationId: null,
+      lastTime: 0,
+      deltaTime: 0,
+      step: 1 / 60,
     });
-
-    // 2. Reset pause state
-    pauseMultiplierRef.current = 1;
-
-    // 3. Reset UI state completely
-    setUiState({
+    const pauseMultiplierRef = useRef(1); //  0 = paused
+    // we're not using useState for this because we don't want to trigger re-renders while the game is playing
+    const gameStateRef = useRef<GameState | null>(null);
+    const [uiState, setUiState] = useState<UIState>({
       isGameOver: false,
       score: 0,
       scoreFlash: false,
@@ -367,40 +308,153 @@ export default function BaseGame({
       level: 0,
       isPaused: false,
     });
+    const [restartTrigger, setRestartTrigger] = useState(0);
 
-    // 4. Reset game loop timing
-    const gameLoop = gameLoopRef.current;
-    gameLoop.deltaTime = 0;
-    gameLoop.lastTime = getTimestamp();
-    setRestartTrigger((prev) => prev + 1);
-  }
+    const syncUIState = useCallback((gameState: GameState) => {
+      setUiState((prev) => ({
+        ...prev,
+        isGameOver: gameState.isGameOver,
+        score: gameState.score,
+        level: gameState.level,
+        scoreFlash: prev.score !== gameState.score, // flash when score changes
+        levelFlash: prev.level !== gameState.level,
+      }));
 
-  // game loop
-  useEffect(() => {
-    if (!canvasRef.current || !gameStateRef.current) return;
+      // remove flash after animation
+      if (gameState.score > 0) {
+        setTimeout(
+          () => setUiState((prev) => ({ ...prev, scoreFlash: false })),
+          FLASH_TRANSITION_DURATION_MS,
+        );
+      }
+    }, []);
 
-    const gameState = gameStateRef.current;
-    const canvas = canvasRef.current;
-    if (!canvas.getContext("2d")) {
-      console.error("Failed to get canvas context");
-      return;
-    }
-    const ctx = canvas.getContext("2d")!;
-    const cellWidth = canvas.width / COLS;
-    const cellHeight = canvas.height / VISIBLE_ROWS;
+    const getNextPiece = useBag();
 
-    function animate() {
+    function restartGame() {
+      if (!gameStateRef.current) return;
+
+      // 1. Reset game state (reuse existing object to maintain references)
+      Object.assign(gameStateRef.current, {
+        ...INITIAL_GAME_STATE,
+        currentPiece: spawnPiece(getNextPiece),
+        dropIntervalSeconds: calcDropSpeed(0),
+        userId,
+        board: createEmptyBoard(),
+      });
+
+      // 2. Reset pause state
+      pauseMultiplierRef.current = 1;
+
+      // 3. Reset UI state completely
+      setUiState({
+        isGameOver: false,
+        score: 0,
+        scoreFlash: false,
+        levelFlash: false,
+        level: 0,
+        isPaused: false,
+      });
+
+      // 4. Reset game loop timing
       const gameLoop = gameLoopRef.current;
-      const pauseMultiplier = pauseMultiplierRef.current;
+      gameLoop.deltaTime = 0;
+      gameLoop.lastTime = getTimestamp();
+      setRestartTrigger((prev) => prev + 1);
+    }
 
-      if (!gameLoop || pauseMultiplier === undefined) {
-        const problemVar = !gameLoop ? gameLoop : pauseMultiplier;
-        console.error(`${problemVar} is not initialized`);
+    // Determine if this is a host game (has socket/roomId) or opponent game (has currentKey)
+    const isHostGame = Boolean(socket && roomId) || singlePlayer;
+
+    const handleKeyPressRef = useCallback(
+      (keyCode: string) => {
+        if (!gameStateRef.current) return;
+
+        handleKeyDown({
+          currentKey: keyCode,
+          gameState: gameStateRef.current,
+          getNextPiece,
+          onStateChange: syncUIState,
+          pauseMultiplierRef,
+          setUiState,
+        });
+      },
+      [getNextPiece, syncUIState],
+    );
+
+    // Expose the handleKeyPress function via useImperativeHandle
+    useImperativeHandle(
+      ref,
+      () => ({
+        handleKeyPress: handleKeyPressRef,
+      }),
+      [handleKeyPressRef],
+    );
+
+    // initialize the game state
+    useEffect(() => {
+      // nullish coalescing assignment https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing_assignment
+      gameStateRef.current ??= {
+        ...INITIAL_GAME_STATE,
+        board: createEmptyBoard(),
+        currentPiece: spawnPiece(getNextPiece),
+        dropIntervalSeconds: calcDropSpeed(0),
+        userId,
+      };
+      gameLoopRef.current.lastTime = getTimestamp();
+    }, [getNextPiece, userId]);
+
+    // game loop
+    useEffect(() => {
+      if (!canvasRef.current || !gameStateRef.current) return;
+
+      const gameState = gameStateRef.current;
+      const canvas = canvasRef.current;
+      if (!canvas.getContext("2d")) {
+        console.error("Failed to get canvas context");
         return;
       }
+      const ctx = canvas.getContext("2d")!;
+      const cellWidth = canvas.width / COLS;
+      const cellHeight = canvas.height / VISIBLE_ROWS;
 
-      if (gameState.isGameOver) {
-        // one more render for the bois
+      function animate() {
+        const gameLoop = gameLoopRef.current;
+        const pauseMultiplier = pauseMultiplierRef.current;
+
+        if (!gameLoop || pauseMultiplier === undefined) {
+          const problemVar = !gameLoop ? gameLoop : pauseMultiplier;
+          console.error(`${problemVar} is not initialized`);
+          return;
+        }
+
+        if (gameState.isGameOver) {
+          // one more render for the bois
+          render({
+            ctx,
+            canvas,
+            cellWidth,
+            cellHeight,
+            gameState,
+          });
+          return;
+        }
+
+        gameLoop.now = getTimestamp();
+        gameLoop.deltaTime =
+          gameLoop.deltaTime +
+          Math.min(1, (gameLoop.now - gameLoop.lastTime) / 1000);
+        while (gameLoop.deltaTime > gameLoop.step) {
+          gameLoop.deltaTime = gameLoop.deltaTime - gameLoop.step;
+          // logic update
+          update({
+            gameState,
+            step: gameLoop.step * pauseMultiplier,
+            getNextPiece,
+            onStateChange: syncUIState,
+          });
+        }
+        // draw the game
         render({
           ctx,
           canvas,
@@ -408,152 +462,118 @@ export default function BaseGame({
           cellHeight,
           gameState,
         });
-        return;
+        gameLoop.lastTime = gameLoop.now;
+        gameLoop.animationId = requestAnimationFrame(animate);
       }
 
-      gameLoop.now = getTimestamp();
-      gameLoop.deltaTime =
-        gameLoop.deltaTime +
-        Math.min(1, (gameLoop.now - gameLoop.lastTime) / 1000);
-      while (gameLoop.deltaTime > gameLoop.step) {
-        gameLoop.deltaTime = gameLoop.deltaTime - gameLoop.step;
-        // logic update
-        update({
-          gameState,
-          step: gameLoop.step * pauseMultiplier,
+      const gameLoop = gameLoopRef.current;
+      gameLoop.animationId = requestAnimationFrame(animate);
+
+      return () => {
+        if (gameLoop.animationId) {
+          cancelAnimationFrame(gameLoop.animationId);
+          gameLoop.animationId = null;
+        }
+      };
+    }, [canvasRef, getNextPiece, syncUIState, restartTrigger]);
+
+    // Host game event listeners (keyboard events)
+    useEffect(() => {
+      if (!isHostGame || !gameStateRef.current) return;
+
+      function handleKeyDownWrapper(event: KeyboardEvent) {
+        // Emit keystroke to opponent BEFORE processing locally
+        if (!GAME_INPUT_KEYS.includes(event.code)) return;
+
+        event.preventDefault();
+        // FIRST try to send the keystroke to the opponent
+        // not sure if this is the best way to do it but lets see.
+        if (socket && roomId) {
+          const gameAction = {
+            roomId,
+            action: {
+              type: "keystroke",
+              keyCode: event.code,
+              timestamp: getTimestamp(),
+            },
+          };
+          socket.emit("game-action", gameAction);
+        }
+        handleKeyDown({
+          currentKey: event.code,
+          gameState: gameStateRef.current!,
           getNextPiece,
           onStateChange: syncUIState,
+          pauseMultiplierRef,
+          setUiState,
         });
       }
-      // draw the game
-      render({
-        ctx,
-        canvas,
-        cellWidth,
-        cellHeight,
-        gameState,
-      });
-      gameLoop.lastTime = gameLoop.now;
-      gameLoop.animationId = requestAnimationFrame(animate);
-    }
 
-    const gameLoop = gameLoopRef.current;
-    gameLoop.animationId = requestAnimationFrame(animate);
+      window.addEventListener("keydown", handleKeyDownWrapper);
+      return () => window.removeEventListener("keydown", handleKeyDownWrapper);
+    }, [isHostGame, socket, roomId, getNextPiece, syncUIState]);
 
-    return () => {
-      if (gameLoop.animationId) {
-        cancelAnimationFrame(gameLoop.animationId);
-        gameLoop.animationId = null;
-      }
-    };
-  }, [canvasRef, getNextPiece, syncUIState, restartTrigger]);
-
-  // Host game event listeners (keyboard events)
-  useEffect(() => {
-    if (!isHostGame || !gameStateRef.current) return;
-
-    function handleKeyDownWrapper(event: KeyboardEvent) {
-      // Emit keystroke to opponent BEFORE processing locally
-      if (!GAME_INPUT_KEYS.includes(event.code)) return;
-
-      event.preventDefault();
-      // FIRST try to send the keystroke to the opponent
-      // not sure if this is the best way to do it but lets see.
-      if (socket && roomId) {
-        const gameAction = {
-          roomId,
-          action: {
-            type: "keystroke",
-            keyCode: event.code,
-            timestamp: getTimestamp(),
-          },
-        };
-        socket.emit("game-action", gameAction);
-      }
-      handleKeyDown({
-        currentKey: event.code,
-        gameState: gameStateRef.current!,
-        getNextPiece,
-        onStateChange: syncUIState,
-        pauseMultiplierRef,
-        setUiState,
-      });
-    }
-
-    window.addEventListener("keydown", handleKeyDownWrapper);
-    return () => window.removeEventListener("keydown", handleKeyDownWrapper);
-  }, [isHostGame, socket, roomId, getNextPiece, syncUIState]);
-
-  // Opponent game input handling (prop-based keys)
-  useEffect(() => {
-    if (!isOpponentGame || !gameStateRef.current || !currentKey) return;
-
-    handleKeyDown({
-      currentKey,
-      gameState: gameStateRef.current,
-      getNextPiece,
-      onStateChange: syncUIState,
-      pauseMultiplierRef,
-      setUiState,
-    });
-  }, [isOpponentGame, currentKey, getNextPiece, syncUIState]);
-
-  return (
-    <div className="relative h-[600px] w-[300px]">
-      <div className={cn("relative")}>
-        <canvas
-          ref={canvasRef}
-          width={300}
-          height={600}
-          className={cn(
-            (uiState.isGameOver || uiState.isPaused) && "opacity-30",
-          )}
-        />
-        <GameStat
-          label="score"
-          value={uiState.score}
-          flashTrigger={uiState.scoreFlash}
-          alignment="right"
-          transitionDuration={FLASH_TRANSITION_DURATION_MS}
-        />
-        <GameStat
-          label="level"
-          value={uiState.level}
-          flashTrigger={uiState.levelFlash}
-          alignment="left"
-          transitionDuration={FLASH_TRANSITION_DURATION_MS}
-        />
-      </div>
-
-      <div
-        className={cn(
-          "absolute inset-0 grid place-items-center",
-          uiState.isGameOver || uiState.isPaused
-            ? "opacity-100"
-            : "pointer-events-none opacity-0",
-        )}
-      >
-        <div className="text-center">
-          <p className="text-shadow mb-8 text-5xl leading-14 text-shadow-[0_0_4px_black,0_0_8px_black]">
-            {uiState.isPaused ? (
-              <span>PAUSED</span>
-            ) : (
-              <span>
-                GAME
-                <br />
-                OVER
-                <br />
-                BITCH
-              </span>
+    return (
+      <div className="relative h-[600px] w-[300px]">
+        <div className={cn("relative")}>
+          <canvas
+            ref={canvasRef}
+            width={300}
+            height={600}
+            className={cn(
+              (uiState.isGameOver || uiState.isPaused) && "opacity-30",
             )}
-          </p>
-          {(uiState.isGameOver || uiState.isPaused) && (
-            <Button onClick={restartGame} size="lg" className="text-lg">
-              Restart
-            </Button>
+          />
+          <GameStat
+            label="score"
+            value={uiState.score}
+            flashTrigger={uiState.scoreFlash}
+            alignment="right"
+            transitionDuration={FLASH_TRANSITION_DURATION_MS}
+          />
+          <GameStat
+            label="level"
+            value={uiState.level}
+            flashTrigger={uiState.levelFlash}
+            alignment="left"
+            transitionDuration={FLASH_TRANSITION_DURATION_MS}
+          />
+        </div>
+
+        <div
+          className={cn(
+            "absolute inset-0 grid place-items-center",
+            uiState.isGameOver || uiState.isPaused
+              ? "opacity-100"
+              : "pointer-events-none opacity-0",
           )}
+        >
+          <div className="text-center">
+            <p className="text-shadow mb-8 text-5xl leading-14 text-shadow-[0_0_4px_black,0_0_8px_black]">
+              {uiState.isPaused ? (
+                <span>PAUSED</span>
+              ) : (
+                <span>
+                  GAME
+                  <br />
+                  OVER
+                  <br />
+                  BITCH
+                </span>
+              )}
+            </p>
+            {(uiState.isGameOver || uiState.isPaused) && (
+              <Button onClick={restartGame} size="lg" className="text-lg">
+                Restart
+              </Button>
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  },
+);
+
+BaseGame.displayName = "BaseGame";
+
+export default BaseGame;
