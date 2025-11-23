@@ -84,6 +84,7 @@ This is set up in a rudimentary way. Just the very basics right now.
   - [x] use socket.io
   - [x] set up `room` for game sessions?
   - [x] Host creates room, invite single player to join.
+  - [x] add game ready state for players
 
 Should send as little as possible data over the socket. Don't want to do the whole game. Offload that to the frontend. So the 'host' of the game essentially runs 2 game frames, one with the input of the player, and the other the inputs from the versus.
 

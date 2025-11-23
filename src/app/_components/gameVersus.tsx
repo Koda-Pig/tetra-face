@@ -14,10 +14,16 @@ import { Button } from "~/components/ui/button";
 export default function GameVersus({ session }: { session: Session | null }) {
   const { socket, isConnected } = useSocket();
   const [currentRoom, setCurrentRoom] = useState<GameRoom | null>(null);
-  const [matchHasBegun, beginMatch] = useState(false);
   const [roomIdToJoin, setRoomIdToJoin] = useState("");
   const [messages, setMessages] = useState<string[]>([]);
   const [opponentKeyPress, setOpponentKeyPress] = useState<string | null>(null);
+  const bothPlayersReady =
+    currentRoom?.players.length === 2 &&
+    currentRoom?.players?.every((player) => player.ready);
+  const currentPlayer = currentRoom?.players.find(
+    (p) => p.userId === session?.user?.id,
+  );
+  const isCurrentPlayerReady = currentPlayer?.ready ?? false;
 
   const addMessage = (message: string) => {
     setMessages((prev) => [
@@ -41,6 +47,15 @@ export default function GameVersus({ session }: { session: Session | null }) {
         userId: session.user.id,
       });
     }
+  };
+
+  const toggleReady = () => {
+    if (!socket || !currentRoom || !session?.user?.id) return;
+
+    socket.emit("toggle-ready", {
+      roomId: currentRoom.id,
+      userId: session.user.id,
+    });
   };
 
   const sendTestGameAction = () => {
@@ -70,16 +85,19 @@ export default function GameVersus({ session }: { session: Session | null }) {
       addMessage(`Player joined room: ${data.roomId}`);
       setCurrentRoom(data.room);
     });
-
+    socket.on(
+      "player-ready-changed",
+      (data: { roomId: string; room: GameRoom }) => {
+        addMessage(`Player ready state changed in room: ${data.roomId}`);
+        setCurrentRoom(data.room);
+      },
+    );
     socket.on("error", (data: { message: string }) => {
       addMessage(`Error: ${data.message}`);
     });
-
     socket.on("player-disconnected", (data: { roomId: string }) => {
       addMessage(`Player disconnected from room: ${data.roomId}`);
     });
-
-    // socket.io types are not fully typed yet
     socket.on(
       "opponent-action",
       (data: {
@@ -102,6 +120,7 @@ export default function GameVersus({ session }: { session: Session | null }) {
     return () => {
       socket.off("room-created");
       socket.off("player-joined");
+      socket.off("player-ready-changed");
       socket.off("error");
       socket.off("player-disconnected");
       socket.off("opponent-action");
@@ -113,7 +132,7 @@ export default function GameVersus({ session }: { session: Session | null }) {
   return (
     <div>
       {/* games */}
-      {matchHasBegun ? (
+      {bothPlayersReady ? (
         <div className="flex gap-8">
           <div>
             <h2 className="text-center text-xl font-bold">Player 1</h2>
@@ -137,14 +156,26 @@ export default function GameVersus({ session }: { session: Session | null }) {
         </div>
       ) : (
         <div>
-          <Button
-            size="lg"
-            onClick={() => beginMatch(true)}
-            className="m-12 mx-auto flex"
-          >
-            <p>begin match</p>
-            <Play />
-          </Button>
+          {currentRoom?.players.length === 2 ? (
+            <div className="flex flex-col items-center gap-4">
+              {/* ready to play button */}
+              <Button
+                size="lg"
+                onClick={toggleReady}
+                className="m-12 mx-auto flex"
+              >
+                {isCurrentPlayerReady ? "Ready ✅" : "Not Ready ⏳"}
+                <Play />
+              </Button>
+            </div>
+          ) : (
+            <p className="m-12 text-center text-lg">
+              {currentRoom
+                ? "Waiting for second player to join..."
+                : "Create or join a room to start"}
+            </p>
+          )}
+
           <div className="mb-4 space-y-2">
             <Button
               onClick={createRoom}
@@ -172,6 +203,7 @@ export default function GameVersus({ session }: { session: Session | null }) {
             </div>
           </div>
           {/* Current Room Info */}
+
           {currentRoom && (
             <div className="mb-4 rounded bg-gray-500 p-2">
               <h4 className="font-semibold">Current Room</h4>
@@ -222,7 +254,7 @@ export default function GameVersus({ session }: { session: Session | null }) {
       {/* socket testing */}
       <Drawer>
         <DrawerTrigger asChild>
-          <Button className="absolute bottom-4 left-1/2 -translate-x-1/2">
+          <Button className="absolute right-4 bottom-38">
             <Terminal />
             <p>Socket Testing</p>
           </Button>

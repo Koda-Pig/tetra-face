@@ -67,6 +67,24 @@ export function initializeSocket(httpServer: HttpServer) {
       io.to(roomId).emit("player-joined", { roomId, room });
     });
 
+    socket.on("toggle-ready", (data: { roomId: string; userId: string }) => {
+      const { roomId, userId } = data;
+      const room = gameRooms.get(roomId);
+
+      if (!room) {
+        socket.emit("error", { message: "Room not found" });
+        return;
+      }
+
+      // Find and toggle the player's ready state
+      const player = room.players.find((p) => p.userId === userId);
+      if (!player) return;
+
+      player.ready = !player.ready;
+      // Emit the updated room to all players
+      io.to(roomId).emit("player-ready-changed", { roomId, room });
+    });
+
     socket.on("game-action", (data: GameActionData) => {
       if (typeof data?.roomId !== "string") {
         console.error('Error, "roomId" is not a string');
