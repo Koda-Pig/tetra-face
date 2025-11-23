@@ -9,5 +9,9 @@ export default function OpponentGame({
   userId: string;
   currentKey: string | null;
 }) {
-  return <BaseGame userId={userId} currentKey={currentKey} />;
+  return (
+    <div className="pointer-events-none">
+      <BaseGame userId={userId} currentKey={currentKey} />;
+    </div>
+  );
 }

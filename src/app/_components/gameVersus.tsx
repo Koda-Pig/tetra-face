@@ -9,6 +9,7 @@ import HostGame from "./hostGame";
 import OpponentGame from "./opponentGame";
 import { Drawer, DrawerContent, DrawerTrigger } from "~/components/ui/drawer";
 import { Button } from "~/components/ui/button";
+import { cn } from "~/lib/utils";
 
 // host perspective
 export default function GameVersus({ session }: { session: Session | null }) {
@@ -17,6 +18,7 @@ export default function GameVersus({ session }: { session: Session | null }) {
   const [roomIdToJoin, setRoomIdToJoin] = useState("");
   const [messages, setMessages] = useState<string[]>([]);
   const [opponentKeyPress, setOpponentKeyPress] = useState<string | null>(null);
+  const [isRoomHost, setIsRoomHost] = useState<boolean>(false);
   const bothPlayersReady =
     currentRoom?.players.length === 2 &&
     currentRoom?.players?.every((player) => player.ready);
@@ -35,6 +37,7 @@ export default function GameVersus({ session }: { session: Session | null }) {
   const createRoom = () => {
     if (socket && session?.user?.id) {
       addMessage("Creating room...");
+      setIsRoomHost(true);
       socket.emit("create-room", session.user.id);
     }
   };
@@ -42,6 +45,7 @@ export default function GameVersus({ session }: { session: Session | null }) {
   const joinRoom = () => {
     if (socket && session?.user?.id && roomIdToJoin.trim()) {
       addMessage(`Attempting to join room: ${roomIdToJoin}`);
+      setIsRoomHost(false);
       socket.emit("join-room", {
         roomId: roomIdToJoin,
         userId: session.user.id,
@@ -133,9 +137,16 @@ export default function GameVersus({ session }: { session: Session | null }) {
     <div>
       {/* games */}
       {bothPlayersReady ? (
-        <div className="flex gap-8">
+        <div
+          className={cn(
+            "flex gap-8",
+            isRoomHost ? "flex-row" : "flex-row-reverse",
+          )}
+        >
           <div>
-            <h2 className="text-center text-xl font-bold">Player 1</h2>
+            <h2 className="text-center text-xl font-bold">
+              {isRoomHost ? "Player 1" : "Player 2"} (YOU)
+            </h2>
             {/* host */}
             {currentRoom && socket && (
               <HostGame
@@ -146,7 +157,9 @@ export default function GameVersus({ session }: { session: Session | null }) {
             )}
           </div>
           <div>
-            <h2 className="text-center text-xl font-bold">Player 2</h2>
+            <h2 className="text-center text-xl font-bold">
+              {isRoomHost ? "Player 2" : "Player 1"}
+            </h2>
             {/* opponent */}
             <OpponentGame
               userId={`${session?.user.id}-opponent`}
