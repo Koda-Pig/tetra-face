@@ -265,3 +265,13 @@ export function clearLines(board: GameState["board"]): number {
   }
   return linesCleared;
 }
+
+// make sure this is generated to avoid shared object references
+export const createEmptyBoard = () =>
+  Array(TOTAL_ROWS)
+    .fill(null)
+    .map(() =>
+      Array(COLS)
+        .fill(null)
+        .map(() => ({ occupied: false })),
+    );

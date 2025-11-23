@@ -149,7 +149,7 @@ export default function GameVersus({ session }: { session: Session | null }) {
             <h2 className="text-center text-xl font-bold">Player 2</h2>
             {/* opponent */}
             <OpponentGame
-              userId={session?.user.id}
+              userId={`${session?.user.id}-opponent`}
               currentKey={opponentKeyPress}
             />
           </div>

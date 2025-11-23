@@ -15,6 +15,7 @@ import {
   placePiece,
   hardDrop,
   getTimestamp,
+  createEmptyBoard,
 } from "./gameUtils";
 import type {
   GameState,
@@ -28,7 +29,6 @@ import {
   VISIBLE_ROWS,
   HIDDEN_ROWS,
   FILLED_CELL,
-  TOTAL_ROWS,
   GAME_INPUT_KEYS,
   FLASH_TRANSITION_DURATION_MS,
   INITIAL_GAME_STATE,
@@ -335,6 +335,7 @@ export default function BaseGame({
     // nullish coalescing assignment https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing_assignment
     gameStateRef.current ??= {
       ...INITIAL_GAME_STATE,
+      board: createEmptyBoard(),
       currentPiece: spawnPiece(getNextPiece),
       dropIntervalSeconds: calcDropSpeed(0),
       userId,
@@ -351,13 +352,7 @@ export default function BaseGame({
       currentPiece: spawnPiece(getNextPiece),
       dropIntervalSeconds: calcDropSpeed(0),
       userId,
-      board: Array(TOTAL_ROWS)
-        .fill(null)
-        .map(() =>
-          Array(COLS)
-            .fill(null)
-            .map(() => ({ occupied: false })),
-        ),
+      board: createEmptyBoard(),
     });
 
     // 2. Reset pause state
