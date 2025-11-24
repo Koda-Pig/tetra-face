@@ -108,10 +108,10 @@ export default function HostGame({
 
   // initialize the game state
   useEffect(() => {
+    if (gameStateRef.current) return;
     const newPiece = spawnPiece(getNextPiece);
-    // nullish coalescing assignment https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing_assignment
 
-    gameStateRef.current ??= {
+    gameStateRef.current = {
       ...INITIAL_GAME_STATE,
       board: createEmptyBoard(),
       currentPiece: newPiece,

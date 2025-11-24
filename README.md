@@ -87,10 +87,11 @@ This is set up in a rudimentary way. Just the very basics right now.
   - [x] add game ready state for players
   - [x] fix bug where pieces dropped in either host or oopponent boards are placed in both boards (was caused by shared object reference to board)
   - [ ] send over other player data (current piece, etc. {atm just inputs being sent})
-    - host player emits when new piece is spawned, with Piece data.
-    - Opponent player reads that new piece that is spawned, and passes it to their own instance of the 'opponentGame' component.
-    - BaseGame has a way to use the piece that is spawned to it, instead of generating its own.
-    - there MIGHT be an issue with duplicate reference to 'useBag' hook for both host and opponent games.
+    - [x] host player emits when new piece is spawned, with Piece data.
+    - [x] Opponent player reads that new piece that is spawned, and passes it to their own instance of the 'opponentGame' component.
+    - [x] OpponentGame has a way to use the piece that is spawned to it, instead of generating its own.
+    - [ ] Game over and
+    - [ ] play/ pause state
 
 Should send as little as possible data over the socket. Don't want to do the whole game. Offload that to the frontend. So the 'host' of the game essentially runs 2 game frames, one with the input of the player, and the other the inputs from the versus.
 

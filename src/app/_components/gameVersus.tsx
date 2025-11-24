@@ -214,6 +214,7 @@ export default function GameVersus({ session }: { session: Session | null }) {
                 value={roomIdToJoin}
                 onChange={(e) => setRoomIdToJoin(e.target.value)}
                 placeholder="Room ID"
+                className="w-full rounded border"
               />
               <Button
                 onClick={joinRoom}

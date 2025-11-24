@@ -128,12 +128,9 @@ const OpponentGame = forwardRef<OpponentGameRef, { userId: string }>(
     // initialize the game state
     useEffect(() => {
       // only initialize if there are available pieces
-      if (!hasPieces) return;
-
+      if (!hasPieces || gameStateRef.current) return;
       const newPiece = spawnPiece(getNextPiece);
-
-      // nullish coalescing assignment https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing_assignment
-      gameStateRef.current ??= {
+      gameStateRef.current = {
         ...INITIAL_GAME_STATE,
         board: createEmptyBoard(),
         currentPiece: newPiece,
