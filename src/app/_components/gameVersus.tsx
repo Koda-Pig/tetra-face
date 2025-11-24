@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { useSocket } from "~/hooks/useSocket";
 import type { GameRoom, Piece } from "~/types";
 import type { Session } from "next-auth";
-import { Copy, Play, Terminal } from "lucide-react";
+import CopyButton from "./copyButton";
+import { Play, Terminal } from "lucide-react";
 import HostGame from "./hostGame";
 import OpponentGame from "./opponentGame";
 import { Drawer, DrawerContent, DrawerTrigger } from "~/components/ui/drawer";
@@ -231,16 +232,7 @@ export default function GameVersus({ session }: { session: Session | null }) {
               <h4 className="font-semibold">Current Room</h4>
               <p className="text-sm">
                 ID: {currentRoom.id}
-                <Button
-                  onClick={() =>
-                    void navigator.clipboard.writeText(currentRoom.id)
-                  }
-                  title="copy"
-                  size="icon-sm"
-                  className="ml-2"
-                >
-                  <Copy />
-                </Button>
+                <CopyButton content={currentRoom.id} />
               </p>
               <p className="text-sm">Players: {currentRoom.players.length}/2</p>
               <ul className="text-xs">
