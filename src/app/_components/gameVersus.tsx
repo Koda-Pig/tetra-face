@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Fragment } from "react";
 import { useSocket } from "~/hooks/useSocket";
 import type { GameRoom, Piece } from "~/types";
 import type { Session } from "next-auth";
@@ -8,7 +8,14 @@ import CopyButton from "./copyButton";
 import { Play, Terminal } from "lucide-react";
 import HostGame from "./hostGame";
 import OpponentGame from "./opponentGame";
-import { Drawer, DrawerContent, DrawerTrigger } from "~/components/ui/drawer";
+import {
+  Drawer,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerContent,
+  DrawerTrigger,
+  DrawerDescription,
+} from "~/components/ui/drawer";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 
@@ -98,12 +105,8 @@ export default function GameVersus({ session }: { session: Session | null }) {
   useEffect(() => {
     if (!socket || !session?.user?.id) return;
 
-    socket.on("rooms-list", (rooms: GameRoom[]) => {
-      setAvailableRooms(rooms);
-    });
-    socket.on("rooms-updated", (rooms: GameRoom[]) => {
-      setAvailableRooms(rooms);
-    });
+    socket.on("rooms-list", (rooms: GameRoom[]) => setAvailableRooms(rooms));
+    socket.on("rooms-updated", (rooms: GameRoom[]) => setAvailableRooms(rooms));
     socket.on("room-created", (data: { roomId: string; room: GameRoom }) => {
       addMessage(`room created: ${data.roomId}`);
       setCurrentRoom(data.room);
@@ -327,9 +330,17 @@ export default function GameVersus({ session }: { session: Session | null }) {
           </Button>
         </DrawerTrigger>
         <DrawerContent>
-          <div className="mx-auto max-w-[min(100%,calc(100%-2rem))] rounded bg-gray-500 p-4">
-            <h3 className="mb-4 font-bold">Socket Testing</h3>
-
+          <DrawerHeader>
+            <DrawerTitle>
+              <p className="mb-3 text-center text-lg font-semibold">
+                Socket Testing
+              </p>
+            </DrawerTitle>
+            <DrawerDescription>
+              Use this to test the socket connection and room creation.
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="mx-auto w-full rounded bg-gray-500 p-4 sm:max-w-xl">
             {/* Connection Status */}
             <div className="mb-4">
               <p
@@ -340,36 +351,6 @@ export default function GameVersus({ session }: { session: Session | null }) {
               {session?.user && (
                 <p className="text-sm">User: {session.user.name}</p>
               )}
-            </div>
-
-            {/* Room Controls */}
-            <div className="mb-4 space-y-2">
-              <button
-                onClick={createRoom}
-                disabled={!isConnected || !session?.user}
-                className="w-full rounded bg-green-500 px-4 py-2 disabled:bg-gray-300"
-              >
-                Create Room
-              </button>
-
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={roomIdToJoin}
-                  onChange={(e) => setRoomIdToJoin(e.target.value)}
-                  placeholder="Room ID"
-                  className="flex-1 rounded border px-2 py-1"
-                />
-                <button
-                  onClick={joinRoomById}
-                  disabled={
-                    !isConnected || !session?.user || !roomIdToJoin.trim()
-                  }
-                  className="rounded bg-green-500 px-4 py-2 disabled:bg-gray-500"
-                >
-                  Join
-                </button>
-              </div>
             </div>
 
             {/* Current Room Info */}
@@ -399,13 +380,14 @@ export default function GameVersus({ session }: { session: Session | null }) {
             {/* Message Log */}
             <div>
               <h4 className="mb-2 font-semibold">Event Log</h4>
-              <div className="bg-background h-40 overflow-y-auto rounded border p-2 text-xs">
+              <p className="bg-background h-40 overflow-y-auto rounded border p-2 text-xs">
                 {messages.map((msg, idx) => (
-                  <div key={idx} className="mb-1">
+                  <Fragment key={idx}>
                     {msg}
-                  </div>
+                    <br />
+                  </Fragment>
                 ))}
-              </div>
+              </p>
             </div>
           </div>
         </DrawerContent>
