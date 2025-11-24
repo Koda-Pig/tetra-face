@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSocket } from "~/hooks/useSocket";
-import type { GameRoom } from "~/types";
+import type { GameRoom, Piece } from "~/types";
 import type { Session } from "next-auth";
 import { Copy, Play, Terminal } from "lucide-react";
 import HostGame from "./hostGame";
@@ -13,9 +13,9 @@ import { cn } from "~/lib/utils";
 
 type OpponentGameRef = {
   handleKeyPress: (keyCode: string) => void;
+  setPiece: (piece: Piece) => void;
 };
 
-// host perspective
 export default function GameVersus({ session }: { session: Session | null }) {
   const { socket, isConnected } = useSocket();
   const [currentRoom, setCurrentRoom] = useState<GameRoom | null>(null);
@@ -113,9 +113,14 @@ export default function GameVersus({ session }: { session: Session | null }) {
           type: string;
           keyCode?: string;
           timestamp: number;
+          piece?: Piece;
         };
       }) => {
         addMessage(`Received opponent action: ${JSON.stringify(data?.action)}`);
+
+        if (data.action.type === "spawn-piece" && data.action.piece) {
+          opponentGameRef.current?.setPiece(data.action.piece);
+        }
 
         // If it's a keystroke action, update the opponent's current key
         if (data.action.type === "keystroke" && data.action.keyCode) {
@@ -277,86 +282,84 @@ export default function GameVersus({ session }: { session: Session | null }) {
           </Button>
         </DrawerTrigger>
         <DrawerContent>
-          <div className="flex-1">
-            <div className="w-80 rounded bg-gray-500 p-4">
-              <h3 className="mb-4 font-bold">Socket Testing</h3>
+          <div className="mx-auto max-w-[min(100%,calc(100%-2rem))] rounded bg-gray-500 p-4">
+            <h3 className="mb-4 font-bold">Socket Testing</h3>
 
-              {/* Connection Status */}
-              <div className="mb-4">
-                <p
-                  className={`font-semibold ${isConnected ? "text-green-600" : "text-red-600"}`}
-                >
-                  {isConnected ? "✅ Connected" : "❌ Disconnected"}
-                </p>
-                {session?.user && (
-                  <p className="text-sm">User: {session.user.name}</p>
-                )}
-              </div>
-
-              {/* Room Controls */}
-              <div className="mb-4 space-y-2">
-                <button
-                  onClick={createRoom}
-                  disabled={!isConnected || !session?.user}
-                  className="w-full rounded bg-green-500 px-4 py-2 disabled:bg-gray-300"
-                >
-                  Create Room
-                </button>
-
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={roomIdToJoin}
-                    onChange={(e) => setRoomIdToJoin(e.target.value)}
-                    placeholder="Room ID"
-                    className="flex-1 rounded border px-2 py-1"
-                  />
-                  <button
-                    onClick={joinRoom}
-                    disabled={
-                      !isConnected || !session?.user || !roomIdToJoin.trim()
-                    }
-                    className="rounded bg-green-500 px-4 py-2 disabled:bg-gray-500"
-                  >
-                    Join
-                  </button>
-                </div>
-              </div>
-
-              {/* Current Room Info */}
-              {currentRoom && (
-                <div className="mb-4 rounded bg-gray-500 p-2">
-                  <h4 className="font-semibold">Current Room</h4>
-                  <p className="text-sm">ID: {currentRoom.id}</p>
-                  <p className="text-sm">
-                    Players: {currentRoom.players.length}/2
-                  </p>
-                  <ul className="text-xs">
-                    {currentRoom.players.map((player, idx) => (
-                      <li key={idx}>
-                        {player.userId} {player.ready ? "✅" : "⏳"}
-                      </li>
-                    ))}
-                  </ul>
-                  <button
-                    onClick={sendTestGameAction}
-                    className="mt-2 rounded bg-purple-500 px-2 py-1 text-sm"
-                  >
-                    Send Test Action
-                  </button>
-                </div>
+            {/* Connection Status */}
+            <div className="mb-4">
+              <p
+                className={`font-semibold ${isConnected ? "text-green-600" : "text-red-600"}`}
+              >
+                {isConnected ? "✅ Connected" : "❌ Disconnected"}
+              </p>
+              {session?.user && (
+                <p className="text-sm">User: {session.user.name}</p>
               )}
+            </div>
 
-              {/* Message Log */}
-              <div>
-                <h4 className="mb-2 font-semibold">Event Log</h4>
-                <div className="bg-background h-40 overflow-y-auto rounded border p-2 text-xs">
-                  {messages.map((msg, idx) => (
-                    <div key={idx} className="mb-1">
-                      {msg}
-                    </div>
+            {/* Room Controls */}
+            <div className="mb-4 space-y-2">
+              <button
+                onClick={createRoom}
+                disabled={!isConnected || !session?.user}
+                className="w-full rounded bg-green-500 px-4 py-2 disabled:bg-gray-300"
+              >
+                Create Room
+              </button>
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={roomIdToJoin}
+                  onChange={(e) => setRoomIdToJoin(e.target.value)}
+                  placeholder="Room ID"
+                  className="flex-1 rounded border px-2 py-1"
+                />
+                <button
+                  onClick={joinRoom}
+                  disabled={
+                    !isConnected || !session?.user || !roomIdToJoin.trim()
+                  }
+                  className="rounded bg-green-500 px-4 py-2 disabled:bg-gray-500"
+                >
+                  Join
+                </button>
+              </div>
+            </div>
+
+            {/* Current Room Info */}
+            {currentRoom && (
+              <div className="mb-4 rounded bg-gray-500 p-2">
+                <h4 className="font-semibold">Current Room</h4>
+                <p className="text-sm">ID: {currentRoom.id}</p>
+                <p className="text-sm">
+                  Players: {currentRoom.players.length}/2
+                </p>
+                <ul className="text-xs">
+                  {currentRoom.players.map((player, idx) => (
+                    <li key={idx}>
+                      {player.userId} {player.ready ? "✅" : "⏳"}
+                    </li>
                   ))}
-                </div>
+                </ul>
+                <button
+                  onClick={sendTestGameAction}
+                  className="mt-2 rounded bg-purple-500 px-2 py-1 text-sm"
+                >
+                  Send Test Action
+                </button>
+              </div>
+            )}
+
+            {/* Message Log */}
+            <div>
+              <h4 className="mb-2 font-semibold">Event Log</h4>
+              <div className="bg-background h-40 overflow-y-auto rounded border p-2 text-xs">
+                {messages.map((msg, idx) => (
+                  <div key={idx} className="mb-1">
+                    {msg}
+                  </div>
+                ))}
               </div>
             </div>
           </div>

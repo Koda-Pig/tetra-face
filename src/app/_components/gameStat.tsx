@@ -1,18 +1,20 @@
 import { cn } from "~/lib/utils";
 
+export type GameStatProps = {
+  transitionDuration: number;
+  flashTrigger: boolean;
+  label: string;
+  value: number;
+  alignment: "left" | "right";
+};
+
 export default function GameStat({
   transitionDuration,
   flashTrigger,
   label,
   value,
   alignment,
-}: {
-  transitionDuration: number;
-  flashTrigger: boolean;
-  label: string;
-  value: number;
-  alignment: "left" | "right";
-}) {
+}: GameStatProps) {
   return (
     <div
       style={{ transitionDuration: `${transitionDuration}ms` }}

@@ -327,13 +327,6 @@ export const INITIAL_GAME_STATE = {
   score: 0,
   isGameOver: false,
   level: 0,
-  board: Array(TOTAL_ROWS)
-    .fill(null)
-    .map(() =>
-      Array(COLS)
-        .fill(null)
-        .map(() => ({ occupied: false })),
-    ),
 };
 
 export const LINE_CLEAR_SCORES = {

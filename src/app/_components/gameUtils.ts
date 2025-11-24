@@ -1,4 +1,11 @@
-import type { GameState, Piece, TetrominoType } from "~/types";
+import type {
+  GameState,
+  Piece,
+  TetrominoType,
+  UIState,
+  Tetromino,
+  GameLoop,
+} from "~/types";
 import {
   TETRAMINOS,
   WALL_KICK_DATA_I,
@@ -11,7 +18,10 @@ import {
   PIECE_SIZE,
   FILLED_CELL,
   LINES_PER_LEVEL,
+  GAME_INPUT_KEYS,
   LINE_CLEAR_SCORES,
+  VISIBLE_ROWS,
+  INITIAL_GAME_STATE,
 } from "~/constants";
 
 export function canPieceMove({
@@ -275,3 +285,297 @@ export const createEmptyBoard = () =>
         .fill(null)
         .map(() => ({ occupied: false })),
     );
+
+export function handleKeyDown({
+  currentKey,
+  gameState,
+  getNextPiece,
+  onStateChange,
+  pauseMultiplierRef,
+  setUiState,
+  lockPieceAndSpawnNext,
+}: {
+  currentKey: string;
+  gameState: GameState;
+  getNextPiece: () => TetrominoType;
+  onStateChange?: (gameState: GameState) => void;
+  pauseMultiplierRef: React.RefObject<number>;
+  setUiState: React.Dispatch<React.SetStateAction<UIState>>;
+  lockPieceAndSpawnNext: (args: {
+    gameState: GameState;
+    getNextPiece: () => TetrominoType;
+    onStateChange?: (gameState: GameState) => void;
+  }) => void;
+}) {
+  if (!GAME_INPUT_KEYS.includes(currentKey)) return;
+
+  const isPaused = pauseMultiplierRef.current === 0;
+
+  if (currentKey === "Escape") {
+    pauseMultiplierRef.current = isPaused ? 1 : 0;
+    setUiState((prev) => ({ ...prev, isPaused: !isPaused }));
+    return;
+  }
+
+  // no key pressing when paused
+  if (isPaused) return;
+
+  switch (currentKey) {
+    case "ArrowUp":
+      hardDrop({
+        piece: gameState.currentPiece,
+        board: gameState.board,
+      });
+      // place piece immediately
+      placePiece({ piece: gameState.currentPiece, board: gameState.board });
+      lockPieceAndSpawnNext({
+        gameState,
+        getNextPiece,
+        onStateChange,
+      });
+      break;
+    case "ArrowDown":
+      if (
+        canPieceMove({
+          piece: gameState.currentPiece,
+          board: gameState.board,
+          deltaY: 1,
+        })
+      ) {
+        gameState.currentPiece.y++;
+      } else {
+        placePiece({ piece: gameState.currentPiece, board: gameState.board });
+        lockPieceAndSpawnNext({
+          gameState,
+          getNextPiece,
+          onStateChange,
+        });
+      }
+      break;
+    case "ArrowLeft":
+      if (
+        canPieceMove({
+          piece: gameState.currentPiece,
+          board: gameState.board,
+          deltaX: -1,
+        })
+      ) {
+        gameState.currentPiece.x--;
+      }
+      break;
+    case "ArrowRight":
+      if (
+        canPieceMove({
+          piece: gameState.currentPiece,
+          board: gameState.board,
+          deltaX: 1,
+        })
+      ) {
+        gameState.currentPiece.x++;
+      }
+      break;
+    case "Space":
+      tryRotatePiece({
+        piece: gameState.currentPiece,
+        board: gameState.board,
+        direction: 1, // clockwise rotation
+      });
+      break;
+    case "KeyZ":
+      tryRotatePiece({
+        piece: gameState.currentPiece,
+        board: gameState.board,
+        direction: -1, // counter-clockwise rotation
+      });
+      break;
+    default:
+      break;
+  }
+}
+
+export function drawBoard({
+  ctx,
+  board,
+  cellWidth,
+  cellHeight,
+}: {
+  ctx: CanvasRenderingContext2D;
+  board: GameState["board"];
+  cellWidth: number;
+  cellHeight: number;
+}) {
+  for (let row = 0; row < VISIBLE_ROWS; row++) {
+    for (let col = 0; col < COLS; col++) {
+      const actualRow = row + HIDDEN_ROWS;
+      const cell = board[actualRow]![col]!;
+      if (cell.occupied) {
+        ctx.fillStyle = cell.color ?? "transparent";
+        ctx.fillRect(col * cellWidth, row * cellHeight, cellWidth, cellHeight);
+      }
+
+      // draw grid
+      ctx.strokeStyle = "#292933";
+      ctx.strokeRect(col * cellWidth, row * cellHeight, cellWidth, cellHeight);
+    }
+  }
+}
+
+export function drawTetromino({
+  ctx,
+  tetromino,
+  rotation,
+  x,
+  y,
+}: {
+  ctx: CanvasRenderingContext2D;
+  tetromino: Tetromino;
+  x: number;
+  y: number;
+  rotation: number;
+}) {
+  const { rotations, color } = tetromino;
+  const cellWidth = ctx.canvas.width / COLS;
+  const cellHeight = ctx.canvas.height / VISIBLE_ROWS;
+  const cells = rotations[rotation];
+
+  for (let i = 0; i < cells!.length; i++) {
+    const row = cells![i];
+
+    if (!row) {
+      console.error("Row is undefined, something went wrong");
+      continue;
+    }
+
+    for (let j = 0; j < row.length; j++) {
+      if (row[j] === FILLED_CELL) {
+        const canvasY = (y + i - HIDDEN_ROWS) * cellHeight; // adjust for hidden rows
+        const canvasX = (x + j) * cellWidth;
+
+        const isWithinVisibleArea = y + i >= HIDDEN_ROWS;
+
+        if (isWithinVisibleArea) {
+          ctx.fillStyle = color;
+          ctx.fillRect(canvasX, canvasY, cellWidth, cellHeight);
+        }
+      }
+    }
+  }
+}
+
+export function update({
+  gameState,
+  step,
+  getNextPiece,
+  onStateChange,
+  lockPieceAndSpawnNext,
+}: {
+  gameState: GameState;
+  step: number;
+  getNextPiece: () => TetrominoType;
+  onStateChange?: (gameState: GameState) => void;
+  lockPieceAndSpawnNext: (args: {
+    gameState: GameState;
+    getNextPiece: () => TetrominoType;
+    onStateChange?: (gameState: GameState) => void;
+  }) => void;
+}) {
+  gameState.dropTimer += step;
+
+  if (gameState.dropTimer < gameState.dropIntervalSeconds) {
+    return;
+  }
+
+  gameState.dropTimer = 0; // reset drop timer
+
+  if (
+    canPieceMove({
+      piece: gameState.currentPiece,
+      board: gameState.board,
+      deltaY: 1,
+    })
+  ) {
+    gameState.currentPiece.y++;
+  } else {
+    placePiece({ piece: gameState.currentPiece, board: gameState.board });
+    lockPieceAndSpawnNext({
+      gameState,
+      getNextPiece,
+      onStateChange,
+    });
+  }
+}
+
+export function render({
+  ctx,
+  canvas,
+  cellWidth,
+  cellHeight,
+  gameState,
+}: {
+  ctx: CanvasRenderingContext2D;
+  canvas: HTMLCanvasElement;
+  cellWidth: number;
+  cellHeight: number;
+  gameState: GameState;
+}) {
+  ctx.fillStyle = "#16161d";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  drawTetromino({
+    ctx,
+    rotation: gameState.currentPiece.rotation,
+    tetromino: gameState.currentPiece.tetromino,
+    x: gameState.currentPiece.x,
+    y: gameState.currentPiece.y,
+  });
+
+  drawBoard({ ctx, board: gameState.board, cellWidth, cellHeight });
+}
+
+export function restartGame({
+  gameStateRef,
+  pauseMultiplierRef,
+  gameLoopRef,
+  setUiState,
+  setRestartTrigger,
+  getNextPiece,
+  userId,
+}: {
+  gameStateRef: React.RefObject<GameState | null>;
+  pauseMultiplierRef: React.RefObject<number>;
+  gameLoopRef: React.RefObject<GameLoop>;
+  setUiState: React.Dispatch<React.SetStateAction<UIState>>;
+  setRestartTrigger: React.Dispatch<React.SetStateAction<number>>;
+  getNextPiece: () => TetrominoType;
+  userId: string;
+}) {
+  if (!gameStateRef.current) return;
+
+  // 1. Reset game state (reuse existing object to maintain references)
+  Object.assign(gameStateRef.current, {
+    ...INITIAL_GAME_STATE,
+    currentPiece: spawnPiece(getNextPiece),
+    dropIntervalSeconds: calcDropSpeed(0),
+    userId,
+    board: createEmptyBoard(),
+  });
+
+  // 2. Reset pause state
+  pauseMultiplierRef.current = 1;
+
+  // 3. Reset UI state completely
+  setUiState({
+    isGameOver: false,
+    score: 0,
+    scoreFlash: false,
+    levelFlash: false,
+    level: 0,
+    isPaused: false,
+  });
+
+  // 4. Reset game loop timing
+  const gameLoop = gameLoopRef.current;
+  gameLoop.deltaTime = 0;
+  gameLoop.lastTime = getTimestamp();
+  setRestartTrigger((prev) => prev + 1);
+}
