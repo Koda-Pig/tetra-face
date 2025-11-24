@@ -21,6 +21,7 @@ export default function GameVersus({ session }: { session: Session | null }) {
   const { socket, isConnected } = useSocket();
   const [currentRoom, setCurrentRoom] = useState<GameRoom | null>(null);
   const [roomIdToJoin, setRoomIdToJoin] = useState("");
+  const [availableRooms, setAvailableRooms] = useState<GameRoom[]>([]);
   const [messages, setMessages] = useState<string[]>([]);
   const [isRoomHost, setIsRoomHost] = useState<boolean>(false);
   const opponentGameRef = useRef<OpponentGameRef>(null);
@@ -32,22 +33,22 @@ export default function GameVersus({ session }: { session: Session | null }) {
   );
   const isCurrentPlayerReady = currentPlayer?.ready ?? false;
 
-  const addMessage = (message: string) => {
+  function addMessage(message: string) {
     setMessages((prev) => [
       ...prev,
       `${new Date().toLocaleDateString()}: ${message}`,
     ]);
-  };
+  }
 
-  const createRoom = () => {
+  function createRoom() {
     if (socket && session?.user?.id) {
       addMessage("Creating room...");
       setIsRoomHost(true);
       socket.emit("create-room", session.user.id);
     }
-  };
+  }
 
-  const joinRoom = () => {
+  function joinRoomById() {
     if (socket && session?.user?.id && roomIdToJoin.trim()) {
       addMessage(`Attempting to join room: ${roomIdToJoin}`);
       setIsRoomHost(false);
@@ -56,18 +57,29 @@ export default function GameVersus({ session }: { session: Session | null }) {
         userId: session.user.id,
       });
     }
-  };
+  }
 
-  const toggleReady = () => {
+  function joinListedRoom(roomId: string) {
+    if (!socket || !session?.user?.id) return;
+
+    addMessage(`Attempting to join room: ${roomId}`);
+    setIsRoomHost(false);
+    socket.emit("join-room", {
+      roomId,
+      userId: session.user.id,
+    });
+  }
+
+  function toggleReady() {
     if (!socket || !currentRoom || !session?.user?.id) return;
 
     socket.emit("toggle-ready", {
       roomId: currentRoom.id,
       userId: session.user.id,
     });
-  };
+  }
 
-  const sendTestGameAction = () => {
+  function sendTestGameAction() {
     if (socket && currentRoom) {
       const testAction = {
         roomId: currentRoom.id,
@@ -80,12 +92,18 @@ export default function GameVersus({ session }: { session: Session | null }) {
       socket.emit("game-action", testAction);
       addMessage(`Sent test game action: ${JSON.stringify(testAction.action)}`);
     }
-  };
+  }
 
   // socket logic
   useEffect(() => {
     if (!socket || !session?.user?.id) return;
 
+    socket.on("rooms-list", (rooms: GameRoom[]) => {
+      setAvailableRooms(rooms);
+    });
+    socket.on("rooms-updated", (rooms: GameRoom[]) => {
+      setAvailableRooms(rooms);
+    });
     socket.on("room-created", (data: { roomId: string; room: GameRoom }) => {
       addMessage(`room created: ${data.roomId}`);
       setCurrentRoom(data.room);
@@ -132,6 +150,8 @@ export default function GameVersus({ session }: { session: Session | null }) {
 
     // Cleanup listeners
     return () => {
+      socket.off("rooms-list");
+      socket.off("rooms-updated");
       socket.off("room-created");
       socket.off("player-joined");
       socket.off("player-ready-changed");
@@ -199,6 +219,38 @@ export default function GameVersus({ session }: { session: Session | null }) {
             </p>
           )}
 
+          {availableRooms.length > 0 && (
+            <div className="mb-4">
+              <h4 className="mb-2 font-semibold">Available Rooms</h4>
+              <div className="space-y-2 overflow-y-auto rounded border p-2">
+                {availableRooms.map((room) => (
+                  <div
+                    key={room.id}
+                    className="bg-background flex items-center justify-between rounded p-2 text-sm"
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-medium">
+                        Room {room.id.slice(5, 13)}
+                      </span>
+                      <span className="text-xs text-gray-600">
+                        {room.players.length}/2 players
+                      </span>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => joinListedRoom(room.id)}
+                      disabled={
+                        room.players.length >= 2 || currentRoom !== null
+                      }
+                    >
+                      Join
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="mb-4 space-y-2">
             <Button
               onClick={createRoom}
@@ -217,7 +269,7 @@ export default function GameVersus({ session }: { session: Session | null }) {
                 className="w-full rounded border"
               />
               <Button
-                onClick={joinRoom}
+                onClick={joinRoomById}
                 disabled={
                   !isConnected || !session?.user || !roomIdToJoin.trim()
                 }
@@ -309,7 +361,7 @@ export default function GameVersus({ session }: { session: Session | null }) {
                   className="flex-1 rounded border px-2 py-1"
                 />
                 <button
-                  onClick={joinRoom}
+                  onClick={joinRoomById}
                   disabled={
                     !isConnected || !session?.user || !roomIdToJoin.trim()
                   }

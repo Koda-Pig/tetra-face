@@ -9,6 +9,15 @@ interface GameActionData {
   [key: string]: unknown;
 }
 
+const getAvailableRooms = (): GameRoom[] =>
+  Array.from(gameRooms.values()).filter(
+    (room) => room.players.length < 2 && !room.gameState?.isActive,
+  );
+
+function broadcastRoomUpdate(io: SocketIOServer) {
+  io.emit("rooms-updated", getAvailableRooms());
+}
+
 export function initializeSocket(httpServer: HttpServer) {
   const io = new SocketIOServer(httpServer, {
     cors: {
@@ -19,6 +28,13 @@ export function initializeSocket(httpServer: HttpServer) {
 
   io.on("connection", (socket) => {
     console.log("client connected: ", socket.id);
+
+    // send list of rooms when client connects
+    socket.emit("rooms-list", getAvailableRooms());
+
+    socket.on("get-rooms", () => {
+      socket.emit("rooms-list", getAvailableRooms());
+    });
 
     socket.on("create-room", (userId: string) => {
       const roomId = `room_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
@@ -40,6 +56,7 @@ export function initializeSocket(httpServer: HttpServer) {
       gameRooms.set(roomId, newRoom);
       void socket.join(roomId); // void for floating promise
       socket.emit("room-created", { roomId, room: newRoom });
+      broadcastRoomUpdate(io);
     });
 
     socket.on("join-room", (data: { roomId: string; userId: string }) => {
@@ -65,6 +82,7 @@ export function initializeSocket(httpServer: HttpServer) {
       void socket.join(roomId); // void for floating promise
 
       io.to(roomId).emit("player-joined", { roomId, room });
+      broadcastRoomUpdate(io);
     });
 
     socket.on("toggle-ready", (data: { roomId: string; userId: string }) => {
@@ -83,6 +101,14 @@ export function initializeSocket(httpServer: HttpServer) {
       player.ready = !player.ready;
       // Emit the updated room to all players
       io.to(roomId).emit("player-ready-changed", { roomId, room });
+
+      // if both players ready, mark game as active
+
+      if (room.players.length === 2 && room.players.every((p) => p.ready)) {
+        room.gameState.isActive = true;
+
+        broadcastRoomUpdate(io);
+      }
     });
 
     socket.on("game-action", (data: GameActionData) => {
@@ -105,6 +131,8 @@ export function initializeSocket(httpServer: HttpServer) {
         } else {
           socket.to(roomId).emit("player-disconnected", { roomId });
         }
+
+        broadcastRoomUpdate(io);
       }
     });
   });

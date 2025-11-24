@@ -8,17 +8,16 @@ import {
   DrawerTrigger,
 } from "~/components/ui/drawer";
 import { Button } from "~/components/ui/button";
-import { Gamepad2, ArrowUp } from "lucide-react";
+import { Gamepad2 } from "lucide-react";
 
 export default function GameplayControls() {
   return (
-    <Drawer>
+    <Drawer direction="top">
       <Button asChild>
-        <DrawerTrigger className="fixed right-0 bottom-0 left-0 flex h-18 flex-col">
-          <ArrowUp className="size-8" />
-          <p className="flex items-center gap-4 text-xl">
-            <span className="font-mono">controls</span>
-            <Gamepad2 className="size-8" />
+        <DrawerTrigger className="fixed top-4 right-4 flex flex-col">
+          <p className="flex items-center gap-4">
+            <span>controls</span>
+            <Gamepad2 className="size-6" />
           </p>
         </DrawerTrigger>
       </Button>
