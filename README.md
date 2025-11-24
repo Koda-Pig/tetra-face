@@ -98,8 +98,8 @@ Should send as little as possible data over the socket. Don't want to do the who
 Running into an issue where the 'opponent' game is playing catch up with the opponent.
 It has its own game to render for the opponent view, but it is delayed in waiting for the pieces.
 
-You're treating piece spawning and input processing as independent events when they're actually causally linked. The input that causes a piece to lock should be atomic with the new piece spawn.
-This explains why the opponent always seems "one step behind" - it's literally processing events in the wrong order or with incomplete state.
+Treating piece spawning and input processing as independent events when can be linked. The input that causes a piece to lock should be atomic with the new piece spawn.
+
 The way I've set this up is that the oppoonent game basically becomes a delayed, desynchonized mirror.
 
 My plan with this is to keep the physics/ gravity isolated to the individual games, and only share player inputs and the spawned pieces over the network.
@@ -107,38 +107,31 @@ My plan with this is to keep the physics/ gravity isolated to the individual gam
 The only 'events' so to speak that we care about transmitting are the player input events, and the piece that is generated.
 Everything else can be calculated and rendered on the client.
 
+ITS TIME TO IMPROVE THIS
+
+OK so I've gotten this far, it's working, but has issues as expected. What I need to do is change my existing method of showing the opponent game.
+Instead of sending keyboard inputs and the new pieces that are spawned (which comes with desync, race conditions, etc), send complete state transitions. Eg:
+
+```ts
+type TetrisEvent =
+  | { type: "piece-move"; direction: "left" | "right"; timestamp: number }
+  | { type: "piece-soft-drop"; timestamp: number }
+  | { type: "piece-rotate"; direction: 1 | -1; timestamp: number }
+  | {
+      type: "piece-hard-drop-and-lock";
+      lockedPiece: Piece;
+      nextPiece: Piece;
+      linesCleared: number[];
+      newScore: number;
+      newLevel: number;
+      timestamp: number;
+    };
+```
+
 **What MUST be sent, and can't be rendered/ updated from the hosts side:**
 
-- new pieces (type, rotation (or is that always the same?))
-
-```ts
-{
-  type: "piece-spawned",
-  piece: "T" | "L" | "J" | "S" | "Z" | "I" | "O",
-  timestamp: Date.now()
-}
-```
-
-- piece is locked in (piece type + position + rotation)
-
-```ts
-{
-  type: "piece-locked",
-  finalPosition: { x: 3, y: 18, rotation: 1 },
-  boardChanges: [
-    { row: 18, col: 3, color: "#ff0000" },
-    { row: 18, col: 4, color: "#ff0000" },
-    // etc...
-  ],
-  timestamp: Date.now()
-}
-```
-
-- cleared line(s)
-
-You know what, f all that. Just send the players raw inputs for now, that will get it working.
-
-need a way for other player to confirm game ready.
+- new pieces (type only , rotation is always 0 for new pieces and position is predetermined)
+- player inputs
 
 ### Auth
 
@@ -153,3 +146,7 @@ Only discord auth set up for now.
 - [ ] Deploy web app
 
 ### Other
+
+```
+
+```
