@@ -9,7 +9,6 @@ import {
   useImperativeHandle,
 } from "react";
 import { cn } from "~/lib/utils";
-import { useBag } from "~/hooks/useBag";
 import GameStats from "./gameStats";
 import GameUi from "./gameUi";
 import {
@@ -30,6 +29,7 @@ import {
   FLASH_TRANSITION_DURATION_MS,
   INITIAL_GAME_STATE,
 } from "~/constants";
+import { useOpponentPieces } from "~/hooks/useOpponentPieces";
 
 interface OpponentGameRef {
   handleKeyPress: (keyCode: string) => void;
@@ -58,7 +58,14 @@ const OpponentGame = forwardRef<OpponentGameRef, { userId: string }>(
       isPaused: false,
     });
     const [restartTrigger, setRestartTrigger] = useState(0);
-    const getNextPiece = useBag();
+    const { getNextPiece, addPiece, hasPieces } = useOpponentPieces();
+
+    const setPieceRef = useCallback(
+      (piece: Piece) => {
+        addPiece(piece.tetrominoType);
+      },
+      [addPiece],
+    );
 
     const syncUIState = useCallback((gameState: GameState) => {
       setUiState((prev) => ({
@@ -108,12 +115,6 @@ const OpponentGame = forwardRef<OpponentGameRef, { userId: string }>(
       [getNextPiece, syncUIState],
     );
 
-    const setPieceRef = useCallback((piece: Piece) => {
-      if (!gameStateRef.current) return;
-      console.log("setting piece");
-      gameStateRef.current.currentPiece = piece;
-    }, []);
-
     // Expose the handleKeyPress function via useImperativeHandle
     useImperativeHandle(
       ref,
@@ -126,7 +127,11 @@ const OpponentGame = forwardRef<OpponentGameRef, { userId: string }>(
 
     // initialize the game state
     useEffect(() => {
+      // only initialize if there are available pieces
+      if (!hasPieces) return;
+
       const newPiece = spawnPiece(getNextPiece);
+
       // nullish coalescing assignment https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing_assignment
       gameStateRef.current ??= {
         ...INITIAL_GAME_STATE,
@@ -137,11 +142,11 @@ const OpponentGame = forwardRef<OpponentGameRef, { userId: string }>(
       };
 
       gameLoopRef.current.lastTime = getTimestamp();
-    }, [getNextPiece, userId]);
+    }, [getNextPiece, userId, hasPieces]);
 
     // game loop
     useEffect(() => {
-      if (!canvasRef.current || !gameStateRef.current) return;
+      if (!canvasRef.current || !gameStateRef.current || !hasPieces) return;
 
       const gameState = gameStateRef.current;
       const canvas = canvasRef.current;
@@ -211,7 +216,7 @@ const OpponentGame = forwardRef<OpponentGameRef, { userId: string }>(
           gameLoop.animationId = null;
         }
       };
-    }, [canvasRef, getNextPiece, syncUIState, restartTrigger]);
+    }, [canvasRef, getNextPiece, syncUIState, restartTrigger, hasPieces]);
 
     return (
       <div className="relative h-[600px] w-[300px]">
