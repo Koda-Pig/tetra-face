@@ -95,6 +95,15 @@ This is set up in a rudimentary way. Just the very basics right now.
 
 Should send as little as possible data over the socket. Don't want to do the whole game. Offload that to the frontend. So the 'host' of the game essentially runs 2 game frames, one with the input of the player, and the other the inputs from the versus.
 
+Running into an issue where the 'opponent' game is playing catch up with the opponent.
+It has its own game to render for the opponent view, but it is delayed in waiting for the pieces.
+
+You're treating piece spawning and input processing as independent events when they're actually causally linked. The input that causes a piece to lock should be atomic with the new piece spawn.
+This explains why the opponent always seems "one step behind" - it's literally processing events in the wrong order or with incomplete state.
+The way I've set this up is that the oppoonent game basically becomes a delayed, desynchonized mirror.
+
+My plan with this is to keep the physics/ gravity isolated to the individual games, and only share player inputs and the spawned pieces over the network.
+
 **What MUST be sent, and can't be rendered/ updated from the hosts side:**
 
 - new pieces (type, rotation (or is that always the same?))
