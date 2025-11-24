@@ -104,6 +104,9 @@ The way I've set this up is that the oppoonent game basically becomes a delayed,
 
 My plan with this is to keep the physics/ gravity isolated to the individual games, and only share player inputs and the spawned pieces over the network.
 
+The only 'events' so to speak that we care about transmitting are the player input events, and the piece that is generated.
+Everything else can be calculated and rendered on the client.
+
 **What MUST be sent, and can't be rendered/ updated from the hosts side:**
 
 - new pieces (type, rotation (or is that always the same?))
