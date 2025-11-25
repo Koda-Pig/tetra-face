@@ -19,6 +19,7 @@ export default function GameVersus({ session }: { session: Session | null }) {
   const [availableRooms, setAvailableRooms] = useState<GameRoom[]>([]);
   const [messages, setMessages] = useState<string[]>([]);
   const [isRoomHost, setIsRoomHost] = useState<boolean>(false);
+  const [gamesPaused, setGamesPaused] = useState(false); // in versus mode, pause state must be synced
   const opponentGameRef = useRef<OpponentGameRef>(null);
   const bothPlayersReady =
     currentRoom?.players.length === 2 &&
@@ -36,22 +37,20 @@ export default function GameVersus({ session }: { session: Session | null }) {
   }
 
   function createRoom() {
-    if (socket && session?.user?.id) {
-      addMessage("Creating room...");
-      setIsRoomHost(true);
-      socket.emit("create-room", session.user.id);
-    }
+    if (!socket || !session?.user?.id) return;
+    addMessage("Creating room...");
+    setIsRoomHost(true);
+    socket.emit("create-room", session.user.id);
   }
 
   function joinRoomById() {
-    if (socket && session?.user?.id && roomIdToJoin.trim()) {
-      addMessage(`Attempting to join room: ${roomIdToJoin}`);
-      setIsRoomHost(false);
-      socket.emit("join-room", {
-        roomId: roomIdToJoin,
-        userId: session.user.id,
-      });
-    }
+    if (!socket || !session?.user?.id || !roomIdToJoin.trim()) return;
+    addMessage(`Attempting to join room: ${roomIdToJoin}`);
+    setIsRoomHost(false);
+    socket.emit("join-room", {
+      roomId: roomIdToJoin,
+      userId: session.user.id,
+    });
   }
 
   function joinListedRoom(roomId: string) {
@@ -104,8 +103,18 @@ export default function GameVersus({ session }: { session: Session | null }) {
     socket.on("opponent-action", (data: { action: TetrisEvent }) => {
       addMessage(`Received opponent action: ${JSON.stringify(data?.action)}`);
 
-      opponentGameRef.current?.triggerAction(data.action);
-      // opponentGameRef.current?.setPiece(data.action.piece);
+      switch (data.action.type) {
+        case "game-over":
+          console.log("player so and so lost, do something now");
+          break;
+        default:
+          opponentGameRef.current?.triggerAction(data.action);
+          break;
+      }
+    });
+    socket.on("game-pause-event", (data: { action: TetrisEvent }) => {
+      addMessage(`game pause event global ${data.action.type}`);
+      setGamesPaused(data.action.type === "game-pause" ? true : false);
     });
 
     // Cleanup listeners
@@ -118,6 +127,7 @@ export default function GameVersus({ session }: { session: Session | null }) {
       socket.off("error");
       socket.off("player-disconnected");
       socket.off("opponent-action");
+      socket.off("game-pause-event");
     };
   }, [socket, session?.user?.id]);
 
@@ -143,6 +153,7 @@ export default function GameVersus({ session }: { session: Session | null }) {
                 userId={session?.user.id}
                 socket={socket}
                 roomId={currentRoom.id}
+                externalPause={gamesPaused}
               />
             )}
           </div>
@@ -154,6 +165,7 @@ export default function GameVersus({ session }: { session: Session | null }) {
             <OpponentGame
               ref={opponentGameRef}
               userId={`${session?.user.id}-opponent`}
+              externalPause={gamesPaused}
             />
           </div>
         </div>

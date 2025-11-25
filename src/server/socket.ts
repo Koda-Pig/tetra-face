@@ -18,6 +18,13 @@ function broadcastRoomUpdate(io: SocketIOServer) {
   io.emit("rooms-updated", getAvailableRooms());
 }
 
+function roomIdCheck(data: GameActionData) {
+  if (typeof data?.roomId !== "string") {
+    console.error('Error, "roomId" is not a string');
+    return;
+  }
+}
+
 export function initializeSocket(httpServer: HttpServer) {
   const io = new SocketIOServer(httpServer, {
     cors: {
@@ -112,10 +119,14 @@ export function initializeSocket(httpServer: HttpServer) {
     });
 
     socket.on("game-action", (data: GameActionData) => {
-      if (typeof data?.roomId !== "string") {
-        console.error('Error, "roomId" is not a string');
-      }
+      roomIdCheck(data);
       socket.to(data.roomId).emit("opponent-action", data);
+    });
+
+    socket.on("game-pause-event", (data: GameActionData) => {
+      roomIdCheck(data);
+      // send game pause event to ALL players in room (incl. sender)
+      io.to(data.roomId).emit("game-pause-event", data);
     });
 
     socket.on("disconnect", () => {

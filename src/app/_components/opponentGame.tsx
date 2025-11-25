@@ -33,170 +33,154 @@ export interface OpponentGameRef {
   triggerAction: (action: TetrisEvent) => void;
 }
 
-const OpponentGame = forwardRef<OpponentGameRef, { userId: string }>(
-  ({ userId }, ref) => {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const gameLoopRef = useRef<GameLoop>(INITIAL_GAMELOOP);
-    const pauseMultiplierRef = useRef(1); //  0 = paused
-    // we're not using useState for this because we don't want to trigger re-renders while the game is playing
-    const gameStateRef = useRef<GameState | null>(null);
-    const [uiState, setUiState] = useState<UIState>(INITIAL_UI_STATE);
-    const [initialPiece, setInitialPiece] = useState<Piece | null>(null);
+const OpponentGame = forwardRef<
+  OpponentGameRef,
+  { userId: string; externalPause: boolean }
+>(({ userId, externalPause }, ref) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const gameLoopRef = useRef<GameLoop>(INITIAL_GAMELOOP);
+  const pauseMultiplierRef = useRef(1); //  0 = paused
+  // we're not using useState for this because we don't want to trigger re-renders while the game is playing
+  const gameStateRef = useRef<GameState | null>(null);
+  const [uiState, setUiState] = useState<UIState>(INITIAL_UI_STATE);
+  const [initialPiece, setInitialPiece] = useState<Piece | null>(null);
 
-    const syncUIState = useCallback((gameState: GameState) => {
-      setUiState((prev) => ({
-        ...prev,
-        isGameOver: gameState.isGameOver,
-        score: gameState.score,
-        level: gameState.level,
-        scoreFlash: prev.score !== gameState.score, // flash when score changes
-        levelFlash: prev.level !== gameState.level,
-      }));
+  const syncUIState = useCallback((gameState: GameState) => {
+    setUiState((prev) => ({
+      ...prev,
+      isGameOver: gameState.isGameOver,
+      score: gameState.score,
+      level: gameState.level,
+      scoreFlash: prev.score !== gameState.score, // flash when score changes
+      levelFlash: prev.level !== gameState.level,
+    }));
 
-      // remove flash after animation
-      if (gameState.score > 0) {
-        setTimeout(
-          () => setUiState((prev) => ({ ...prev, scoreFlash: false })),
-          FLASH_TRANSITION_DURATION_MS,
-        );
-      }
-    }, []);
+    // remove flash after animation
+    if (gameState.score > 0) {
+      setTimeout(
+        () => setUiState((prev) => ({ ...prev, scoreFlash: false })),
+        FLASH_TRANSITION_DURATION_MS,
+      );
+    }
+  }, []);
 
-    const triggerActionRef = useCallback(
-      (action: TetrisEvent) => {
-        const { type } = action;
+  const triggerActionRef = useCallback(
+    (action: TetrisEvent) => {
+      const { type } = action;
 
-        if (type === "initial-piece-spawn") {
-          setInitialPiece(action.piece);
-          return;
-        }
-
-        if (!gameStateRef.current) {
-          console.error("gamestateRef not initialized");
-          return;
-        }
-
-        switch (type) {
-          case "piece-player-move":
-            gameStateRef.current.currentPiece.x += action.deltaX;
-            break;
-          case "piece-player-rotate":
-            gameStateRef.current.currentPiece.rotation = action.newRotation;
-            break;
-          case "piece-soft-drop":
-            gameStateRef.current.currentPiece.y = action.newY;
-            break;
-          // my types for these are the same, need to test if the result is
-          // the same in practice.
-          case "piece-soft-drop-lock":
-          case "piece-hard-drop-lock":
-            placePiece({
-              piece: action.lockedPiece,
-              board: gameStateRef.current.board,
-            });
-            gameStateRef.current.currentPiece = action.nextPiece;
-            gameStateRef.current.linesCleared = action.linesCleared;
-            gameStateRef.current.score = action.newScore;
-            gameStateRef.current.level = action.newLevel;
-            clearLines(gameStateRef.current.board);
-            syncUIState(gameStateRef.current);
-            break;
-          case "piece-gravity-drop":
-            gameStateRef.current.currentPiece.y = action.newY;
-            break;
-          case "piece-gravity-lock":
-            gameStateRef.current.currentPiece.y = action.newY;
-            placePiece({
-              piece: action.lockedPiece,
-              board: gameStateRef.current.board,
-            });
-            gameStateRef.current.currentPiece = action.nextPiece;
-            gameStateRef.current.linesCleared = action.linesCleared;
-            gameStateRef.current.score = action.newScore;
-            gameStateRef.current.level = action.newLevel;
-            clearLines(gameStateRef.current.board);
-            syncUIState(gameStateRef.current);
-            break;
-          case "game-pause":
-            pauseMultiplierRef.current = 0;
-            setUiState((prev) => ({ ...prev, isPaused: true }));
-            break;
-          case "game-resume":
-            pauseMultiplierRef.current = 1;
-            setUiState((prev) => ({ ...prev, isPaused: false }));
-            break;
-        }
-      },
-      [syncUIState],
-    );
-
-    useImperativeHandle(
-      ref,
-      () => ({
-        triggerAction: triggerActionRef,
-      }),
-      [triggerActionRef],
-    );
-
-    // initialize the game state
-    useEffect(() => {
-      // don't initialize if already initialized or there's no piece
-      if (gameStateRef.current || !initialPiece) return;
-      gameStateRef.current = {
-        ...INITIAL_GAME_STATE,
-        board: createEmptyBoard(),
-        currentPiece: initialPiece,
-        dropIntervalSeconds: calcDropSpeed(0),
-        userId,
-      };
-
-      gameLoopRef.current.lastTime = getTimestamp();
-    }, [userId, initialPiece]);
-
-    // game loop
-    useEffect(() => {
-      if (!canvasRef.current || !gameStateRef.current) return;
-
-      const gameState = gameStateRef.current;
-      const canvas = canvasRef.current;
-      if (!canvas.getContext("2d")) {
-        console.error("Failed to get canvas context");
+      if (type === "initial-piece-spawn") {
+        setInitialPiece(action.piece);
         return;
       }
-      const ctx = canvas.getContext("2d")!;
-      const cellWidth = canvas.width / COLS;
-      const cellHeight = canvas.height / VISIBLE_ROWS;
 
-      function animate() {
-        const gameLoop = gameLoopRef.current;
-        const pauseMultiplier = pauseMultiplierRef.current;
+      if (!gameStateRef.current) {
+        console.error("gamestateRef not initialized");
+        return;
+      }
 
-        if (!gameLoop || pauseMultiplier === undefined) {
-          const problemVar = !gameLoop ? gameLoop : pauseMultiplier;
-          console.error(`${problemVar} is not initialized`);
-          return;
-        }
-
-        if (gameState.isGameOver) {
-          // one more render for the bois
-          render({
-            ctx,
-            canvas,
-            cellWidth,
-            cellHeight,
-            gameState,
+      switch (type) {
+        case "piece-player-move":
+          gameStateRef.current.currentPiece.x += action.deltaX;
+          break;
+        case "piece-player-rotate":
+          gameStateRef.current.currentPiece.rotation = action.newRotation;
+          break;
+        case "piece-soft-drop":
+          gameStateRef.current.currentPiece.y = action.newY;
+          break;
+        // my types for these are the same, need to test if the result is
+        // the same in practice.
+        case "piece-soft-drop-lock":
+        case "piece-hard-drop-lock":
+          placePiece({
+            piece: action.lockedPiece,
+            board: gameStateRef.current.board,
           });
-          return;
-        }
+          gameStateRef.current.currentPiece = action.nextPiece;
+          gameStateRef.current.linesCleared = action.linesCleared;
+          gameStateRef.current.score = action.newScore;
+          gameStateRef.current.level = action.newLevel;
+          clearLines(gameStateRef.current.board);
+          syncUIState(gameStateRef.current);
+          break;
+        case "piece-gravity-drop":
+          gameStateRef.current.currentPiece.y = action.newY;
+          break;
+        case "piece-gravity-lock":
+          gameStateRef.current.currentPiece.y = action.newY;
+          placePiece({
+            piece: action.lockedPiece,
+            board: gameStateRef.current.board,
+          });
+          gameStateRef.current.currentPiece = action.nextPiece;
+          gameStateRef.current.linesCleared = action.linesCleared;
+          gameStateRef.current.score = action.newScore;
+          gameStateRef.current.level = action.newLevel;
+          clearLines(gameStateRef.current.board);
+          syncUIState(gameStateRef.current);
+          break;
+        case "game-pause":
+          pauseMultiplierRef.current = 0;
+          setUiState((prev) => ({ ...prev, isPaused: true }));
+          break;
+        case "game-resume":
+          pauseMultiplierRef.current = 1;
+          setUiState((prev) => ({ ...prev, isPaused: false }));
+          break;
+      }
+    },
+    [syncUIState],
+  );
 
-        gameLoop.now = getTimestamp();
-        gameLoop.deltaTime =
-          gameLoop.deltaTime +
-          Math.min(1, (gameLoop.now - gameLoop.lastTime) / 1000);
-        while (gameLoop.deltaTime > gameLoop.step) {
-          gameLoop.deltaTime = gameLoop.deltaTime - gameLoop.step;
-        }
-        // draw the game
+  useImperativeHandle(
+    ref,
+    () => ({
+      triggerAction: triggerActionRef,
+    }),
+    [triggerActionRef],
+  );
+
+  // initialize the game state
+  useEffect(() => {
+    // don't initialize if already initialized or there's no piece
+    if (gameStateRef.current || !initialPiece) return;
+    gameStateRef.current = {
+      ...INITIAL_GAME_STATE,
+      board: createEmptyBoard(),
+      currentPiece: initialPiece,
+      dropIntervalSeconds: calcDropSpeed(0),
+      userId,
+    };
+
+    gameLoopRef.current.lastTime = getTimestamp();
+  }, [userId, initialPiece]);
+
+  // game loop
+  useEffect(() => {
+    if (!canvasRef.current || !gameStateRef.current) return;
+
+    const gameState = gameStateRef.current;
+    const canvas = canvasRef.current;
+    if (!canvas.getContext("2d")) {
+      console.error("Failed to get canvas context");
+      return;
+    }
+    const ctx = canvas.getContext("2d")!;
+    const cellWidth = canvas.width / COLS;
+    const cellHeight = canvas.height / VISIBLE_ROWS;
+
+    function animate() {
+      const gameLoop = gameLoopRef.current;
+      const pauseMultiplier = pauseMultiplierRef.current;
+
+      if (!gameLoop || pauseMultiplier === undefined) {
+        const problemVar = !gameLoop ? gameLoop : pauseMultiplier;
+        console.error(`${problemVar} is not initialized`);
+        return;
+      }
+
+      if (gameState.isGameOver) {
+        // one more render for the bois
         render({
           ctx,
           canvas,
@@ -204,39 +188,63 @@ const OpponentGame = forwardRef<OpponentGameRef, { userId: string }>(
           cellHeight,
           gameState,
         });
-        gameLoop.lastTime = gameLoop.now;
-        gameLoop.animationId = requestAnimationFrame(animate);
+        return;
       }
 
-      const gameLoop = gameLoopRef.current;
+      gameLoop.now = getTimestamp();
+      gameLoop.deltaTime =
+        gameLoop.deltaTime +
+        Math.min(1, (gameLoop.now - gameLoop.lastTime) / 1000);
+      while (gameLoop.deltaTime > gameLoop.step) {
+        gameLoop.deltaTime = gameLoop.deltaTime - gameLoop.step;
+      }
+      // draw the game
+      render({
+        ctx,
+        canvas,
+        cellWidth,
+        cellHeight,
+        gameState,
+      });
+      gameLoop.lastTime = gameLoop.now;
       gameLoop.animationId = requestAnimationFrame(animate);
+    }
 
-      return () => {
-        if (gameLoop.animationId) {
-          cancelAnimationFrame(gameLoop.animationId);
-          gameLoop.animationId = null;
-        }
-      };
-    }, [canvasRef, syncUIState, initialPiece]);
+    const gameLoop = gameLoopRef.current;
+    gameLoop.animationId = requestAnimationFrame(animate);
 
-    return (
-      <div className="relative h-[600px] w-[300px]">
-        <div className="relative">
-          <canvas
-            ref={canvasRef}
-            width={300}
-            height={600}
-            className={cn(
-              (uiState.isGameOver || uiState.isPaused) && "opacity-30",
-            )}
-          />
-          <GameStats uiState={uiState} />
-        </div>
-        <GameUi uiState={uiState} />
+    return () => {
+      if (gameLoop.animationId) {
+        cancelAnimationFrame(gameLoop.animationId);
+        gameLoop.animationId = null;
+      }
+    };
+  }, [canvasRef, syncUIState, initialPiece]);
+
+  useEffect(() => {
+    if (externalPause) pauseMultiplierRef.current = 0;
+    else pauseMultiplierRef.current = 1;
+
+    setUiState((prev) => ({ ...prev, isPaused: externalPause }));
+  }, [externalPause]);
+
+  return (
+    <div className="relative h-[600px] w-[300px]">
+      <div className="relative">
+        <canvas
+          ref={canvasRef}
+          width={300}
+          height={600}
+          className={cn(
+            (uiState.isGameOver || uiState.isPaused) && "opacity-30",
+          )}
+        />
+        <GameStats uiState={uiState} />
       </div>
-    );
-  },
-);
+      <GameUi uiState={uiState} />
+    </div>
+  );
+});
 
 OpponentGame.displayName = "OpponentGame";
 

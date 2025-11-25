@@ -32,10 +32,12 @@ export default function HostGame({
   userId,
   socket,
   roomId,
+  externalPause,
 }: {
   userId: string;
   socket: Socket;
   roomId: string;
+  externalPause: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<GameLoop>(INITIAL_GAMELOOP);
@@ -192,12 +194,24 @@ export default function HostGame({
         pauseMultiplierRef,
         setUiState,
       });
-      if (action) socket.emit("game-action", { roomId, action });
+
+      if (action?.type === "game-pause" || action?.type === "game-resume") {
+        socket.emit("game-pause-event", { roomId, action });
+      } else if (action) {
+        socket.emit("game-action", { roomId, action });
+      }
     }
 
     window.addEventListener("keydown", handleKeyDownWrapper);
     return () => window.removeEventListener("keydown", handleKeyDownWrapper);
   }, [socket, roomId, getNextPiece, syncUIState]);
+
+  useEffect(() => {
+    if (externalPause) pauseMultiplierRef.current = 0;
+    else pauseMultiplierRef.current = 1;
+
+    setUiState((prev) => ({ ...prev, isPaused: externalPause }));
+  }, [externalPause]);
 
   return (
     <div className="relative h-[600px] w-[300px]">
