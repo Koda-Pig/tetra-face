@@ -1,13 +1,12 @@
 import { cn } from "~/lib/utils";
-import { Button } from "~/components/ui/button";
 import type { UIState } from "~/types";
 
 export default function GameUi({
   uiState,
-  restartGame,
+  children,
 }: {
   uiState: UIState;
-  restartGame: () => void;
+  children?: React.ReactNode;
 }) {
   return (
     <div
@@ -30,11 +29,7 @@ export default function GameUi({
             </span>
           )}
         </p>
-        {(uiState.isGameOver || uiState.isPaused) && (
-          <Button onClick={restartGame} size="lg" className="text-lg">
-            Restart
-          </Button>
-        )}
+        {children}
       </div>
     </div>
   );

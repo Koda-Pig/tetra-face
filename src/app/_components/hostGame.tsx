@@ -6,6 +6,7 @@ import { useBag } from "~/hooks/useBag";
 import GameStats from "./gameStats";
 import GameUi from "./gameUi";
 import type { Socket } from "socket.io-client";
+import { Button } from "~/components/ui/button";
 import {
   calcDropSpeed,
   spawnPiece,
@@ -99,7 +100,7 @@ export default function HostGame({
     };
 
     gameLoopRef.current.lastTime = getTimestamp();
-  }, [getNextPiece, userId, roomId]);
+  }, [socket, getNextPiece, userId, roomId]);
 
   // game loop
   useEffect(() => {
@@ -173,7 +174,7 @@ export default function HostGame({
         gameLoop.animationId = null;
       }
     };
-  }, [canvasRef, getNextPiece, syncUIState, restartTrigger]);
+  }, [roomId, socket, canvasRef, getNextPiece, syncUIState, restartTrigger]);
 
   // Event listeners (keyboard events)
   useEffect(() => {
@@ -211,7 +212,13 @@ export default function HostGame({
         />
         <GameStats uiState={uiState} />
       </div>
-      <GameUi uiState={uiState} restartGame={handleRestart} />
+      <GameUi uiState={uiState}>
+        {(uiState.isGameOver || uiState.isPaused) && (
+          <Button onClick={handleRestart} size="lg" className="text-lg">
+            Restart
+          </Button>
+        )}
+      </GameUi>
     </div>
   );
 }

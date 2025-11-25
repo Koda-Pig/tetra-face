@@ -56,7 +56,7 @@ export type GameLoop = {
 export type TetrisEvent =
   // Player-driven events
   | { type: "piece-player-move"; deltaX: number; timestamp: number }
-  | { type: "piece-player-rotate"; newRotation; timestamp: number }
+  | { type: "piece-player-rotate"; newRotation: number; timestamp: number }
   | { type: "piece-soft-drop"; newY: number; timestamp: number }
   | {
       type: "piece-soft-drop-lock";

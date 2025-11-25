@@ -17,6 +17,7 @@ import {
   createEmptyBoard,
   render,
   placePiece,
+  clearLines,
 } from "./gameUtils";
 import type { GameState, GameLoop, UIState, TetrisEvent, Piece } from "~/types";
 import {
@@ -42,67 +43,6 @@ const OpponentGame = forwardRef<OpponentGameRef, { userId: string }>(
     const [uiState, setUiState] = useState<UIState>(INITIAL_UI_STATE);
     const [initialPiece, setInitialPiece] = useState<Piece | null>(null);
 
-    const triggerActionRef = useCallback((action: TetrisEvent) => {
-      const { type } = action;
-
-      if (type === "initial-piece-spawn") {
-        setInitialPiece(action.piece);
-        return;
-      }
-
-      if (!gameStateRef.current) {
-        console.error("gamestateRef not initialized");
-        return;
-      }
-
-      switch (type) {
-        case "piece-player-move":
-          gameStateRef.current.currentPiece.x += action.deltaX;
-          break;
-        case "piece-player-rotate":
-          gameStateRef.current.currentPiece.rotation = action.newRotation;
-          break;
-        case "piece-soft-drop":
-          gameStateRef.current.currentPiece.y = action.newY;
-          break;
-        // my types for these are the same, need to test if the result is
-        // the same in practice.
-        case "piece-soft-drop-lock":
-        case "piece-hard-drop-lock":
-          placePiece({
-            piece: action.lockedPiece,
-            board: gameStateRef.current.board,
-          });
-          gameStateRef.current.currentPiece = action.nextPiece;
-          gameStateRef.current.linesCleared = action.linesCleared;
-          gameStateRef.current.score = action.newScore;
-          gameStateRef.current.level = action.newLevel;
-          syncUIState(gameStateRef.current);
-          break;
-        case "piece-gravity-drop":
-          gameStateRef.current.currentPiece.y = action.newY;
-          break;
-        case "piece-gravity-lock":
-          gameStateRef.current.currentPiece.y = action.newY;
-          placePiece({
-            piece: action.lockedPiece,
-            board: gameStateRef.current.board,
-          });
-          gameStateRef.current.currentPiece = action.nextPiece;
-          gameStateRef.current.linesCleared = action.linesCleared;
-          gameStateRef.current.score = action.newScore;
-          gameStateRef.current.level = action.newLevel;
-          syncUIState(gameStateRef.current);
-          break;
-        case "game-pause":
-          pauseMultiplierRef.current = 0;
-          break;
-        case "game-resume":
-          pauseMultiplierRef.current = 1;
-          break;
-      }
-    }, []);
-
     const syncUIState = useCallback((gameState: GameState) => {
       setUiState((prev) => ({
         ...prev,
@@ -121,6 +61,74 @@ const OpponentGame = forwardRef<OpponentGameRef, { userId: string }>(
         );
       }
     }, []);
+
+    const triggerActionRef = useCallback(
+      (action: TetrisEvent) => {
+        const { type } = action;
+
+        if (type === "initial-piece-spawn") {
+          setInitialPiece(action.piece);
+          return;
+        }
+
+        if (!gameStateRef.current) {
+          console.error("gamestateRef not initialized");
+          return;
+        }
+
+        switch (type) {
+          case "piece-player-move":
+            gameStateRef.current.currentPiece.x += action.deltaX;
+            break;
+          case "piece-player-rotate":
+            gameStateRef.current.currentPiece.rotation = action.newRotation;
+            break;
+          case "piece-soft-drop":
+            gameStateRef.current.currentPiece.y = action.newY;
+            break;
+          // my types for these are the same, need to test if the result is
+          // the same in practice.
+          case "piece-soft-drop-lock":
+          case "piece-hard-drop-lock":
+            placePiece({
+              piece: action.lockedPiece,
+              board: gameStateRef.current.board,
+            });
+            gameStateRef.current.currentPiece = action.nextPiece;
+            gameStateRef.current.linesCleared = action.linesCleared;
+            gameStateRef.current.score = action.newScore;
+            gameStateRef.current.level = action.newLevel;
+            clearLines(gameStateRef.current.board);
+            syncUIState(gameStateRef.current);
+            break;
+          case "piece-gravity-drop":
+            gameStateRef.current.currentPiece.y = action.newY;
+            break;
+          case "piece-gravity-lock":
+            gameStateRef.current.currentPiece.y = action.newY;
+            placePiece({
+              piece: action.lockedPiece,
+              board: gameStateRef.current.board,
+            });
+            gameStateRef.current.currentPiece = action.nextPiece;
+            gameStateRef.current.linesCleared = action.linesCleared;
+            gameStateRef.current.score = action.newScore;
+            gameStateRef.current.level = action.newLevel;
+            clearLines(gameStateRef.current.board);
+            syncUIState(gameStateRef.current);
+            break;
+          case "game-pause":
+            pauseMultiplierRef.current = 0;
+            setUiState((prev) => ({ ...prev, isPaused: true }));
+            break;
+          case "game-resume":
+            pauseMultiplierRef.current = 1;
+            setUiState((prev) => ({ ...prev, isPaused: false }));
+            break;
+        }
+      },
+      [syncUIState],
+    );
 
     useImperativeHandle(
       ref,
@@ -224,8 +232,7 @@ const OpponentGame = forwardRef<OpponentGameRef, { userId: string }>(
           />
           <GameStats uiState={uiState} />
         </div>
-        {/* no restart needed for simulated game */}
-        <GameUi uiState={uiState} restartGame={() => {}} />
+        <GameUi uiState={uiState} />
       </div>
     );
   },
