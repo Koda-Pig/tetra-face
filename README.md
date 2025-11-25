@@ -78,60 +78,18 @@ pnpm run dev
 
 ### Multiplayer
 
-This is set up in a rudimentary way. Just the very basics right now.
-
 - [x] set up multiplayer
   - [x] use socket.io
   - [x] set up `room` for game sessions?
   - [x] Host creates room, invite single player to join.
   - [x] add game ready state for players
   - [x] fix bug where pieces dropped in either host or oopponent boards are placed in both boards (was caused by shared object reference to board)
-  - [ ] send over other player data (current piece, etc. {atm just inputs being sent})
+  - [x] send over other player data (current piece, etc. {atm just inputs being sent})
     - [x] host player emits when new piece is spawned, with Piece data.
     - [x] Opponent player reads that new piece that is spawned, and passes it to their own instance of the 'opponentGame' component.
     - [x] OpponentGame has a way to use the piece that is spawned to it, instead of generating its own.
     - [ ] Game over and
-    - [ ] play/ pause state
-
-Should send as little as possible data over the socket. Don't want to do the whole game. Offload that to the frontend. So the 'host' of the game essentially runs 2 game frames, one with the input of the player, and the other the inputs from the versus.
-
-Running into an issue where the 'opponent' game is playing catch up with the opponent.
-It has its own game to render for the opponent view, but it is delayed in waiting for the pieces.
-
-Treating piece spawning and input processing as independent events when can be linked. The input that causes a piece to lock should be atomic with the new piece spawn.
-
-The way I've set this up is that the oppoonent game basically becomes a delayed, desynchonized mirror.
-
-My plan with this is to keep the physics/ gravity isolated to the individual games, and only share player inputs and the spawned pieces over the network.
-
-The only 'events' so to speak that we care about transmitting are the player input events, and the piece that is generated.
-Everything else can be calculated and rendered on the client.
-
-ITS TIME TO IMPROVE THIS
-
-OK so I've gotten this far, it's working, but has issues as expected. What I need to do is change my existing method of showing the opponent game.
-Instead of sending keyboard inputs and the new pieces that are spawned (which comes with desync, race conditions, etc), send complete state transitions. Eg:
-
-```ts
-type TetrisEvent =
-  | { type: "piece-move"; direction: "left" | "right"; timestamp: number }
-  | { type: "piece-soft-drop"; timestamp: number }
-  | { type: "piece-rotate"; direction: 1 | -1; timestamp: number }
-  | {
-      type: "piece-hard-drop-and-lock";
-      lockedPiece: Piece;
-      nextPiece: Piece;
-      linesCleared: number[];
-      newScore: number;
-      newLevel: number;
-      timestamp: number;
-    };
-```
-
-**What MUST be sent, and can't be rendered/ updated from the hosts side:**
-
-- new pieces (type only , rotation is always 0 for new pieces and position is predetermined)
-- player inputs
+    - [x] play/ pause state
 
 ### Auth
 
@@ -146,7 +104,3 @@ Only discord auth set up for now.
 - [ ] Deploy web app
 
 ### Other
-
-```
-
-```
