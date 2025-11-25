@@ -17,7 +17,6 @@ import {
   getTimestamp,
   createEmptyBoard,
   handleKeyDown,
-  lockPieceAndSpawnNext,
   render,
   update,
   restartGame,
@@ -109,7 +108,6 @@ const OpponentGame = forwardRef<OpponentGameRef, { userId: string }>(
           onStateChange: syncUIState,
           pauseMultiplierRef,
           setUiState,
-          lockPieceAndSpawnNext,
         });
       },
       [getNextPiece, syncUIState],
@@ -189,7 +187,6 @@ const OpponentGame = forwardRef<OpponentGameRef, { userId: string }>(
             step: gameLoop.step * pauseMultiplier,
             getNextPiece,
             onStateChange: syncUIState,
-            lockPieceAndSpawnNext,
           });
         }
         // draw the game

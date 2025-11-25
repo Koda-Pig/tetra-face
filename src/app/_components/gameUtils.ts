@@ -5,6 +5,7 @@ import type {
   UIState,
   Tetromino,
   GameLoop,
+  TetrisEvent,
 } from "~/types";
 import {
   TETRAMINOS,
@@ -293,7 +294,6 @@ export function handleKeyDown({
   onStateChange,
   pauseMultiplierRef,
   setUiState,
-  lockPieceAndSpawnNext,
 }: {
   currentKey: string;
   gameState: GameState;
@@ -301,27 +301,26 @@ export function handleKeyDown({
   onStateChange?: (gameState: GameState) => void;
   pauseMultiplierRef: React.RefObject<number>;
   setUiState: React.Dispatch<React.SetStateAction<UIState>>;
-  lockPieceAndSpawnNext: (args: {
-    gameState: GameState;
-    getNextPiece: () => TetrominoType;
-    onStateChange?: (gameState: GameState) => void;
-  }) => void;
-}) {
-  if (!GAME_INPUT_KEYS.includes(currentKey)) return;
+}): TetrisEvent | null {
+  if (!GAME_INPUT_KEYS.includes(currentKey)) return null;
 
   const isPaused = pauseMultiplierRef.current === 0;
 
   if (currentKey === "Escape") {
     pauseMultiplierRef.current = isPaused ? 1 : 0;
     setUiState((prev) => ({ ...prev, isPaused: !isPaused }));
-    return;
+    return {
+      type: isPaused ? "game-resume" : "game-pause",
+      timestamp: getTimestamp(),
+    };
   }
 
   // no key pressing when paused
-  if (isPaused) return;
+  if (isPaused) return null;
 
   switch (currentKey) {
     case "ArrowUp":
+      const lockedPiece = gameState.currentPiece;
       hardDrop({
         piece: gameState.currentPiece,
         board: gameState.board,
@@ -333,7 +332,19 @@ export function handleKeyDown({
         getNextPiece,
         onStateChange,
       });
-      break;
+      const nextPiece = gameState.currentPiece;
+      const linesCleared = gameState.linesCleared;
+      const newScore = gameState.score;
+      const newLevel = gameState.level;
+      return {
+        type: "piece-hard-drop-lock",
+        lockedPiece,
+        nextPiece,
+        linesCleared,
+        newScore,
+        newLevel,
+        timestamp: getTimestamp(),
+      };
     case "ArrowDown":
       if (
         canPieceMove({
@@ -343,15 +354,33 @@ export function handleKeyDown({
         })
       ) {
         gameState.currentPiece.y++;
+        return {
+          type: "piece-soft-drop",
+          newY: gameState.currentPiece.y,
+          timestamp: getTimestamp(),
+        };
       } else {
+        const lockedPiece = gameState.currentPiece;
         placePiece({ piece: gameState.currentPiece, board: gameState.board });
         lockPieceAndSpawnNext({
           gameState,
           getNextPiece,
           onStateChange,
         });
+        const nextPiece = gameState.currentPiece;
+        const linesCleared = gameState.linesCleared;
+        const newScore = gameState.score;
+        const newLevel = gameState.level;
+        return {
+          type: "piece-soft-drop-lock",
+          lockedPiece,
+          nextPiece,
+          linesCleared,
+          newScore,
+          newLevel,
+          timestamp: getTimestamp(),
+        };
       }
-      break;
     case "ArrowLeft":
       if (
         canPieceMove({
@@ -361,8 +390,13 @@ export function handleKeyDown({
         })
       ) {
         gameState.currentPiece.x--;
+        return {
+          type: "piece-player-move",
+          deltaX: -1,
+          timestamp: getTimestamp(),
+        };
       }
-      break;
+      return null;
     case "ArrowRight":
       if (
         canPieceMove({
@@ -372,24 +406,45 @@ export function handleKeyDown({
         })
       ) {
         gameState.currentPiece.x++;
+        return {
+          type: "piece-player-move",
+          deltaX: 1,
+          timestamp: getTimestamp(),
+        };
       }
-      break;
+      return null;
     case "Space":
-      tryRotatePiece({
+      const didRotateClockwise = tryRotatePiece({
         piece: gameState.currentPiece,
         board: gameState.board,
         direction: 1, // clockwise rotation
       });
-      break;
+      if (didRotateClockwise) {
+        return {
+          type: "piece-player-rotate",
+          direction: 1,
+          timestamp: getTimestamp(),
+        };
+      } else {
+        return null;
+      }
     case "KeyZ":
-      tryRotatePiece({
+      const didRotateAntiClockwise = tryRotatePiece({
         piece: gameState.currentPiece,
         board: gameState.board,
         direction: -1, // counter-clockwise rotation
       });
-      break;
+      if (didRotateAntiClockwise) {
+        return {
+          type: "piece-player-rotate",
+          direction: -1,
+          timestamp: getTimestamp(),
+        };
+      } else {
+        return null;
+      }
     default:
-      break;
+      return null;
   }
 }
 
@@ -467,22 +522,16 @@ export function update({
   step,
   getNextPiece,
   onStateChange,
-  lockPieceAndSpawnNext,
 }: {
   gameState: GameState;
   step: number;
   getNextPiece: () => TetrominoType;
   onStateChange?: (gameState: GameState) => void;
-  lockPieceAndSpawnNext: (args: {
-    gameState: GameState;
-    getNextPiece: () => TetrominoType;
-    onStateChange?: (gameState: GameState) => void;
-  }) => void;
-}) {
+}): TetrisEvent | null {
   gameState.dropTimer += step;
 
   if (gameState.dropTimer < gameState.dropIntervalSeconds) {
-    return;
+    return null;
   }
 
   gameState.dropTimer = 0; // reset drop timer
@@ -495,13 +544,34 @@ export function update({
     })
   ) {
     gameState.currentPiece.y++;
+    return {
+      type: "piece-gravity-drop",
+      newY: gameState.currentPiece.y,
+      timestamp: getTimestamp(),
+    };
   } else {
+    const lockedPiece = gameState.currentPiece;
+
     placePiece({ piece: gameState.currentPiece, board: gameState.board });
     lockPieceAndSpawnNext({
       gameState,
       getNextPiece,
       onStateChange,
     });
+    const nextPiece = gameState.currentPiece;
+    const linesCleared = gameState.linesCleared;
+    const newScore = gameState.score;
+    const newLevel = gameState.level;
+    return {
+      type: "piece-gravity-lock",
+      newY: gameState.currentPiece.y,
+      lockedPiece,
+      nextPiece,
+      linesCleared,
+      newScore,
+      newLevel,
+      timestamp: getTimestamp(),
+    };
   }
 }
 

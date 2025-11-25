@@ -42,8 +42,8 @@ export default function GameVersus({ session }: { session: Session | null }) {
 
   function addMessage(message: string) {
     setMessages((prev) => [
-      ...prev,
       `${new Date().toLocaleDateString()}: ${message}`,
+      ...prev,
     ]);
   }
 

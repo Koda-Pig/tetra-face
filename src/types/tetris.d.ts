@@ -52,3 +52,43 @@ export type GameLoop = {
   deltaTime: number;
   step: number;
 };
+
+export type TetrisEvent =
+  // Player-driven events
+  | { type: "piece-player-move"; deltaX: number; timestamp: number }
+  | { type: "piece-player-rotate"; direction: 1 | -1; timestamp: number }
+  | {
+      type: "piece-hard-drop-lock";
+      lockedPiece: Piece;
+      nextPiece: Piece;
+      linesCleared: number;
+      newScore: number;
+      newLevel: number;
+      timestamp: number;
+    }
+  | { type: "piece-soft-drop"; newY: number; timestamp: number }
+  | {
+      type: "piece-soft-drop-lock";
+      lockedPiece: Piece;
+      nextPiece: Piece;
+      linesCleared: number;
+      newScore: number;
+      newLevel: number;
+      timestamp: number;
+    }
+  // Gravity-driven (game loop) events
+  | { type: "piece-gravity-drop"; newY: number; timestamp: number }
+  | {
+      type: "piece-gravity-lock";
+      newY: number;
+      lockedPiece: Piece;
+      nextPiece: Piece;
+      linesCleared: number;
+      newScore: number;
+      newLevel: number;
+      timestamp: number;
+    }
+  // Game state events
+  | { type: "game-pause"; timestamp: number }
+  | { type: "game-resume"; timestamp: number }
+  | { type: "game-over"; timestamp: number };

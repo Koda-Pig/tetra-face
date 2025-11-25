@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import SinglePlayerGame from "./singlePlayerGame";
+// import SinglePlayerGame from "./singlePlayerGame";
 import GameplayControls from "./gameplayControls";
 import GameVersus from "./gameVersus";
 import { Button } from "~/components/ui/button";
@@ -116,7 +116,8 @@ export default function GameSection({ session }: { session: Session | null }) {
         </div>
       )}
       {session?.user?.id && gameMode === "single-player" && (
-        <SinglePlayerGame userId={session.user.id} />
+        // <SinglePlayerGame userId={session.user.id} />
+        <p>Single player disabled temporarily</p>
       )}
       {gameMode === "versus" && <GameVersus session={session} />}
     </div>

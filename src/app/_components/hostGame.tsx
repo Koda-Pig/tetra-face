@@ -13,11 +13,10 @@ import {
   getTimestamp,
   handleKeyDown,
   createEmptyBoard,
-  lockPieceAndSpawnNext,
   render,
   restartGame,
 } from "./gameUtils";
-import type { GameState, GameLoop, UIState, TetrominoType } from "~/types";
+import type { GameState, GameLoop, UIState } from "~/types";
 import {
   COLS,
   VISIBLE_ROWS,
@@ -76,24 +75,6 @@ export default function HostGame({
     }
   }, []);
 
-  const hostLockPieceAndSpawnNext = useCallback(
-    (args: {
-      gameState: GameState;
-      getNextPiece: () => TetrominoType;
-      onStateChange?: (gameState: GameState) => void;
-    }) => {
-      lockPieceAndSpawnNext(args);
-      socket.emit("game-action", {
-        roomId,
-        action: {
-          type: "spawn-piece",
-          piece: args.gameState.currentPiece,
-        },
-      });
-    },
-    [socket, roomId],
-  );
-
   const handleRestart = useCallback(() => {
     restartGame({
       gameStateRef,
@@ -119,16 +100,8 @@ export default function HostGame({
       userId,
     };
 
-    socket.emit("game-action", {
-      roomId,
-      action: {
-        type: "spawn-piece",
-        piece: newPiece,
-      },
-    });
-
     gameLoopRef.current.lastTime = getTimestamp();
-  }, [getNextPiece, userId, socket, roomId]);
+  }, [getNextPiece, userId, roomId]);
 
   // game loop
   useEffect(() => {
@@ -173,13 +146,15 @@ export default function HostGame({
       while (gameLoop.deltaTime > gameLoop.step) {
         gameLoop.deltaTime = gameLoop.deltaTime - gameLoop.step;
         // logic update
-        update({
+        const updateResult = update({
           gameState,
           step: gameLoop.step * pauseMultiplier,
           getNextPiece,
           onStateChange: syncUIState,
-          lockPieceAndSpawnNext: hostLockPieceAndSpawnNext,
         });
+        if (updateResult) {
+          socket.emit("game-action", { roomId, action: updateResult });
+        }
       }
       // draw the game
       render({
@@ -202,47 +177,32 @@ export default function HostGame({
         gameLoop.animationId = null;
       }
     };
-  }, [
-    canvasRef,
-    getNextPiece,
-    syncUIState,
-    restartTrigger,
-    hostLockPieceAndSpawnNext,
-  ]);
+  }, [canvasRef, getNextPiece, syncUIState, restartTrigger]);
 
   // Event listeners (keyboard events)
   useEffect(() => {
     if (!gameStateRef.current) return;
 
     function handleKeyDownWrapper(event: KeyboardEvent) {
-      // Emit keystroke to opponent BEFORE processing locally
       if (!GAME_INPUT_KEYS.includes(event.code)) return;
 
       event.preventDefault();
-      // FIRST try to send the keystroke to the opponent
-      // not sure if this is the best way to do it but lets see.
-      socket.emit("game-action", {
-        roomId,
-        action: {
-          type: "keystroke",
-          keyCode: event.code,
-          timestamp: getTimestamp(),
-        },
-      });
-      handleKeyDown({
+      const keydownResult = handleKeyDown({
         currentKey: event.code,
         gameState: gameStateRef.current!,
         getNextPiece,
         onStateChange: syncUIState,
         pauseMultiplierRef,
         setUiState,
-        lockPieceAndSpawnNext: hostLockPieceAndSpawnNext,
       });
+      if (keydownResult) {
+        socket.emit("game-action", { roomId, action: keydownResult });
+      }
     }
 
     window.addEventListener("keydown", handleKeyDownWrapper);
     return () => window.removeEventListener("keydown", handleKeyDownWrapper);
-  }, [socket, roomId, getNextPiece, syncUIState, hostLockPieceAndSpawnNext]);
+  }, [socket, roomId, getNextPiece, syncUIState]);
 
   return (
     <div className="relative h-[600px] w-[300px]">
