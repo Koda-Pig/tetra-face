@@ -77,7 +77,7 @@ const OpponentGame = forwardRef<OpponentGameRef, { userId: string }>(
           gameStateRef.current.linesCleared = action.linesCleared;
           gameStateRef.current.score = action.newScore;
           gameStateRef.current.level = action.newLevel;
-          // syncUIState(game
+          syncUIState(gameStateRef.current);
           break;
         case "piece-gravity-drop":
           gameStateRef.current.currentPiece.y = action.newY;
@@ -92,7 +92,7 @@ const OpponentGame = forwardRef<OpponentGameRef, { userId: string }>(
           gameStateRef.current.linesCleared = action.linesCleared;
           gameStateRef.current.score = action.newScore;
           gameStateRef.current.level = action.newLevel;
-          // syncUIState(game
+          syncUIState(gameStateRef.current);
           break;
         case "game-pause":
           pauseMultiplierRef.current = 0;
