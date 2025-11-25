@@ -146,15 +146,13 @@ export default function HostGame({
       while (gameLoop.deltaTime > gameLoop.step) {
         gameLoop.deltaTime = gameLoop.deltaTime - gameLoop.step;
         // logic update
-        const updateResult = update({
+        const action = update({
           gameState,
           step: gameLoop.step * pauseMultiplier,
           getNextPiece,
           onStateChange: syncUIState,
         });
-        if (updateResult) {
-          socket.emit("game-action", { roomId, action: updateResult });
-        }
+        if (action) socket.emit("game-action", { roomId, action });
       }
       // draw the game
       render({
@@ -187,7 +185,7 @@ export default function HostGame({
       if (!GAME_INPUT_KEYS.includes(event.code)) return;
 
       event.preventDefault();
-      const keydownResult = handleKeyDown({
+      const action = handleKeyDown({
         currentKey: event.code,
         gameState: gameStateRef.current!,
         getNextPiece,
@@ -195,9 +193,7 @@ export default function HostGame({
         pauseMultiplierRef,
         setUiState,
       });
-      if (keydownResult) {
-        socket.emit("game-action", { roomId, action: keydownResult });
-      }
+      if (action) socket.emit("game-action", { roomId, action });
     }
 
     window.addEventListener("keydown", handleKeyDownWrapper);
