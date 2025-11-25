@@ -35,8 +35,8 @@ export interface OpponentGameRef {
 
 const OpponentGame = forwardRef<
   OpponentGameRef,
-  { userId: string; externalPause: boolean }
->(({ userId, externalPause }, ref) => {
+  { userId: string; externalPause: boolean; externalGameOver: boolean }
+>(({ userId, externalPause, externalGameOver }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<GameLoop>(INITIAL_GAMELOOP);
   const pauseMultiplierRef = useRef(1); //  0 = paused
@@ -46,22 +46,32 @@ const OpponentGame = forwardRef<
   const [initialPiece, setInitialPiece] = useState<Piece | null>(null);
 
   const syncUIState = useCallback((gameState: GameState) => {
-    setUiState((prev) => ({
-      ...prev,
-      isGameOver: gameState.isGameOver,
-      score: gameState.score,
-      level: gameState.level,
-      scoreFlash: prev.score !== gameState.score, // flash when score changes
-      levelFlash: prev.level !== gameState.level,
-    }));
+    setUiState((prev) => {
+      const scoreChanged = prev.score !== gameState.score;
+      const levelChanged = prev.level !== gameState.level;
 
-    // remove flash after animation
-    if (gameState.score > 0) {
-      setTimeout(
-        () => setUiState((prev) => ({ ...prev, scoreFlash: false })),
-        FLASH_TRANSITION_DURATION_MS,
-      );
-    }
+      // remove flash after animation
+      if (scoreChanged || levelChanged) {
+        setTimeout(
+          () =>
+            setUiState((prev) => ({
+              ...prev,
+              scoreFlash: false,
+              levelFlash: false,
+            })),
+          FLASH_TRANSITION_DURATION_MS,
+        );
+      }
+
+      return {
+        ...prev,
+        isGameOver: gameState.isGameOver,
+        score: gameState.score,
+        level: gameState.level,
+        scoreFlash: prev.score !== gameState.score, // flash when score changes
+        levelFlash: prev.level !== gameState.level,
+      };
+    });
   }, []);
 
   const triggerActionRef = useCallback(
@@ -221,12 +231,19 @@ const OpponentGame = forwardRef<
     };
   }, [canvasRef, syncUIState, initialPiece]);
 
+  // sync external game
   useEffect(() => {
+    if (!gameStateRef.current) return;
+    if (externalGameOver) {
+      gameStateRef.current.isGameOver = true;
+      setUiState((prev) => ({ ...prev, isGameOver: true }));
+    }
+
     if (externalPause) pauseMultiplierRef.current = 0;
     else pauseMultiplierRef.current = 1;
 
     setUiState((prev) => ({ ...prev, isPaused: externalPause }));
-  }, [externalPause]);
+  }, [externalPause, externalGameOver]);
 
   return (
     <div className="relative h-[600px] w-[300px]">

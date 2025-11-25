@@ -12,3 +12,5 @@ export type GameRoom = {
   };
   createdAt: Date;
 };
+
+export type Winner = "opponent" | "you" | null;

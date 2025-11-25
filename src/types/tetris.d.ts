@@ -91,6 +91,6 @@ export type TetrisEvent =
   // Game state events
   | { type: "game-pause"; timestamp: number }
   | { type: "game-resume"; timestamp: number }
-  | { type: "game-over"; timestamp: number }
+  | { type: "game-over"; playerId: string; timestamp: number }
   // other
   | { type: "initial-piece-spawn"; piece: Piece; timestamp: number };

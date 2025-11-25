@@ -110,10 +110,8 @@ export function initializeSocket(httpServer: HttpServer) {
       io.to(roomId).emit("player-ready-changed", { roomId, room });
 
       // if both players ready, mark game as active
-
       if (room.players.length === 2 && room.players.every((p) => p.ready)) {
         room.gameState.isActive = true;
-
         broadcastRoomUpdate(io);
       }
     });
@@ -121,6 +119,12 @@ export function initializeSocket(httpServer: HttpServer) {
     socket.on("game-action", (data: GameActionData) => {
       roomIdCheck(data);
       socket.to(data.roomId).emit("opponent-action", data);
+    });
+
+    socket.on("game-over-event", (data: GameActionData) => {
+      roomIdCheck(data);
+      // send game over event to ALL players in room (incl. sender)
+      io.to(data.roomId).emit("game-over-event", data);
     });
 
     socket.on("game-pause-event", (data: GameActionData) => {

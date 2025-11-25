@@ -293,6 +293,7 @@ export function handleKeyDown({
   onStateChange,
   pauseMultiplierRef,
   setUiState,
+  playerId,
 }: {
   currentKey: string;
   gameState: GameState;
@@ -300,6 +301,7 @@ export function handleKeyDown({
   onStateChange?: (gameState: GameState) => void;
   pauseMultiplierRef: React.RefObject<number>;
   setUiState: React.Dispatch<React.SetStateAction<UIState>>;
+  playerId: string;
 }): TetrisEvent | null {
   if (!GAME_INPUT_KEYS.includes(currentKey)) return null;
 
@@ -332,7 +334,7 @@ export function handleKeyDown({
         onStateChange,
       });
       if (gameState.isGameOver) {
-        return { type: "game-over", timestamp: getTimestamp() };
+        return { type: "game-over", playerId, timestamp: getTimestamp() };
       }
       const nextPiece = gameState.currentPiece;
       const linesCleared = gameState.linesCleared;
@@ -370,7 +372,7 @@ export function handleKeyDown({
           onStateChange,
         });
         if (gameState.isGameOver) {
-          return { type: "game-over", timestamp: getTimestamp() };
+          return { type: "game-over", playerId, timestamp: getTimestamp() };
         }
         const nextPiece = gameState.currentPiece;
         const linesCleared = gameState.linesCleared;
@@ -527,11 +529,13 @@ export function update({
   step,
   getNextPiece,
   onStateChange,
+  playerId,
 }: {
   gameState: GameState;
   step: number;
   getNextPiece: () => TetrominoType;
   onStateChange?: (gameState: GameState) => void;
+  playerId: string;
 }): TetrisEvent | null {
   gameState.dropTimer += step;
 
@@ -566,7 +570,7 @@ export function update({
     // need to check here for gameover, as the above function is the only place
     // gameOver state is changed
     if (gameState.isGameOver) {
-      return { type: "game-over", timestamp: getTimestamp() };
+      return { type: "game-over", playerId, timestamp: getTimestamp() };
     }
     const nextPiece = gameState.currentPiece;
     const linesCleared = gameState.linesCleared;

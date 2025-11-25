@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSocket } from "~/hooks/useSocket";
-import type { GameRoom, TetrisEvent } from "~/types";
+import type { GameRoom, TetrisEvent, Winner } from "~/types";
 import type { Session } from "next-auth";
 import CopyButton from "./copyButton";
 import { Play } from "lucide-react";
@@ -19,7 +19,9 @@ export default function GameVersus({ session }: { session: Session | null }) {
   const [availableRooms, setAvailableRooms] = useState<GameRoom[]>([]);
   const [messages, setMessages] = useState<string[]>([]);
   const [isRoomHost, setIsRoomHost] = useState<boolean>(false);
-  const [gamesPaused, setGamesPaused] = useState(false); // in versus mode, pause state must be synced
+  const [gamePaused, setGamePaused] = useState(false); // in versus mode, pause state must be synced
+  const [isGameOver, setIsGameOver] = useState(false);
+  const [winner, setWinner] = useState<Winner>(null);
   const opponentGameRef = useRef<OpponentGameRef>(null);
   const bothPlayersReady =
     currentRoom?.players.length === 2 &&
@@ -114,7 +116,20 @@ export default function GameVersus({ session }: { session: Session | null }) {
     });
     socket.on("game-pause-event", (data: { action: TetrisEvent }) => {
       addMessage(`game pause event global ${data.action.type}`);
-      setGamesPaused(data.action.type === "game-pause" ? true : false);
+      setGamePaused(data.action.type === "game-pause" ? true : false);
+    });
+    socket.on("game-over-event", (data: { action: TetrisEvent }) => {
+      addMessage(`game over event global ${data.action.type}`);
+      setIsGameOver(true);
+      if (data.action.type !== "game-over") return;
+      // there is a potential for error here, as the winner is set based on whoever sends the gameover event first
+      // so in a case where player 1's game ended first, they send a game over event. Meanwhile player 2's game also ended
+      // and they send the game over event second. The should win the game, but if the event they sent arrives before player 1's,
+      // due to network speed, then the incorrect player will be set as the winner.
+      // this is pretty unlikely, but good to note.
+      setWinner(
+        data.action.playerId === session?.user?.id ? "opponent" : "you",
+      );
     });
 
     // Cleanup listeners
@@ -128,6 +143,7 @@ export default function GameVersus({ session }: { session: Session | null }) {
       socket.off("player-disconnected");
       socket.off("opponent-action");
       socket.off("game-pause-event");
+      socket.off("game-over-event");
     };
   }, [socket, session?.user?.id]);
 
@@ -153,7 +169,9 @@ export default function GameVersus({ session }: { session: Session | null }) {
                 userId={session?.user.id}
                 socket={socket}
                 roomId={currentRoom.id}
-                externalPause={gamesPaused}
+                externalPause={gamePaused}
+                externalGameOver={isGameOver}
+                winner={winner}
               />
             )}
           </div>
@@ -165,7 +183,8 @@ export default function GameVersus({ session }: { session: Session | null }) {
             <OpponentGame
               ref={opponentGameRef}
               userId={`${session?.user.id}-opponent`}
-              externalPause={gamesPaused}
+              externalPause={gamePaused}
+              externalGameOver={isGameOver}
             />
           </div>
         </div>
@@ -269,18 +288,6 @@ export default function GameVersus({ session }: { session: Session | null }) {
               </ul>
             </div>
           )}
-
-          {/* Message Log */}
-          <div>
-            <h4 className="mb-2 font-semibold">Event Log</h4>
-            <div className="bg-background h-40 overflow-y-auto rounded border p-2 text-xs">
-              {messages.map((msg, idx) => (
-                <div key={idx} className="mb-1">
-                  {msg}
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       )}
 
