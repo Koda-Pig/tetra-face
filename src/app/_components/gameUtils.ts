@@ -191,9 +191,8 @@ export function lockPieceAndSpawnNext({
     gameState.dropIntervalSeconds = calcDropSpeed(newLevel);
   }
 
-  if (isGameOver(gameState)) {
-    gameState.isGameOver = true;
-  } else {
+  if (isGameOver(gameState)) gameState.isGameOver = true;
+  else {
     const lineClearScore =
       LINE_CLEAR_SCORES[linesCleared as keyof typeof LINE_CLEAR_SCORES];
 
@@ -332,6 +331,9 @@ export function handleKeyDown({
         getNextPiece,
         onStateChange,
       });
+      if (gameState.isGameOver) {
+        return { type: "game-over", timestamp: getTimestamp() };
+      }
       const nextPiece = gameState.currentPiece;
       const linesCleared = gameState.linesCleared;
       const newScore = gameState.score;
@@ -367,6 +369,9 @@ export function handleKeyDown({
           getNextPiece,
           onStateChange,
         });
+        if (gameState.isGameOver) {
+          return { type: "game-over", timestamp: getTimestamp() };
+        }
         const nextPiece = gameState.currentPiece;
         const linesCleared = gameState.linesCleared;
         const newScore = gameState.score;
@@ -558,6 +563,11 @@ export function update({
       getNextPiece,
       onStateChange,
     });
+    // need to check here for gameover, as the above function is the only place
+    // gameOver state is changed
+    if (gameState.isGameOver) {
+      return { type: "game-over", timestamp: getTimestamp() };
+    }
     const nextPiece = gameState.currentPiece;
     const linesCleared = gameState.linesCleared;
     const newScore = gameState.score;
