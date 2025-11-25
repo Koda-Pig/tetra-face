@@ -19,14 +19,14 @@ export default function GameUi({
     >
       <div className="text-center">
         <p className="text-shadow mb-8 text-5xl leading-14 text-shadow-[0_0_4px_black,0_0_8px_black]">
-          {uiState.isPaused ? (
-            <span>PAUSED</span>
-          ) : (
+          {uiState.isGameOver ? (
             <span>
               GAME
               <br />
               OVER
             </span>
+          ) : (
+            <span>PAUSED</span>
           )}
         </p>
         {children}

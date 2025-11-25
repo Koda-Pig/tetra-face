@@ -90,6 +90,7 @@ pnpm run dev
     - [x] OpponentGame has a way to use the piece that is spawned to it, instead of generating its own.
     - [x] Game over and
     - [x] play/ pause state
+  - [ ] handle players leaving the room/ exiting the game
 
 ### Auth
 
@@ -108,5 +109,9 @@ Only discord auth set up for now.
 host game has a restart button when paused. This makes more sense for single player. For multiplayer, it should probably just have a resume button.
 
 - [ ] replace restart button with resume + rematch buttons in host game
+  - [x] remove restart btn
+  - [x] add resume btn
+  - [x] add surrender btn
+  - [ ] add rematch btn
 - [ ] re-implement single player (low priority)
 - [ ] Update game events to only send over tetromino type, not the whole piece. It's unnecessary usage of bandwidth

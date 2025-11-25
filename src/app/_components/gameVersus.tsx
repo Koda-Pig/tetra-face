@@ -155,11 +155,25 @@ export default function GameVersus({ session }: { session: Session | null }) {
       {bothPlayersReady ? (
         <div
           className={cn(
-            "flex gap-8",
+            "relative flex gap-8",
             isRoomHost ? "flex-row" : "flex-row-reverse",
           )}
         >
-          <div>
+          <p
+            className={cn(
+              "bg-background/40 absolute inset-0 z-10 grid place-items-center p-8 text-center text-9xl transition-opacity",
+              isGameOver ? "opacity-100" : "pointer-events-none opacity-0",
+              winner === null && "hidden",
+            )}
+          >
+            YOU {winner === "you" ? "WON" : "LOST"}!
+          </p>
+          <div
+            className={cn(
+              "transition-opacity duration-300",
+              isGameOver ? "opacity-50" : "opacity-100",
+            )}
+          >
             <h2 className="text-center text-xl font-bold">
               {isRoomHost ? "Player 1" : "Player 2"} (YOU)
             </h2>
@@ -175,7 +189,12 @@ export default function GameVersus({ session }: { session: Session | null }) {
               />
             )}
           </div>
-          <div>
+          <div
+            className={cn(
+              "transition-opacity duration-300",
+              isGameOver ? "opacity-50" : "opacity-100",
+            )}
+          >
             <h2 className="text-center text-xl font-bold">
               {isRoomHost ? "Player 2" : "Player 1"}
             </h2>

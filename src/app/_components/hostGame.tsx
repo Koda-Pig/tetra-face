@@ -6,7 +6,7 @@ import { useBag } from "~/hooks/useBag";
 import GameStats from "./gameStats";
 import GameUi from "./gameUi";
 import type { Socket } from "socket.io-client";
-// import { Button } from "~/components/ui/button";
+import { Button } from "~/components/ui/button";
 import {
   calcDropSpeed,
   spawnPiece,
@@ -27,6 +27,11 @@ import {
   INITIAL_UI_STATE,
   INITIAL_GAMELOOP,
 } from "~/constants";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 
 export default function HostGame({
   userId,
@@ -83,6 +88,28 @@ export default function HostGame({
       };
     });
   }, []);
+
+  function handleResume() {
+    socket.emit("game-pause-event", {
+      roomId,
+      action: {
+        type: "game-resume",
+        timestamp: getTimestamp(),
+      },
+    });
+  }
+
+  function handleSurrender() {
+    // submit a loss
+    socket.emit("game-over-event", {
+      roomId,
+      action: {
+        type: "game-over",
+        playerId: userId,
+        timestamp: getTimestamp(),
+      },
+    });
+  }
 
   // const handleRestart = useCallback(() => {
   //   restartGame({
@@ -271,7 +298,22 @@ export default function HostGame({
           <Button onClick={handleRestart} size="lg" className="text-lg">
             Restart
           </Button>
-        )} */}
+          )} */}
+        {uiState.isPaused && !uiState.isGameOver && (
+          <div className="grid gap-4">
+            <Button onClick={handleResume} size="lg" className="text-lg">
+              Resume
+            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="lg" className="text-lg" onClick={handleSurrender}>
+                  Surrender
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>You a quitter?</TooltipContent>
+            </Tooltip>
+          </div>
+        )}
         {winner && <p>YOU {winner === "you" ? "WON" : "LOST"}!</p>}
       </GameUi>
     </div>
