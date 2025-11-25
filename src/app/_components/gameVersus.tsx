@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef, Fragment } from "react";
 import { useSocket } from "~/hooks/useSocket";
-import type { GameRoom, Piece } from "~/types";
+import type { GameRoom, TetrisEvent } from "~/types";
 import type { Session } from "next-auth";
 import CopyButton from "./copyButton";
 import { Play, Terminal } from "lucide-react";
 import HostGame from "./hostGame";
-import OpponentGame from "./opponentGame";
+import OpponentGame, { type OpponentGameRef } from "./opponentGame";
 import {
   Drawer,
   DrawerHeader,
@@ -18,11 +18,6 @@ import {
 } from "~/components/ui/drawer";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
-
-type OpponentGameRef = {
-  handleKeyPress: (keyCode: string) => void;
-  setPiece: (piece: Piece) => void;
-};
 
 export default function GameVersus({ session }: { session: Session | null }) {
   const { socket, isConnected } = useSocket();
@@ -128,28 +123,12 @@ export default function GameVersus({ session }: { session: Session | null }) {
     socket.on("player-disconnected", (data: { roomId: string }) => {
       addMessage(`Player disconnected from room: ${data.roomId}`);
     });
-    socket.on(
-      "opponent-action",
-      (data: {
-        action: {
-          type: string;
-          keyCode?: string;
-          timestamp: number;
-          piece?: Piece;
-        };
-      }) => {
-        addMessage(`Received opponent action: ${JSON.stringify(data?.action)}`);
+    socket.on("opponent-action", (data: { action: TetrisEvent }) => {
+      addMessage(`Received opponent action: ${JSON.stringify(data?.action)}`);
 
-        if (data.action.type === "spawn-piece" && data.action.piece) {
-          opponentGameRef.current?.setPiece(data.action.piece);
-        }
-
-        // If it's a keystroke action, update the opponent's current key
-        if (data.action.type === "keystroke" && data.action.keyCode) {
-          opponentGameRef.current?.handleKeyPress(data.action.keyCode);
-        }
-      },
-    );
+      opponentGameRef.current?.triggerAction(data.action);
+      // opponentGameRef.current?.setPiece(data.action.piece);
+    });
 
     // Cleanup listeners
     return () => {

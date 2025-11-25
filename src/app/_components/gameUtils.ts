@@ -427,7 +427,7 @@ export function handleKeyDown({
       if (didRotateClockwise) {
         return {
           type: "piece-player-rotate",
-          direction: 1,
+          newRotation: gameState.currentPiece.rotation,
           timestamp: getTimestamp(),
         };
       } else {
@@ -442,7 +442,7 @@ export function handleKeyDown({
       if (didRotateAntiClockwise) {
         return {
           type: "piece-player-rotate",
-          direction: -1,
+          newRotation: gameState.currentPiece.rotation,
           timestamp: getTimestamp(),
         };
       } else {

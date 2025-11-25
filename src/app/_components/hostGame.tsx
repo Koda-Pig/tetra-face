@@ -23,6 +23,8 @@ import {
   GAME_INPUT_KEYS,
   FLASH_TRANSITION_DURATION_MS,
   INITIAL_GAME_STATE,
+  INITIAL_UI_STATE,
+  INITIAL_GAMELOOP,
 } from "~/constants";
 
 export default function HostGame({
@@ -35,24 +37,11 @@ export default function HostGame({
   roomId: string;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const gameLoopRef = useRef<GameLoop>({
-    now: 0,
-    animationId: null,
-    lastTime: 0,
-    deltaTime: 0,
-    step: 1 / 60,
-  });
+  const gameLoopRef = useRef<GameLoop>(INITIAL_GAMELOOP);
   const pauseMultiplierRef = useRef(1); //  0 = paused
   // we're not using useState for this because we don't want to trigger re-renders while the game is playing
   const gameStateRef = useRef<GameState | null>(null);
-  const [uiState, setUiState] = useState<UIState>({
-    isGameOver: false,
-    score: 0,
-    scoreFlash: false,
-    levelFlash: false,
-    level: 0,
-    isPaused: false,
-  });
+  const [uiState, setUiState] = useState<UIState>(INITIAL_UI_STATE);
   const [restartTrigger, setRestartTrigger] = useState(0);
   const getNextPiece = useBag();
 
@@ -91,6 +80,15 @@ export default function HostGame({
   useEffect(() => {
     if (gameStateRef.current) return;
     const newPiece = spawnPiece(getNextPiece);
+
+    socket.emit("game-action", {
+      roomId,
+      action: {
+        type: "initial-piece-spawn",
+        piece: newPiece,
+        timestamp: getTimestamp(),
+      },
+    });
 
     gameStateRef.current = {
       ...INITIAL_GAME_STATE,

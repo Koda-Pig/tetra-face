@@ -56,9 +56,10 @@ export type GameLoop = {
 export type TetrisEvent =
   // Player-driven events
   | { type: "piece-player-move"; deltaX: number; timestamp: number }
-  | { type: "piece-player-rotate"; direction: 1 | -1; timestamp: number }
+  | { type: "piece-player-rotate"; newRotation; timestamp: number }
+  | { type: "piece-soft-drop"; newY: number; timestamp: number }
   | {
-      type: "piece-hard-drop-lock";
+      type: "piece-soft-drop-lock";
       lockedPiece: Piece;
       nextPiece: Piece;
       linesCleared: number;
@@ -66,9 +67,8 @@ export type TetrisEvent =
       newLevel: number;
       timestamp: number;
     }
-  | { type: "piece-soft-drop"; newY: number; timestamp: number }
   | {
-      type: "piece-soft-drop-lock";
+      type: "piece-hard-drop-lock";
       lockedPiece: Piece;
       nextPiece: Piece;
       linesCleared: number;
@@ -91,4 +91,6 @@ export type TetrisEvent =
   // Game state events
   | { type: "game-pause"; timestamp: number }
   | { type: "game-resume"; timestamp: number }
-  | { type: "game-over"; timestamp: number };
+  | { type: "game-over"; timestamp: number }
+  // other
+  | { type: "initial-piece-spawn"; piece: Piece; timestamp: number };

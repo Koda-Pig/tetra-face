@@ -338,3 +338,20 @@ export const LINE_CLEAR_SCORES = {
 };
 
 export const LINES_PER_LEVEL = 10;
+
+export const INITIAL_UI_STATE = {
+  isGameOver: false,
+  score: 0,
+  scoreFlash: false,
+  levelFlash: false,
+  level: 0,
+  isPaused: false,
+};
+
+export const INITIAL_GAMELOOP = {
+  now: 0,
+  animationId: null,
+  lastTime: 0,
+  deltaTime: 0,
+  step: 1 / 60,
+};

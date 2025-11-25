@@ -13,58 +13,95 @@ import GameStats from "./gameStats";
 import GameUi from "./gameUi";
 import {
   calcDropSpeed,
-  spawnPiece,
   getTimestamp,
   createEmptyBoard,
-  handleKeyDown,
   render,
-  update,
-  restartGame,
+  placePiece,
 } from "./gameUtils";
-import type { GameState, GameLoop, UIState, Piece } from "~/types";
+import type { GameState, GameLoop, UIState, TetrisEvent, Piece } from "~/types";
 import {
   COLS,
   VISIBLE_ROWS,
   FLASH_TRANSITION_DURATION_MS,
   INITIAL_GAME_STATE,
+  INITIAL_UI_STATE,
+  INITIAL_GAMELOOP,
 } from "~/constants";
-import { useOpponentPieces } from "~/hooks/useOpponentPieces";
 
-interface OpponentGameRef {
-  handleKeyPress: (keyCode: string) => void;
-  setPiece: (piece: Piece) => void;
+export interface OpponentGameRef {
+  triggerAction: (action: TetrisEvent) => void;
 }
 
 const OpponentGame = forwardRef<OpponentGameRef, { userId: string }>(
   ({ userId }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const gameLoopRef = useRef<GameLoop>({
-      now: 0,
-      animationId: null,
-      lastTime: 0,
-      deltaTime: 0,
-      step: 1 / 60,
-    });
+    const gameLoopRef = useRef<GameLoop>(INITIAL_GAMELOOP);
     const pauseMultiplierRef = useRef(1); //  0 = paused
     // we're not using useState for this because we don't want to trigger re-renders while the game is playing
     const gameStateRef = useRef<GameState | null>(null);
-    const [uiState, setUiState] = useState<UIState>({
-      isGameOver: false,
-      score: 0,
-      scoreFlash: false,
-      levelFlash: false,
-      level: 0,
-      isPaused: false,
-    });
-    const [restartTrigger, setRestartTrigger] = useState(0);
-    const { getNextPiece, addPiece, hasPieces } = useOpponentPieces();
+    const [uiState, setUiState] = useState<UIState>(INITIAL_UI_STATE);
+    const [initialPiece, setInitialPiece] = useState<Piece | null>(null);
 
-    const setPieceRef = useCallback(
-      (piece: Piece) => {
-        addPiece(piece.tetrominoType);
-      },
-      [addPiece],
-    );
+    const triggerActionRef = useCallback((action: TetrisEvent) => {
+      const { type } = action;
+
+      if (type === "initial-piece-spawn") {
+        setInitialPiece(action.piece);
+        return;
+      }
+
+      if (!gameStateRef.current) {
+        console.error("gamestateRef not initialized");
+        return;
+      }
+
+      switch (type) {
+        case "piece-player-move":
+          gameStateRef.current.currentPiece.x += action.deltaX;
+          break;
+        case "piece-player-rotate":
+          gameStateRef.current.currentPiece.rotation = action.newRotation;
+          break;
+        case "piece-soft-drop":
+          gameStateRef.current.currentPiece.y = action.newY;
+          break;
+        // my types for these are the same, need to test if the result is
+        // the same in practice.
+        case "piece-soft-drop-lock":
+        case "piece-hard-drop-lock":
+          placePiece({
+            piece: action.lockedPiece,
+            board: gameStateRef.current.board,
+          });
+          gameStateRef.current.currentPiece = action.nextPiece;
+          gameStateRef.current.linesCleared = action.linesCleared;
+          gameStateRef.current.score = action.newScore;
+          gameStateRef.current.level = action.newLevel;
+          // syncUIState(game
+          break;
+        case "piece-gravity-drop":
+          gameStateRef.current.currentPiece.y = action.newY;
+          break;
+        case "piece-gravity-lock":
+          gameStateRef.current.currentPiece.y = action.newY;
+          placePiece({
+            piece: action.lockedPiece,
+            board: gameStateRef.current.board,
+          });
+          gameStateRef.current.currentPiece = action.nextPiece;
+          gameStateRef.current.linesCleared = action.linesCleared;
+          gameStateRef.current.score = action.newScore;
+          gameStateRef.current.level = action.newLevel;
+          // syncUIState(game
+          break;
+        case "game-pause":
+          pauseMultiplierRef.current = 0;
+          break;
+        case "game-resume":
+          pauseMultiplierRef.current = 1;
+          break;
+      }
+    }, []);
 
     const syncUIState = useCallback((gameState: GameState) => {
       setUiState((prev) => ({
@@ -85,63 +122,32 @@ const OpponentGame = forwardRef<OpponentGameRef, { userId: string }>(
       }
     }, []);
 
-    const handleRestart = useCallback(() => {
-      restartGame({
-        gameStateRef,
-        pauseMultiplierRef,
-        gameLoopRef,
-        setUiState,
-        setRestartTrigger,
-        getNextPiece,
-        userId,
-      });
-    }, [getNextPiece, userId]);
-
-    const handleKeyPressRef = useCallback(
-      (keyCode: string) => {
-        if (!gameStateRef.current) return;
-
-        handleKeyDown({
-          currentKey: keyCode,
-          gameState: gameStateRef.current,
-          getNextPiece,
-          onStateChange: syncUIState,
-          pauseMultiplierRef,
-          setUiState,
-        });
-      },
-      [getNextPiece, syncUIState],
-    );
-
-    // Expose the handleKeyPress function via useImperativeHandle
     useImperativeHandle(
       ref,
       () => ({
-        handleKeyPress: handleKeyPressRef,
-        setPiece: setPieceRef,
+        triggerAction: triggerActionRef,
       }),
-      [handleKeyPressRef, setPieceRef],
+      [triggerActionRef],
     );
 
     // initialize the game state
     useEffect(() => {
-      // only initialize if there are available pieces
-      if (!hasPieces || gameStateRef.current) return;
-      const newPiece = spawnPiece(getNextPiece);
+      // don't initialize if already initialized or there's no piece
+      if (gameStateRef.current || !initialPiece) return;
       gameStateRef.current = {
         ...INITIAL_GAME_STATE,
         board: createEmptyBoard(),
-        currentPiece: newPiece,
+        currentPiece: initialPiece,
         dropIntervalSeconds: calcDropSpeed(0),
         userId,
       };
 
       gameLoopRef.current.lastTime = getTimestamp();
-    }, [getNextPiece, userId, hasPieces]);
+    }, [userId, initialPiece]);
 
     // game loop
     useEffect(() => {
-      if (!canvasRef.current || !gameStateRef.current || !hasPieces) return;
+      if (!canvasRef.current || !gameStateRef.current) return;
 
       const gameState = gameStateRef.current;
       const canvas = canvasRef.current;
@@ -181,13 +187,6 @@ const OpponentGame = forwardRef<OpponentGameRef, { userId: string }>(
           Math.min(1, (gameLoop.now - gameLoop.lastTime) / 1000);
         while (gameLoop.deltaTime > gameLoop.step) {
           gameLoop.deltaTime = gameLoop.deltaTime - gameLoop.step;
-          // logic update
-          update({
-            gameState,
-            step: gameLoop.step * pauseMultiplier,
-            getNextPiece,
-            onStateChange: syncUIState,
-          });
         }
         // draw the game
         render({
@@ -210,7 +209,7 @@ const OpponentGame = forwardRef<OpponentGameRef, { userId: string }>(
           gameLoop.animationId = null;
         }
       };
-    }, [canvasRef, getNextPiece, syncUIState, restartTrigger, hasPieces]);
+    }, [canvasRef, syncUIState, initialPiece]);
 
     return (
       <div className="relative h-[600px] w-[300px]">
@@ -225,7 +224,8 @@ const OpponentGame = forwardRef<OpponentGameRef, { userId: string }>(
           />
           <GameStats uiState={uiState} />
         </div>
-        <GameUi uiState={uiState} restartGame={handleRestart} />
+        {/* no restart needed for simulated game */}
+        <GameUi uiState={uiState} restartGame={() => {}} />
       </div>
     );
   },
