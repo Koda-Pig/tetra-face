@@ -113,5 +113,5 @@ host game has a restart button when paused. This makes more sense for single pla
   - [x] add resume btn
   - [x] add surrender btn
   - [ ] add rematch btn
-- [ ] re-implement single player (low priority)
+- [x] re-implement single player (low priority)
 - [ ] Update game events to only send over tetromino type, not the whole piece. It's unnecessary usage of bandwidth
