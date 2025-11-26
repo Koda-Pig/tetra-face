@@ -15,6 +15,7 @@ RUN pnpm install --frozen-lockfile
 
 # Skip environment validation during build (env vars only needed at runtime)
 ENV SKIP_ENV_VALIDATION=true
+ENV AUTH_TRUST_HOST=true
 
 COPY . .
 RUN pnpm build

@@ -158,3 +158,11 @@ https://tetra-face.fly.dev/
 They made their own branch and CD from there
 https://github.com/Koda-Pig/tetra-face/tree/flyio-new-files
 would like to change that at some point.
+
+authenticate and run
+
+```bash
+fly deploy
+```
+
+their ui is crap
