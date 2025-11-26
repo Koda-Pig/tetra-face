@@ -165,4 +165,24 @@ authenticate and run
 fly deploy
 ```
 
-their ui is crap
+don't use their ui it's crap
+
+## Troubleshooting
+
+check fly logs:
+
+```bash
+fly logs -a tetra-face
+```
+
+check docker build locally
+
+```bash
+docker build -t tetra-face .
+```
+
+then
+
+```bash
+docker run -p 3000:3000 --env-file .env.docker tetra-face
+```
