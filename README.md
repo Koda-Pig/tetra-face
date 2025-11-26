@@ -115,3 +115,4 @@ host game has a restart button when paused. This makes more sense for single pla
   - [ ] add rematch btn
 - [x] re-implement single player (low priority)
 - [ ] Update game events to only send over tetromino type, not the whole piece. It's unnecessary usage of bandwidth
+  - Actually need to double check this. I think the whole piece may need to be sent for most cases, as the whole piece is needed for the `placePiece` function in the opponent game. Maybe, maybe not.
