@@ -15,7 +15,6 @@ RUN pnpm install --frozen-lockfile
 
 # Skip environment validation during build (env vars only needed at runtime)
 ENV SKIP_ENV_VALIDATION=true
-ENV AUTH_TRUST_HOST=true
 
 COPY . .
 RUN pnpm build
@@ -24,6 +23,7 @@ RUN pnpm build
 FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+ENV AUTH_TRUST_HOST=true
 
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y openssl && \
