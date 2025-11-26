@@ -142,3 +142,15 @@ host game has a restart button when paused. This makes more sense for single pla
 - [x] re-implement single player (low priority)
 - [ ] Update game events to only send over tetromino type, not the whole piece. It's unnecessary usage of bandwidth
   - Actually need to double check this. I think the whole piece may need to be sent for most cases, as the whole piece is needed for the `placePiece` function in the opponent game. Maybe, maybe not.
+
+Note about the `DATABASE_URL` var in fly.io deployment:
+
+Don't use localhost, host.docker.internal, or 0.0.0.0 for production - those are only for local Docker testing. Fly.io uses internal networking with .flycast domains for database connections.
+The fly postgres attach command will replace the current `DATABASE_URL` secret with the correct production value automatically.
+
+---
+
+## Deployment
+
+Deployed using fly.io here:
+https://tetra-face.fly.dev/
