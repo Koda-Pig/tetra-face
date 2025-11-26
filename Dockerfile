@@ -13,6 +13,9 @@ COPY .npmrc package.json pnpm-lock.yaml ./
 COPY prisma ./prisma
 RUN pnpm install --frozen-lockfile
 
+# Skip environment validation during build (env vars only needed at runtime)
+ENV SKIP_ENV_VALIDATION=true
+
 COPY . .
 RUN pnpm build
 
