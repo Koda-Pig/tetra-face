@@ -1,7 +1,7 @@
 import { createServer } from "http";
 import { parse } from "url";
 import next from "next";
-import { initializeSocket } from "./src/server/socket.js";
+import { initializeSocket } from "./src/server/socket.ts";
 
 const isDev = process.env.NODE_ENV !== "production";
 const hostname = isDev ? "localhost" : "0.0.0.0"; // "0.0.0.0" essentially means "bind to all available network interfaces" on the server
