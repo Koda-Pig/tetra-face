@@ -14,7 +14,6 @@ COPY prisma ./prisma
 RUN pnpm install --frozen-lockfile
 
 COPY . .
-RUN npx prisma generate
 RUN pnpm build
 
 # Production stage

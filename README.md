@@ -154,3 +154,7 @@ The fly postgres attach command will replace the current `DATABASE_URL` secret w
 
 Deployed using fly.io here:
 https://tetra-face.fly.dev/
+
+They made their own branch and CD from there
+https://github.com/Koda-Pig/tetra-face/tree/flyio-new-files
+would like to change that at some point.
