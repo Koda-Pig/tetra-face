@@ -40,6 +40,10 @@ pnpm run dev
 
 ## TODO
 
+### UI
+
+- [ ] Get it looking decent
+
 ### Gameplay
 
 - [x] Implement the 7-bag randomizer method for selecting tetrominos
@@ -102,18 +106,10 @@ Only discord auth set up for now.
 
 ### Deployment
 
-- [ ] Deploy web app
+- [x] Deploy web app
 
 Options to consider
 
-- railway.com
-  - doesn't support S3 - doesn't matter for me
-  - free trial, no free plan
-- render.app
-  - they have a free plan - but its got downsides obvs
-    - The cold starts are horrendous
-  - paid plan is $7 per month (R120)
-  -
 - fly.io
   - free tier covers $5 usage per month
   - cold starts are fast AF
@@ -155,11 +151,7 @@ The fly postgres attach command will replace the current `DATABASE_URL` secret w
 Deployed using fly.io here:
 https://tetra-face.fly.dev/
 
-They made their own branch and CD from there
-https://github.com/Koda-Pig/tetra-face/tree/flyio-new-files
-would like to change that at some point.
-
-authenticate and run
+Run to deploy:
 
 ```bash
 fly deploy
@@ -173,6 +165,12 @@ check fly logs:
 
 ```bash
 fly logs -a tetra-face
+```
+
+Make sure both tetra-face-db and tetra-face apps are running.
+
+```bash
+fly machine start --app YOUR_APP_NAME_HERE
 ```
 
 check docker build locally
