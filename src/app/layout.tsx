@@ -3,8 +3,6 @@ import "~/styles/globals.css";
 import { type Metadata } from "next";
 import { Wix_Madefor_Text } from "next/font/google";
 
-import { TRPCReactProvider } from "~/trpc/react";
-
 export const metadata: Metadata = {
   title: "Tetra Face",
   description: "Real-time multiplayer tetris web app",
@@ -27,9 +25,7 @@ export default function RootLayout({
           src="//unpkg.com/react-scan/dist/auto.global.js"
         />
       </head> */}
-      <body className="dark">
-        <TRPCReactProvider>{children}</TRPCReactProvider>
-      </body>
+      <body className="dark">{children}</body>
     </html>
   );
 }
