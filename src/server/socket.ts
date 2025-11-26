@@ -28,7 +28,7 @@ function roomIdCheck(data: GameActionData) {
 export function initializeSocket(httpServer: HttpServer) {
   const io = new SocketIOServer(httpServer, {
     cors: {
-      origin: "*",
+      origin: process.env.NEXTAUTH_URL ?? "http://localhost:3000",
       methods: ["GET", "POST"], // for initial handshake
     },
   });

@@ -104,6 +104,32 @@ Only discord auth set up for now.
 
 - [ ] Deploy web app
 
+Options to consider
+
+- railway.com
+  - doesn't support S3 - doesn't matter for me
+  - free trial, no free plan
+- render.app
+  - they have a free plan - but its got downsides obvs
+    - The cold starts are horrendous
+  - paid plan is $7 per month (R120)
+  -
+- fly.io
+  - free tier covers $5 usage per month
+  - cold starts are fast AF
+  - they have redis
+  - they have postgres
+  - pay as you go
+  - free trial should work for now https://fly.io/trial
+
+Notes about deployment:
+
+Might need to add this postbuild script to package.json, but lets test first without it.
+
+```json
+"postbuild": "prisma migrate deploy"
+```
+
 ### Other
 
 host game has a restart button when paused. This makes more sense for single player. For multiplayer, it should probably just have a resume button.

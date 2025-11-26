@@ -4,7 +4,7 @@ import next from "next";
 import { initializeSocket } from "./src/server/socket.js";
 
 const isDev = process.env.NODE_ENV !== "production";
-const hostname = "localhost";
+const hostname = isDev ? "localhost" : "0.0.0.0"; // "0.0.0.0" essentially means "bind to all available network interfaces" on the server
 const port = parseInt(process.env.PORT || "3000");
 
 const app = next({ dev: isDev });
