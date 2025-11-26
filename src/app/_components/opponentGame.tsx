@@ -13,12 +13,12 @@ import GameStats from "./gameStats";
 import GameUi from "./gameUi";
 import {
   calcDropSpeed,
-  getTimestamp,
   createEmptyBoard,
   render,
   placePiece,
   clearLines,
 } from "./gameUtils";
+import { getTimestamp } from "~/lib/utils";
 import type { GameState, GameLoop, UIState, TetrisEvent, Piece } from "~/types";
 import {
   COLS,

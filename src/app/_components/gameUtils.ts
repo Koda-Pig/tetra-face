@@ -24,6 +24,7 @@ import {
   VISIBLE_ROWS,
   INITIAL_GAME_STATE,
 } from "~/constants";
+import { getTimestamp } from "~/lib/utils";
 
 export function canPieceMove({
   piece,
@@ -200,10 +201,6 @@ export function lockPieceAndSpawnNext({
   }
 
   onStateChange?.(gameState);
-}
-export function getTimestamp() {
-  if (!window) return new Date().getTime();
-  return window?.performance?.now();
 }
 export function placePiece({
   piece,

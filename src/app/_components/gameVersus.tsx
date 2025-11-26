@@ -7,6 +7,7 @@ import type { Session } from "next-auth";
 import CopyButton from "./copyButton";
 import { Play } from "lucide-react";
 import HostGame from "./hostGame";
+import { getTimestamp } from "~/lib/utils";
 import OpponentGame, { type OpponentGameRef } from "./opponentGame";
 import SocketDebugUi from "./socketDebugUi";
 import { Button } from "~/components/ui/button";
@@ -99,9 +100,21 @@ export default function GameVersus({ session }: { session: Session | null }) {
     socket.on("error", (data: { message: string }) => {
       addMessage(`Error: ${data.message}`);
     });
-    socket.on("player-disconnected", (data: { roomId: string }) => {
-      addMessage(`Player disconnected from room: ${data.roomId}`);
-    });
+    socket.on(
+      "player-disconnected",
+      (data: { roomId: string; userId: string }) => {
+        addMessage(`Player disconnected from room: ${data.roomId}`);
+        const { roomId, userId } = data;
+        socket.emit("game-over-event", {
+          roomId,
+          action: {
+            type: "game-over",
+            playerId: userId,
+            timestamp: getTimestamp(),
+          },
+        });
+      },
+    );
     socket.on("opponent-action", (data: { action: TetrisEvent }) => {
       addMessage(`Received opponent action: ${JSON.stringify(data?.action)}`);
 

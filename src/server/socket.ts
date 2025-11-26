@@ -140,12 +140,12 @@ export function initializeSocket(httpServer: HttpServer) {
         );
         if (playerIndex === -1) continue;
 
+        const disconnectedPlayer = room.players[playerIndex];
+        const userId = disconnectedPlayer!.userId;
+
         room.players.splice(playerIndex, 1);
-        if (room.players.length === 0) {
-          gameRooms.delete(roomId);
-        } else {
-          socket.to(roomId).emit("player-disconnected", { roomId });
-        }
+        if (room.players.length === 0) gameRooms.delete(roomId);
+        else socket.to(roomId).emit("player-disconnected", { roomId, userId });
 
         broadcastRoomUpdate(io);
       }

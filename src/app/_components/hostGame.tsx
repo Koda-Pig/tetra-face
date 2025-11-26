@@ -11,12 +11,12 @@ import {
   calcDropSpeed,
   spawnPiece,
   update,
-  getTimestamp,
   handleKeyDown,
   createEmptyBoard,
   render,
   // restartGame,
 } from "./gameUtils";
+import { getTimestamp } from "~/lib/utils";
 import type { GameState, GameLoop, UIState, Winner } from "~/types";
 import {
   COLS,
