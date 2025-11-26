@@ -1,4 +1,4 @@
-# Tetra Face
+# Tetra Face (it's a bad name, I know)
 
 This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
 
@@ -40,7 +40,11 @@ pnpm run dev
 
 ## TODO
 
-### UI
+### User Interface
+
+#### Font options:
+
+https://fonts.google.com/specimen/Teko?preview.text=TETRAFACE&query=te
 
 - [ ] Get it looking decent
 

@@ -58,10 +58,10 @@ export default function GameSection({ session }: { session: Session | null }) {
             />
             <Button
               size="lg"
-              className="w-full"
+              className="text-md w-full"
               onClick={() => setGameMode("single-player")}
             >
-              Single player
+              SINGLE PLAYER
             </Button>
           </div>
 
@@ -99,13 +99,13 @@ export default function GameSection({ session }: { session: Session | null }) {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  size="lg"
+                  className="text-md w-full"
                   onClick={() => {
                     if (!session) return;
                     setGameMode("versus");
                   }}
                 >
-                  Versus
+                  VERSUS
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -117,7 +117,6 @@ export default function GameSection({ session }: { session: Session | null }) {
       )}
       {session?.user?.id && gameMode === "single-player" && (
         <SinglePlayerGame userId={session.user.id} />
-        // <p>Single player disabled temporarily</p>
       )}
       {gameMode === "versus" && <GameVersus session={session} />}
     </div>

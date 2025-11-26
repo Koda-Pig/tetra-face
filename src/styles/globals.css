@@ -5,7 +5,7 @@
 
 @theme {
   --font-sans:
-    var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
+    var(--font-wixmadefortext), ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
@@ -128,6 +128,12 @@
   }
 }
 
+html,
+body,
+main {
+  height: 100%;
+}
+
 .game-stat {
   /* transition duration set via JS to match with timeout  */
   transition-timing-function: ease-out;
@@ -147,4 +153,20 @@
   .value {
     scale: 1.2;
   }
+}
+
+.nice-bg-bro {
+  background:
+    radial-gradient(
+        farthest-side at bottom left,
+        rgba(0, 255, 162, 0.5),
+        transparent
+      )
+      0/ 200%200%,
+    radial-gradient(
+        farthest-corner at bottom right,
+        rgba(0, 149, 255, 0.5),
+        transparent 400px
+      )
+      0/ 200%200%;
 }
