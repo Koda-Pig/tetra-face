@@ -41,11 +41,20 @@ pnpm run dev
 
 ### User Interface
 
+- [ ] Get it looking decent
+
+Game UI categories:
+
+1. diegetic -> invokes game world and narrative, only applies for games with characters (unapplicable for this)
+2. Non diegetic -> game tells info immediately, regardless, like healthbars
+3. spatial -> UI existing in gamespace, think instructions on actual walls
+4. meta -> like blood on screen to portray health in a FPS game
+
+The all rely on game world + narrative
+
 #### Font options:
 
 https://fonts.google.com/specimen/Teko?preview.text=TETRAFACE&query=te
-
-- [ ] Get it looking decent
 
 ### Gameplay
 
@@ -66,6 +75,7 @@ https://fonts.google.com/specimen/Teko?preview.text=TETRAFACE&query=te
 - [x] Implement the game pause / resume. Consider the way unity handles this with a time scale. Noted here: https://github.com/Koda-Pig/hadeez/blob/f2a531ec9eda007310b538d309b30b79327c4277/README.md?plain=1#L38
 - [x] add visual effect when row is cleared
 - [ ] ensure implementation matches guidelines: https://tetris.fandom.com/wiki/Tetris_Guideline
+- [ ] add controller support
 
 #### SCORING SYSTEM
 

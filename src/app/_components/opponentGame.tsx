@@ -8,9 +8,6 @@ import {
   forwardRef,
   useImperativeHandle,
 } from "react";
-import { cn } from "~/lib/utils";
-import GameStats from "./gameStats";
-import GameUi from "./gameUi";
 import {
   calcDropSpeed,
   createEmptyBoard,
@@ -28,6 +25,7 @@ import {
   INITIAL_UI_STATE,
   INITIAL_GAMELOOP,
 } from "~/constants";
+import GameBoard from "./gameBoard";
 
 export interface OpponentGameRef {
   triggerAction: (action: TetrisEvent) => void;
@@ -245,22 +243,7 @@ const OpponentGame = forwardRef<
     setUiState((prev) => ({ ...prev, isPaused: externalPause }));
   }, [externalPause, externalGameOver]);
 
-  return (
-    <div className="relative h-[600px] w-[300px]">
-      <div className="relative">
-        <canvas
-          ref={canvasRef}
-          width={300}
-          height={600}
-          className={cn(
-            (uiState.isGameOver || uiState.isPaused) && "opacity-30",
-          )}
-        />
-        <GameStats uiState={uiState} />
-      </div>
-      <GameUi uiState={uiState} />
-    </div>
-  );
+  return <GameBoard ref={canvasRef} uiState={uiState} />;
 });
 
 OpponentGame.displayName = "OpponentGame";

@@ -5,7 +5,7 @@
 
 @theme {
   --font-sans:
-    var(--font-wixmadefortext), ui-sans-serif, system-ui, sans-serif,
+    var(--font-retro_font), ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
@@ -80,6 +80,8 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  /*  */
+  --eigengrau: #16161d;
 }
 
 .dark {
@@ -128,10 +130,8 @@
   }
 }
 
-html,
-body,
 main {
-  height: 100%;
+  min-height: 100svh;
 }
 
 .game-stat {
@@ -158,15 +158,16 @@ main {
 .nice-bg-bro {
   background:
     radial-gradient(
-        farthest-side at bottom left,
-        rgba(0, 255, 162, 0.5),
+        farthest-side at top left,
+        oklab(0.74 -0.24 0.17 / 0.9),
         transparent
       )
       0/ 200%200%,
+    radial-gradient(circle at 0%50%, oklab(0.6 0.26 -0.14/ 0.9), transparent),
     radial-gradient(
         farthest-corner at bottom right,
-        rgba(0, 149, 255, 0.5),
-        transparent 400px
+        oklab(0.56 -0.02 -0.26 / 0.9),
+        transparent
       )
       0/ 200%200%;
 }

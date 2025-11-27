@@ -168,13 +168,13 @@ export default function GameVersus({ session }: { session: Session | null }) {
       {bothPlayersReady ? (
         <div
           className={cn(
-            "relative flex gap-8",
+            "relative flex justify-center gap-8",
             isRoomHost ? "flex-row" : "flex-row-reverse",
           )}
         >
           <p
             className={cn(
-              "bg-background/40 absolute inset-0 z-10 grid place-items-center p-8 text-center text-9xl transition-opacity",
+              "absolute inset-0 z-10 grid place-items-center p-8 text-center text-9xl transition-opacity",
               isGameOver ? "opacity-100" : "pointer-events-none opacity-0",
               winner === null && "hidden",
             )}

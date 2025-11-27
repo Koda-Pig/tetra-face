@@ -1,7 +1,7 @@
 import "~/styles/globals.css";
 
 import { type Metadata } from "next";
-import { Wix_Madefor_Text } from "next/font/google";
+import { Silkscreen } from "next/font/google";
 
 export const metadata: Metadata = {
   title: "Tetra Face",
@@ -9,23 +9,24 @@ export const metadata: Metadata = {
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
-const wixmadefortext = Wix_Madefor_Text({
+const retro_font = Silkscreen({
   subsets: ["latin"],
-  variable: "--font-wixmadefortext",
+  weight: "400",
+  variable: "--font-retro_font",
 });
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${wixmadefortext.variable}`}>
+    <html lang="en" className={`${retro_font.variable}`}>
       {/* <head>
         <script
           crossOrigin="anonymous"
           src="//unpkg.com/react-scan/dist/auto.global.js"
         />
       </head> */}
-      <body className="dark">{children}</body>
+      <body>{children}</body>
     </html>
   );
 }

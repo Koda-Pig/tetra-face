@@ -1,10 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { cn } from "~/lib/utils";
 import { useBag } from "~/hooks/useBag";
-import GameStats from "./gameStats";
-import GameUi from "./gameUi";
 import { Button } from "~/components/ui/button";
 import {
   calcDropSpeed,
@@ -26,6 +23,7 @@ import {
   INITIAL_UI_STATE,
   INITIAL_GAMELOOP,
 } from "~/constants";
+import GameBoard from "./gameBoard";
 
 export default function SinglePlayerGame({ userId }: { userId: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -196,32 +194,19 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
   }, [userId, getNextPiece, syncUIState]);
 
   return (
-    <div className="relative h-[600px] w-[300px]">
-      <div className={cn("relative")}>
-        <canvas
-          ref={canvasRef}
-          width={300}
-          height={600}
-          className={cn(
-            (uiState.isGameOver || uiState.isPaused) && "opacity-30",
-          )}
-        />
-        <GameStats uiState={uiState} />
+    <GameBoard uiState={uiState} ref={canvasRef}>
+      <div className="grid gap-4">
+        {(uiState.isGameOver || uiState.isPaused) && (
+          <Button onClick={handleRestart} size="lg" className="text-lg">
+            Restart
+          </Button>
+        )}
+        {uiState.isPaused && !uiState.isGameOver && (
+          <Button onClick={handleResume} size="lg" className="text-lg">
+            Resume
+          </Button>
+        )}
       </div>
-      <GameUi uiState={uiState}>
-        <div className="grid gap-4">
-          {(uiState.isGameOver || uiState.isPaused) && (
-            <Button onClick={handleRestart} size="lg" className="text-lg">
-              Restart
-            </Button>
-          )}
-          {uiState.isPaused && !uiState.isGameOver && (
-            <Button onClick={handleResume} size="lg" className="text-lg">
-              Resume
-            </Button>
-          )}
-        </div>
-      </GameUi>
-    </div>
+    </GameBoard>
   );
 }

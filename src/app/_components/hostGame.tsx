@@ -1,10 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { cn } from "~/lib/utils";
 import { useBag } from "~/hooks/useBag";
-import GameStats from "./gameStats";
-import GameUi from "./gameUi";
 import type { Socket } from "socket.io-client";
 import { Button } from "~/components/ui/button";
 import {
@@ -14,7 +11,6 @@ import {
   handleKeyDown,
   createEmptyBoard,
   render,
-  // restartGame,
 } from "./gameUtils";
 import { getTimestamp } from "~/lib/utils";
 import type { GameState, GameLoop, UIState, Winner } from "~/types";
@@ -32,6 +28,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
+import GameBoard from "./gameBoard";
 
 export default function HostGame({
   userId,
@@ -281,41 +278,23 @@ export default function HostGame({
   }, [externalPause, externalGameOver]);
 
   return (
-    <div className="relative h-[600px] w-[300px]">
-      <div className={cn("relative")}>
-        <canvas
-          ref={canvasRef}
-          width={300}
-          height={600}
-          className={cn(
-            (uiState.isGameOver || uiState.isPaused) && "opacity-30",
-          )}
-        />
-        <GameStats uiState={uiState} />
-      </div>
-      <GameUi uiState={uiState}>
-        {/* {(uiState.isGameOver || uiState.isPaused) && (
-          <Button onClick={handleRestart} size="lg" className="text-lg">
-            Restart
+    <GameBoard uiState={uiState} ref={canvasRef}>
+      {uiState.isPaused && !uiState.isGameOver && (
+        <div className="grid gap-4">
+          <Button onClick={handleResume} size="lg" className="text-lg">
+            Resume
           </Button>
-          )} */}
-        {uiState.isPaused && !uiState.isGameOver && (
-          <div className="grid gap-4">
-            <Button onClick={handleResume} size="lg" className="text-lg">
-              Resume
-            </Button>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button size="lg" className="text-lg" onClick={handleSurrender}>
-                  Surrender
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>You a quitter?</TooltipContent>
-            </Tooltip>
-          </div>
-        )}
-        {winner && <p>YOU {winner === "you" ? "WON" : "LOST"}!</p>}
-      </GameUi>
-    </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button size="lg" className="text-lg" onClick={handleSurrender}>
+                Surrender
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>You a quitter?</TooltipContent>
+          </Tooltip>
+        </div>
+      )}
+      {winner && <p>YOU {winner === "you" ? "WON" : "LOST"}!</p>}
+    </GameBoard>
   );
 }
