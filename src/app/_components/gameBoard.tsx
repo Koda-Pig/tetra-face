@@ -3,6 +3,7 @@ import { cn } from "~/lib/utils";
 import type { UIState } from "~/types";
 import GameStats from "./gameStats";
 import GameUi from "./gameUi";
+import { CANVAS_ANIMATION_DURATION_MS } from "~/constants";
 
 interface GameBoardProps {
   uiState: UIState;
@@ -16,10 +17,11 @@ const GameBoard = forwardRef<HTMLCanvasElement, GameBoardProps>(
         ref={ref}
         width={300}
         height={600}
+        style={{ animationDuration: `${CANVAS_ANIMATION_DURATION_MS}ms` }}
         className={cn(
           "game-canvas rounded-md border-2 border-[var(--retro-green)] shadow shadow-[var(--retro-green)]",
           (uiState.isGameOver || uiState.isPaused) && "opacity-30",
-          (uiState.scoreFlash || uiState.levelFlash) && "game-canvas-flash",
+          uiState.canvasFlash && "game-canvas-flash",
         )}
       />
       <GameStats uiState={uiState} />

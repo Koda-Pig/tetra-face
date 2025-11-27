@@ -138,24 +138,17 @@ main {
   min-height: 100svh;
 }
 
-.game-canvas {
-  /* transition: box-shadow 0.2s ease-out; */
-  box-shadow: 0 0 0 var(--retro-green-dull);
-}
-
-.game-canvas:has(~ .game-stat-flash) {
-  animation: shadow-anim 1s ease-out;
+.game-canvas.game-canvas-flash {
+  /* animation duration set via JS */
+  animation: shadow-anim ease forwards;
 }
 
 @keyframes shadow-anim {
   0% {
     box-shadow: 0 0 0 var(--retro-green-dull);
   }
-  50% {
-    box-shadow: 0 0 100px var(--retro-green-dull);
-  }
   100% {
-    box-shadow: 0 0 100px transparent;
+    box-shadow: 0 0 200px transparent;
   }
 }
 
@@ -191,23 +184,6 @@ main {
   border-color: var(--color-background);
   background-color: var(--color-foreground);
   .value {
-    scale: 1.2;
+    scale: 1.5;
   }
 }
-
-/* .nice-bg-bro {
-  background:
-    radial-gradient(
-        farthest-side at top left,
-        oklab(0.74 -0.24 0.17 / 0.9),
-        transparent
-      )
-      0/ 200%200%,
-    radial-gradient(circle at 0%50%, oklab(0.6 0.26 -0.14/ 0.9), transparent),
-    radial-gradient(
-        farthest-corner at bottom right,
-        oklab(0.56 -0.02 -0.26 / 0.9),
-        transparent
-      )
-      0/ 200%200%;
-} */

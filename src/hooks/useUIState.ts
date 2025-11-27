@@ -13,6 +13,7 @@ export function useUIState() {
     setUiState((prev) => {
       const scoreChanged = prev.score !== gameState.score;
       const levelChanged = prev.level !== gameState.level;
+      const performCanvasFlash = scoreChanged || levelChanged;
 
       // remove flash after animation
       if (scoreChanged || levelChanged) {
@@ -27,6 +28,17 @@ export function useUIState() {
         );
       }
 
+      if (performCanvasFlash) {
+        setTimeout(
+          () =>
+            setUiState((prev) => ({
+              ...prev,
+              canvasFlash: false,
+            })),
+          CANVAS_ANIMATION_DURATION_MS,
+        );
+      }
+
       return {
         ...prev,
         isGameOver: gameState.isGameOver,
@@ -34,6 +46,7 @@ export function useUIState() {
         level: gameState.level,
         scoreFlash: prev.score !== gameState.score,
         levelFlash: prev.level !== gameState.level,
+        canvasFlash: scoreChanged || levelChanged,
       };
     });
   }, []);

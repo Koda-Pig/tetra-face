@@ -650,6 +650,7 @@ export function restartGame({
     score: 0,
     scoreFlash: false,
     levelFlash: false,
+    canvasFlash: false,
     level: 0,
     isPaused: false,
   });

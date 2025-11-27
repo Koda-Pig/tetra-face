@@ -8,7 +8,7 @@ export default async function Home() {
   const session = await auth();
 
   return (
-    <main className="nice-bg-bro text-[var(--retro-green)]">
+    <main className="text-[var(--retro-green)]">
       <div className="container mx-auto flex h-full min-h-svh flex-col px-4 py-8 text-center">
         <h1 className="text-4xl font-bold tracking-wide">TETRA FACE</h1>
         <p className="text-lg">

@@ -41,6 +41,7 @@ export type UIState = {
   score: number;
   scoreFlash: boolean;
   levelFlash: boolean;
+  canvasFlash: boolean;
   level: number;
   isPaused: boolean;
 };

@@ -1,4 +1,4 @@
-import type { Tetromino, TetrominoType } from "~/types";
+import type { Tetromino, TetrominoType, UIState } from "~/types";
 
 export const COLS = 10;
 export const TOTAL_ROWS = 40;
@@ -320,7 +320,7 @@ export const WALL_KICK_DATA_I: Record<
 };
 
 export const FLASH_TRANSITION_DURATION_MS = 300;
-export const CANVAS_ANIMATION_DURATION_MS = 1000;
+export const CANVAS_ANIMATION_DURATION_MS = 500;
 
 export const INITIAL_GAME_STATE = {
   dropTimer: 0,
@@ -340,11 +340,12 @@ export const LINE_CLEAR_SCORES = {
 
 export const LINES_PER_LEVEL = 10;
 
-export const INITIAL_UI_STATE = {
+export const INITIAL_UI_STATE: UIState = {
   isGameOver: false,
   score: 0,
   scoreFlash: false,
   levelFlash: false,
+  canvasFlash: false,
   level: 0,
   isPaused: false,
 };
