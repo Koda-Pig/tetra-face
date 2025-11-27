@@ -82,6 +82,7 @@
   --sidebar-ring: oklch(0.708 0 0);
   /*  */
   --eigengrau: #16161d;
+  --retro-green: #bbffbf;
 }
 
 .dark {
@@ -155,7 +156,7 @@ main {
   }
 }
 
-.nice-bg-bro {
+/* .nice-bg-bro {
   background:
     radial-gradient(
         farthest-side at top left,
@@ -170,4 +171,4 @@ main {
         transparent
       )
       0/ 200%200%;
-}
+} */

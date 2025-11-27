@@ -8,21 +8,19 @@ export default async function Home() {
   const session = await auth();
 
   return (
-    <main className="nice-bg-bro text-[var(--eigengrau)]">
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-center text-4xl font-bold tracking-wide">
-          TETRA FACE
-        </h1>
-        <p className="text-center text-lg">
+    <main className="nice-bg-bro text-[var(--retro-green)]">
+      <div className="container mx-auto flex h-full min-h-svh flex-col px-4 py-8 text-center">
+        <h1 className="text-4xl font-bold tracking-wide">TETRA FACE</h1>
+        <p className="text-lg">
           Multiplayer online tetris.
           <br />
           {!session && "Sign in to start a versus match."}
         </p>
         {session?.user && <GameSection session={session} />}
 
-        <p className="text-center text-2xl text-white">
+        <p className="mt-8 mt-auto text-2xl text-white">
           {session && (
-            <span className="flex items-center gap-2">
+            <span className="flex items-center justify-center gap-2">
               Logged in as
               <span className="font-bold">{session.user?.name}</span>
               {session.user?.image && (
@@ -38,7 +36,7 @@ export default async function Home() {
           )}
         </p>
 
-        <Button asChild size="lg" className="text-xl">
+        <Button asChild size="lg" className="mt-4 text-xl leading-0">
           <Link href={session ? "/api/auth/signout" : "/api/auth/signin"}>
             {session ? "SIGN OUT" : "SIGN IN"}
           </Link>

@@ -26,7 +26,7 @@ export default function RootLayout({
           src="//unpkg.com/react-scan/dist/auto.global.js"
         />
       </head> */}
-      <body>{children}</body>
+      <body className="dark">{children}</body>
     </html>
   );
 }

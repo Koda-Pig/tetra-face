@@ -29,7 +29,7 @@ export default function GameSection({ session }: { session: Session | null }) {
     <div className="my-8">
       {gameMode !== null && <GameplayControls />}
 
-      <div className="fixed right-4 bottom-4 grid gap-2">
+      <div className="fixed top-4 left-4 grid gap-2">
         <Button
           onClick={() => setGameMode(null)}
           className="border-background border"
