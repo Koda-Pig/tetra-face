@@ -319,7 +319,8 @@ export const WALL_KICK_DATA_I: Record<
   },
 };
 
-export const FLASH_TRANSITION_DURATION_MS = 200;
+export const FLASH_TRANSITION_DURATION_MS = 300;
+export const CANVAS_ANIMATION_DURATION_MS = 1000;
 
 export const INITIAL_GAME_STATE = {
   dropTimer: 0,

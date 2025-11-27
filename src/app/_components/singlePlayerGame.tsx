@@ -13,16 +13,15 @@ import {
   restartGame,
 } from "./gameUtils";
 import { getTimestamp } from "~/lib/utils";
-import type { GameState, GameLoop, UIState } from "~/types";
+import type { GameState, GameLoop } from "~/types";
 import {
   COLS,
   VISIBLE_ROWS,
   GAME_INPUT_KEYS,
-  FLASH_TRANSITION_DURATION_MS,
   INITIAL_GAME_STATE,
-  INITIAL_UI_STATE,
   INITIAL_GAMELOOP,
 } from "~/constants";
+import { useUIState } from "~/hooks/useUIState";
 import GameBoard from "./gameBoard";
 
 export default function SinglePlayerGame({ userId }: { userId: string }) {
@@ -31,38 +30,9 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
   const pauseMultiplierRef = useRef(1); //  0 = paused
   // we're not using useState for this because we don't want to trigger re-renders while the game is playing
   const gameStateRef = useRef<GameState | null>(null);
-  const [uiState, setUiState] = useState<UIState>(INITIAL_UI_STATE);
+  const { uiState, setUiState, syncUIState } = useUIState();
   const [restartTrigger, setRestartTrigger] = useState(0);
   const getNextPiece = useBag();
-
-  const syncUIState = useCallback((gameState: GameState) => {
-    setUiState((prev) => {
-      const scoreChanged = prev.score !== gameState.score;
-      const levelChanged = prev.level !== gameState.level;
-
-      // remove flash after animation
-      if (scoreChanged || levelChanged) {
-        setTimeout(
-          () =>
-            setUiState((prev) => ({
-              ...prev,
-              scoreFlash: false,
-              levelFlash: false,
-            })),
-          FLASH_TRANSITION_DURATION_MS,
-        );
-      }
-
-      return {
-        ...prev,
-        isGameOver: gameState.isGameOver,
-        score: gameState.score,
-        level: gameState.level,
-        scoreFlash: prev.score !== gameState.score, // flash when score changes
-        levelFlash: prev.level !== gameState.level,
-      };
-    });
-  }, []);
 
   function handleResume() {
     if (!gameStateRef.current || pauseMultiplierRef.current === null) return;
@@ -81,7 +51,7 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
       getNextPiece,
       userId,
     });
-  }, [getNextPiece, userId]);
+  }, [getNextPiece, userId, setUiState]);
 
   // initialize the game state
   useEffect(() => {
@@ -191,7 +161,7 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
 
     window.addEventListener("keydown", handleKeyDownWrapper);
     return () => window.removeEventListener("keydown", handleKeyDownWrapper);
-  }, [userId, getNextPiece, syncUIState]);
+  }, [userId, getNextPiece, syncUIState, setUiState]);
 
   return (
     <GameBoard uiState={uiState} ref={canvasRef}>

@@ -83,6 +83,9 @@
   /*  */
   --eigengrau: #16161d;
   --retro-green: #bbffbf;
+  --retro-green-dull: #8dc190;
+  --retro-green-dullest: #638866;
+  --retro-green-dark: #151d15;
 }
 
 .dark {
@@ -135,10 +138,32 @@ main {
   min-height: 100svh;
 }
 
+.game-canvas {
+  /* transition: box-shadow 0.2s ease-out; */
+  box-shadow: 0 0 0 var(--retro-green-dull);
+}
+
+.game-canvas:has(~ .game-stat-flash) {
+  animation: shadow-anim 1s ease-out;
+}
+
+@keyframes shadow-anim {
+  0% {
+    box-shadow: 0 0 0 var(--retro-green-dull);
+  }
+  50% {
+    box-shadow: 0 0 100px var(--retro-green-dull);
+  }
+  100% {
+    box-shadow: 0 0 100px transparent;
+  }
+}
+
 .game-stat {
   /* transition duration set via JS to match with timeout  */
   transition-timing-function: ease-out;
-  border: 2px solid transparent;
+  border: 2px solid var(--retro-green);
+  border-radius: 6px;
   transition-property: border-color, background-color;
 
   .value {
@@ -148,7 +173,21 @@ main {
   }
 }
 
-.game-stat-flash {
+.game-stat-left {
+  left: 0;
+  border-right-width: 0;
+  border-radius: 10px 0 0 10px;
+  transform: translateX(-100%);
+}
+
+.game-stat-right {
+  right: 0;
+  border-left-width: 0;
+  border-radius: 0 10px 10px 0;
+  transform: translateX(calc(100% + 4px)); /* add border width */
+}
+
+.game-stat.game-stat-flash {
   border-color: var(--color-background);
   background-color: var(--color-foreground);
   .value {

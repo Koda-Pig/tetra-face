@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import { useBag } from "~/hooks/useBag";
 import type { Socket } from "socket.io-client";
 import { Button } from "~/components/ui/button";
@@ -13,14 +13,12 @@ import {
   render,
 } from "./gameUtils";
 import { getTimestamp } from "~/lib/utils";
-import type { GameState, GameLoop, UIState, Winner } from "~/types";
+import type { GameState, GameLoop, Winner } from "~/types";
 import {
   COLS,
   VISIBLE_ROWS,
   GAME_INPUT_KEYS,
-  FLASH_TRANSITION_DURATION_MS,
   INITIAL_GAME_STATE,
-  INITIAL_UI_STATE,
   INITIAL_GAMELOOP,
 } from "~/constants";
 import {
@@ -28,6 +26,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
+import { useUIState } from "~/hooks/useUIState";
 import GameBoard from "./gameBoard";
 
 export default function HostGame({
@@ -48,43 +47,10 @@ export default function HostGame({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<GameLoop>(INITIAL_GAMELOOP);
   const pauseMultiplierRef = useRef(1); //  0 = paused
-  // we're not using useState for this because we don't want to trigger re-renders while the game is playing
+  // we're not using `useState` for this because we don't want to trigger re-renders while the game is playing
   const gameStateRef = useRef<GameState | null>(null);
-  const [uiState, setUiState] = useState<UIState>(INITIAL_UI_STATE);
-  const [
-    restartTrigger,
-    // setRestartTrigger
-  ] = useState(0);
+  const { uiState, setUiState, syncUIState } = useUIState();
   const getNextPiece = useBag();
-
-  const syncUIState = useCallback((gameState: GameState) => {
-    setUiState((prev) => {
-      const scoreChanged = prev.score !== gameState.score;
-      const levelChanged = prev.level !== gameState.level;
-
-      // remove flash after animation
-      if (scoreChanged || levelChanged) {
-        setTimeout(
-          () =>
-            setUiState((prev) => ({
-              ...prev,
-              scoreFlash: false,
-              levelFlash: false,
-            })),
-          FLASH_TRANSITION_DURATION_MS,
-        );
-      }
-
-      return {
-        ...prev,
-        isGameOver: gameState.isGameOver,
-        score: gameState.score,
-        level: gameState.level,
-        scoreFlash: prev.score !== gameState.score, // flash when score changes
-        levelFlash: prev.level !== gameState.level,
-      };
-    });
-  }, []);
 
   function handleResume() {
     socket.emit("game-pause-event", {
@@ -107,18 +73,6 @@ export default function HostGame({
       },
     });
   }
-
-  // const handleRestart = useCallback(() => {
-  //   restartGame({
-  //     gameStateRef,
-  //     pauseMultiplierRef,
-  //     gameLoopRef,
-  //     setUiState,
-  //     setRestartTrigger,
-  //     getNextPiece,
-  //     userId,
-  //   });
-  // }, [getNextPiece, userId]);
 
   // initialize the game state
   useEffect(() => {
@@ -222,15 +176,7 @@ export default function HostGame({
         gameLoop.animationId = null;
       }
     };
-  }, [
-    userId,
-    roomId,
-    socket,
-    canvasRef,
-    getNextPiece,
-    syncUIState,
-    restartTrigger,
-  ]);
+  }, [userId, roomId, socket, canvasRef, getNextPiece, syncUIState]);
 
   // Event listeners (keyboard events)
   useEffect(() => {
@@ -261,7 +207,7 @@ export default function HostGame({
 
     window.addEventListener("keydown", handleKeyDownWrapper);
     return () => window.removeEventListener("keydown", handleKeyDownWrapper);
-  }, [socket, roomId, userId, getNextPiece, syncUIState]);
+  }, [socket, roomId, userId, getNextPiece, syncUIState, setUiState]);
 
   // sync external game
   useEffect(() => {
@@ -275,7 +221,7 @@ export default function HostGame({
     else pauseMultiplierRef.current = 1;
 
     setUiState((prev) => ({ ...prev, isPaused: externalPause }));
-  }, [externalPause, externalGameOver]);
+  }, [externalPause, externalGameOver, setUiState]);
 
   return (
     <GameBoard uiState={uiState} ref={canvasRef}>

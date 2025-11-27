@@ -19,9 +19,9 @@ export default function GameStat({
     <div
       style={{ transitionDuration: `${transitionDuration}ms` }}
       className={cn(
-        "game-stat font-xl bg-background/50 absolute top-1 z-10 grid aspect-square h-14 w-auto place-items-center rounded-sm px-2 py-1 text-center text-xl",
+        "game-stat font-xl absolute top-4 z-10 grid aspect-square h-14 w-auto place-items-center bg-black px-2 py-1 text-center text-xl",
         flashTrigger && "game-stat-flash",
-        alignment === "left" ? "left-1" : "right-1",
+        alignment === "left" ? "game-stat-left" : "game-stat-right",
       )}
     >
       <p className="text-sm">{label}</p>

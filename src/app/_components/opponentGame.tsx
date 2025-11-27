@@ -16,16 +16,15 @@ import {
   clearLines,
 } from "./gameUtils";
 import { getTimestamp } from "~/lib/utils";
-import type { GameState, GameLoop, UIState, TetrisEvent, Piece } from "~/types";
+import type { GameState, GameLoop, TetrisEvent, Piece } from "~/types";
 import {
   COLS,
   VISIBLE_ROWS,
-  FLASH_TRANSITION_DURATION_MS,
   INITIAL_GAME_STATE,
-  INITIAL_UI_STATE,
   INITIAL_GAMELOOP,
 } from "~/constants";
 import GameBoard from "./gameBoard";
+import { useUIState } from "~/hooks/useUIState";
 
 export interface OpponentGameRef {
   triggerAction: (action: TetrisEvent) => void;
@@ -40,37 +39,8 @@ const OpponentGame = forwardRef<
   const pauseMultiplierRef = useRef(1); //  0 = paused
   // we're not using useState for this because we don't want to trigger re-renders while the game is playing
   const gameStateRef = useRef<GameState | null>(null);
-  const [uiState, setUiState] = useState<UIState>(INITIAL_UI_STATE);
+  const { uiState, setUiState, syncUIState } = useUIState();
   const [initialPiece, setInitialPiece] = useState<Piece | null>(null);
-
-  const syncUIState = useCallback((gameState: GameState) => {
-    setUiState((prev) => {
-      const scoreChanged = prev.score !== gameState.score;
-      const levelChanged = prev.level !== gameState.level;
-
-      // remove flash after animation
-      if (scoreChanged || levelChanged) {
-        setTimeout(
-          () =>
-            setUiState((prev) => ({
-              ...prev,
-              scoreFlash: false,
-              levelFlash: false,
-            })),
-          FLASH_TRANSITION_DURATION_MS,
-        );
-      }
-
-      return {
-        ...prev,
-        isGameOver: gameState.isGameOver,
-        score: gameState.score,
-        level: gameState.level,
-        scoreFlash: prev.score !== gameState.score, // flash when score changes
-        levelFlash: prev.level !== gameState.level,
-      };
-    });
-  }, []);
 
   const triggerActionRef = useCallback(
     (action: TetrisEvent) => {
@@ -137,7 +107,7 @@ const OpponentGame = forwardRef<
           break;
       }
     },
-    [syncUIState],
+    [syncUIState, setUiState],
   );
 
   useImperativeHandle(
@@ -241,7 +211,7 @@ const OpponentGame = forwardRef<
     else pauseMultiplierRef.current = 1;
 
     setUiState((prev) => ({ ...prev, isPaused: externalPause }));
-  }, [externalPause, externalGameOver]);
+  }, [externalPause, externalGameOver, setUiState]);
 
   return <GameBoard ref={canvasRef} uiState={uiState} />;
 });
