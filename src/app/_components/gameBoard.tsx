@@ -28,4 +28,6 @@ const GameBoard = forwardRef<HTMLCanvasElement, GameBoardProps>(
   ),
 );
 
+GameBoard.displayName = "GameBoard";
+
 export default GameBoard;
