@@ -11,9 +11,10 @@ import {
   createEmptyBoard,
   render,
   restartGame,
+  pollGamepadInput,
 } from "./gameUtils";
 import { getTimestamp } from "~/lib/utils";
-import type { GameState, GameLoop } from "~/types";
+import type { GameState, GameLoop, GamepadState } from "~/types";
 import {
   COLS,
   VISIBLE_ROWS,
@@ -30,8 +31,12 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
   const pauseMultiplierRef = useRef(1); //  0 = paused
   // we're not using useState for this because we don't want to trigger re-renders while the game is playing
   const gameStateRef = useRef<GameState | null>(null);
+  const gamepadStateRef = useRef<GamepadState>({
+    previousBtnStates: Array.from({ length: 17 }, () => false), // gamepads have 17 buttons
+  });
   const { uiState, setUiState, syncUIState } = useUIState();
   const [restartTrigger, setRestartTrigger] = useState(0);
+  const [gamepadConnected, setGamepadConnected] = useState(false);
   const getNextPiece = useBag();
 
   function handleResume() {
@@ -102,6 +107,21 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
         return;
       }
 
+      if (gamepadConnected) {
+        const gamepadKey = pollGamepadInput({ gamepadStateRef });
+        if (gamepadKey) {
+          handleKeyDown({
+            currentKey: gamepadKey,
+            gameState: gameStateRef.current!,
+            getNextPiece,
+            onStateChange: syncUIState,
+            pauseMultiplierRef,
+            setUiState,
+            playerId: userId,
+          });
+        }
+      }
+
       gameLoop.now = getTimestamp();
       gameLoop.deltaTime =
         gameLoop.deltaTime +
@@ -138,7 +158,14 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
         gameLoop.animationId = null;
       }
     };
-  }, [userId, canvasRef, getNextPiece, syncUIState, restartTrigger]);
+  }, [
+    userId,
+    canvasRef,
+    getNextPiece,
+    syncUIState,
+    restartTrigger,
+    gamepadConnected,
+  ]);
 
   // Event listeners (keyboard events)
   useEffect(() => {
@@ -159,9 +186,34 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
       });
     }
 
+    const handleGamepadConnected = () => setGamepadConnected(true);
+    const handleGamepadDisconnected = () => {
+      setGamepadConnected(false);
+      gamepadStateRef.current.previousBtnStates.fill(false);
+    };
+
     window.addEventListener("keydown", handleKeyDownWrapper);
-    return () => window.removeEventListener("keydown", handleKeyDownWrapper);
+    window.addEventListener("gamepadconnected", handleGamepadConnected);
+    window.addEventListener("gamepaddisconnected", handleGamepadDisconnected);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDownWrapper);
+      window.removeEventListener("gamepadconnected", handleGamepadConnected);
+      window.removeEventListener(
+        "gamepaddisconnected",
+        handleGamepadDisconnected,
+      );
+    };
   }, [userId, getNextPiece, syncUIState, setUiState]);
+
+  // Check for already-connected gamepads on mount
+  useEffect(() => {
+    const gamepads = navigator.getGamepads();
+    const hasConnectedGamepad = Array.from(gamepads).some(
+      (gamepad) => gamepad?.connected,
+    );
+    if (hasConnectedGamepad) setGamepadConnected(true);
+  }, []);
 
   return (
     <GameBoard uiState={uiState} ref={canvasRef}>

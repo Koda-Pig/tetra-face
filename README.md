@@ -43,6 +43,9 @@ pnpm run dev
 
 - [ ] Get it looking decent
 
+Refer to the oldschool UI to make sure I have everything I need. This is a convenient source for that.
+https://play.tetris.com/
+
 Game UI categories:
 
 1. diegetic -> invokes game world and narrative, only applies for games with characters (unapplicable for this)
@@ -75,7 +78,7 @@ https://fonts.google.com/specimen/Teko?preview.text=TETRAFACE&query=te
 - [x] Implement the game pause / resume. Consider the way unity handles this with a time scale. Noted here: https://github.com/Koda-Pig/hadeez/blob/f2a531ec9eda007310b538d309b30b79327c4277/README.md?plain=1#L38
 - [x] add visual effect when row is cleared
 - [ ] ensure implementation matches guidelines: https://tetris.fandom.com/wiki/Tetris_Guideline
-- [ ] add controller support
+- [x] add controller support - refer to my implementation in [this repo](https://github.com/Koda-Pig/not-a-pig/blob/118776208c649313edd4dbf4d596bdd837a72aa4/src/input.ts#L53)
 
 #### SCORING SYSTEM
 

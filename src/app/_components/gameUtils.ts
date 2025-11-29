@@ -1,3 +1,5 @@
+import { type RefObject } from "react";
+
 import type {
   GameState,
   Piece,
@@ -5,6 +7,7 @@ import type {
   UIState,
   Tetromino,
   GameLoop,
+  GamepadState,
   TetrisEvent,
 } from "~/types";
 import {
@@ -23,6 +26,7 @@ import {
   LINE_CLEAR_SCORES,
   VISIBLE_ROWS,
   INITIAL_GAME_STATE,
+  GAMEPAD_KEY_MAP,
 } from "~/constants";
 import { getTimestamp } from "~/lib/utils";
 
@@ -660,4 +664,35 @@ export function restartGame({
   gameLoop.deltaTime = 0;
   gameLoop.lastTime = getTimestamp();
   setRestartTrigger((prev) => prev + 1);
+}
+
+export // returns keycode
+function pollGamepadInput({
+  gamepadStateRef,
+}: {
+  gamepadStateRef: RefObject<GamepadState>;
+}): string | null {
+  const gamepads = navigator.getGamepads();
+  const activeGamepad = gamepads.find((gamepad) => gamepad);
+
+  if (!activeGamepad || !gamepadStateRef.current) return null;
+  const gamepadState = gamepadStateRef.current;
+
+  for (const [index, button] of activeGamepad.buttons.entries()) {
+    const keyCode = GAMEPAD_KEY_MAP[index as keyof typeof GAMEPAD_KEY_MAP];
+    if (!keyCode) continue; // skip if no mapping for this button
+
+    const isPressed = button.pressed;
+    const wasPressed = gamepadState.previousBtnStates[index];
+
+    // trigger on press (NOT hold)
+    if (isPressed && !wasPressed) {
+      gamepadState.previousBtnStates[index] = isPressed;
+      return keyCode;
+    }
+
+    gamepadState.previousBtnStates[index] = isPressed;
+  }
+
+  return null;
 }

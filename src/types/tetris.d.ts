@@ -95,3 +95,5 @@ export type TetrisEvent =
   | { type: "game-over"; playerId: string; timestamp: number }
   // other
   | { type: "initial-piece-spawn"; piece: Piece; timestamp: number };
+
+export type GamepadState = { previousBtnStates: boolean[] };

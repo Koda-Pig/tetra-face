@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useBag } from "~/hooks/useBag";
 import type { Socket } from "socket.io-client";
 import { Button } from "~/components/ui/button";
@@ -11,9 +11,10 @@ import {
   handleKeyDown,
   createEmptyBoard,
   render,
+  pollGamepadInput,
 } from "./gameUtils";
 import { getTimestamp } from "~/lib/utils";
-import type { GameState, GameLoop, Winner } from "~/types";
+import type { GameState, GameLoop, Winner, GamepadState } from "~/types";
 import {
   COLS,
   VISIBLE_ROWS,
@@ -49,7 +50,11 @@ export default function HostGame({
   const pauseMultiplierRef = useRef(1); //  0 = paused
   // we're not using `useState` for this because we don't want to trigger re-renders while the game is playing
   const gameStateRef = useRef<GameState | null>(null);
+  const gamepadStateRef = useRef<GamepadState>({
+    previousBtnStates: Array.from({ length: 17 }, () => false), // gamepads have 17 buttons
+  });
   const { uiState, setUiState, syncUIState } = useUIState();
+  const [gamepadConnected, setGamepadConnected] = useState(false);
   const getNextPiece = useBag();
 
   function handleResume() {
@@ -135,6 +140,28 @@ export default function HostGame({
         return;
       }
 
+      if (gamepadConnected) {
+        const gamepadKey = pollGamepadInput({ gamepadStateRef });
+        if (gamepadKey) {
+          const action = handleKeyDown({
+            currentKey: gamepadKey,
+            gameState: gameStateRef.current!,
+            getNextPiece,
+            onStateChange: syncUIState,
+            pauseMultiplierRef,
+            setUiState,
+            playerId: userId,
+          });
+          if (action?.type === "game-pause" || action?.type === "game-resume") {
+            socket.emit("game-pause-event", { roomId, action });
+          } else if (action?.type === "game-over") {
+            socket.emit("game-over-event", { roomId, action });
+          } else if (action) {
+            socket.emit("game-action", { roomId, action });
+          }
+        }
+      }
+
       gameLoop.now = getTimestamp();
       gameLoop.deltaTime =
         gameLoop.deltaTime +
@@ -176,7 +203,15 @@ export default function HostGame({
         gameLoop.animationId = null;
       }
     };
-  }, [userId, roomId, socket, canvasRef, getNextPiece, syncUIState]);
+  }, [
+    userId,
+    roomId,
+    socket,
+    canvasRef,
+    getNextPiece,
+    syncUIState,
+    gamepadConnected,
+  ]);
 
   // Event listeners (keyboard events)
   useEffect(() => {
@@ -205,8 +240,24 @@ export default function HostGame({
       }
     }
 
+    const handleGamepadConnected = () => setGamepadConnected(true);
+    const handleGamepadDisconnected = () => {
+      setGamepadConnected(false);
+      gamepadStateRef.current.previousBtnStates.fill(false);
+    };
+
     window.addEventListener("keydown", handleKeyDownWrapper);
-    return () => window.removeEventListener("keydown", handleKeyDownWrapper);
+    window.addEventListener("gamepadconnected", handleGamepadConnected);
+    window.addEventListener("gamepaddisconnected", handleGamepadDisconnected);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDownWrapper);
+      window.removeEventListener("gamepadconnected", handleGamepadConnected);
+      window.removeEventListener(
+        "gamepaddisconnected",
+        handleGamepadDisconnected,
+      );
+    };
   }, [socket, roomId, userId, getNextPiece, syncUIState, setUiState]);
 
   // sync external game
@@ -222,6 +273,15 @@ export default function HostGame({
 
     setUiState((prev) => ({ ...prev, isPaused: externalPause }));
   }, [externalPause, externalGameOver, setUiState]);
+
+  // Check for already-connected gamepads on mount
+  useEffect(() => {
+    const gamepads = navigator.getGamepads();
+    const hasConnectedGamepad = Array.from(gamepads).some(
+      (gamepad) => gamepad?.connected,
+    );
+    if (hasConnectedGamepad) setGamepadConnected(true);
+  }, []);
 
   return (
     <GameBoard uiState={uiState} ref={canvasRef}>

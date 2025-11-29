@@ -168,7 +168,7 @@ export default function GameVersus({ session }: { session: Session | null }) {
       {bothPlayersReady ? (
         <div
           className={cn(
-            "relative flex justify-center gap-8",
+            "relative flex justify-center gap-36",
             isRoomHost ? "flex-row" : "flex-row-reverse",
           )}
         >
