@@ -155,8 +155,6 @@ main {
 .game-stat {
   /* transition duration set via JS to match with timeout  */
   transition-timing-function: ease-out;
-  border: 2px solid var(--retro-green);
-  border-radius: 6px;
   transition-property: border-color, background-color;
 
   .value {
@@ -166,24 +164,68 @@ main {
   }
 }
 
-.game-stat-left {
-  left: 0;
-  border-right-width: 0;
-  border-radius: 10px 0 0 10px;
-  transform: translateX(-100%);
-}
-
-.game-stat-right {
-  right: 0;
-  border-left-width: 0;
-  border-radius: 0 10px 10px 0;
-  transform: translateX(calc(100% + 4px)); /* add border width */
-}
-
 .game-stat.game-stat-flash {
   border-color: var(--color-background);
   background-color: var(--color-foreground);
   .value {
     scale: 1.5;
+  }
+}
+
+.hold-tetro {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: currentColor;
+  transition-property: background-color, box-shadow, transform;
+  transition-duration: 0.2s;
+  &.I {
+    transform: translateX(-5px);
+    box-shadow:
+      -11px 0,
+      11px 0,
+      22px 0;
+  }
+  &.J {
+    transform: translateY(5px);
+    box-shadow:
+      -11px 0,
+      -11px -11px,
+      11px 0;
+  }
+  &.L {
+    transform: translateY(5px);
+    box-shadow:
+      -11px 0,
+      11px -11px,
+      11px 0;
+  }
+  &.O {
+    transform: translate(-5px, -5px);
+    box-shadow:
+      11px 0,
+      11px 11px,
+      0 11px;
+  }
+  &.S {
+    transform: translateY(-5px);
+    box-shadow:
+      11px 0,
+      0 11px,
+      -11px 11px;
+  }
+  &.Z {
+    transform: translateY(-5px);
+    box-shadow:
+      -11px 0,
+      0 11px,
+      11px 11px;
+  }
+  &.T {
+    transform: translateY(5px);
+    box-shadow:
+      11px 0,
+      -11px 0,
+      0 -11px;
   }
 }

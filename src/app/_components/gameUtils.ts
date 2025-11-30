@@ -86,8 +86,18 @@ export function calcDropSpeed(level: number): number {
   return frames / 60; // convert to seconds
 }
 
-export function spawnPiece(getNext: () => TetrominoType): Piece {
-  const tetrominoType = getNext();
+// function overloads
+export function spawnPiece(getNext: () => TetrominoType): Piece;
+export function spawnPiece(
+  getNext: undefined,
+  newTetrominoType: TetrominoType,
+): Piece;
+
+export function spawnPiece(
+  getNext?: () => TetrominoType,
+  newTetrominoType?: TetrominoType,
+): Piece {
+  const tetrominoType = newTetrominoType ?? getNext!();
   const spawnYPos = tetrominoType === "I" ? SPAWN_ROW_I : SPAWN_ROW_OTHER;
 
   return {
@@ -204,6 +214,8 @@ export function lockPieceAndSpawnNext({
     gameState.score += lineClearScore * (gameState.level + 1); // +1 for zero index;
   }
 
+  // reset 'canHold' after a new piece is spawned
+  gameState.canHold = true;
   onStateChange?.(gameState);
 }
 export function placePiece({
@@ -232,6 +244,29 @@ export function placePiece({
   }
 
   return true;
+}
+
+export function handleHoldPiece({
+  gameState,
+  getNextPiece,
+}: {
+  gameState: GameState;
+  getNextPiece: () => TetrominoType;
+}): TetrominoType | null {
+  if (!gameState.canHold) return null;
+  const oldHold = gameState.holdPiece;
+  const currentPiece = gameState.currentPiece;
+  // this'll only  happen the first hold event
+  if (!oldHold) {
+    gameState.holdPiece = gameState.currentPiece.tetrominoType;
+    gameState.currentPiece = spawnPiece(getNextPiece);
+  } else {
+    gameState.holdPiece = gameState.currentPiece.tetrominoType;
+    gameState.currentPiece = spawnPiece(undefined, oldHold);
+  }
+
+  gameState.canHold = false;
+  return currentPiece.tetrominoType;
 }
 export function hardDrop({
   piece,
@@ -451,6 +486,19 @@ export function handleKeyDown({
       } else {
         return null;
       }
+    case "KeyH":
+      const newHoldPiece = handleHoldPiece({ gameState, getNextPiece });
+      if (newHoldPiece) {
+        setUiState((prev) => ({ ...prev, holdPiece: newHoldPiece }));
+        return {
+          type: "hold-piece",
+          pieceType: gameState.currentPiece.tetrominoType,
+          timestamp: getTimestamp(),
+          newPieceToHold: newHoldPiece,
+        };
+      } else {
+        return null;
+      }
     default:
       return null;
   }
@@ -657,6 +705,7 @@ export function restartGame({
     canvasFlash: false,
     level: 0,
     isPaused: false,
+    holdPiece: null,
   });
 
   // 4. Reset game loop timing

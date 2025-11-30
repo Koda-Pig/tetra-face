@@ -1,4 +1,4 @@
-import type { Tetromino, TetrominoType, UIState } from "~/types";
+import type { GameState, Tetromino, TetrominoType, UIState } from "~/types";
 
 export const COLS = 10;
 export const TOTAL_ROWS = 40;
@@ -19,6 +19,7 @@ export const GAME_INPUT_KEYS = [
   "ArrowRight",
   "Space",
   "KeyZ",
+  "KeyH",
   "Escape",
 ];
 // use values same as GAME_INPUT_KEYS so that the function can be reused for the existing
@@ -352,12 +353,17 @@ export const WALL_KICK_DATA_I: Record<
 export const FLASH_TRANSITION_DURATION_MS = 300;
 export const CANVAS_ANIMATION_DURATION_MS = 500;
 
-export const INITIAL_GAME_STATE = {
+export const INITIAL_GAME_STATE: Omit<
+  GameState,
+  "currentPiece" | "dropIntervalSeconds" | "board" | "userId"
+> = {
   dropTimer: 0,
   linesCleared: 0,
   score: 0,
   isGameOver: false,
   level: 0,
+  holdPiece: null,
+  canHold: true,
 };
 
 export const LINE_CLEAR_SCORES = {
@@ -378,6 +384,7 @@ export const INITIAL_UI_STATE: UIState = {
   canvasFlash: false,
   level: 0,
   isPaused: false,
+  holdPiece: null,
 };
 
 export const INITIAL_GAMELOOP = {

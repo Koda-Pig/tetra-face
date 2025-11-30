@@ -117,15 +117,7 @@ export default function GameVersus({ session }: { session: Session | null }) {
     );
     socket.on("opponent-action", (data: { action: TetrisEvent }) => {
       addMessage(`Received opponent action: ${JSON.stringify(data?.action)}`);
-
-      switch (data.action.type) {
-        case "game-over":
-          console.log("player so and so lost, do something now");
-          break;
-        default:
-          opponentGameRef.current?.triggerAction(data.action);
-          break;
-      }
+      opponentGameRef.current?.triggerAction(data.action);
     });
     socket.on("game-pause-event", (data: { action: TetrisEvent }) => {
       addMessage(`game pause event global ${data.action.type}`);

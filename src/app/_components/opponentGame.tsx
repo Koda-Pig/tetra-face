@@ -14,6 +14,7 @@ import {
   render,
   placePiece,
   clearLines,
+  spawnPiece,
 } from "./gameUtils";
 import { getTimestamp } from "~/lib/utils";
 import type { GameState, GameLoop, TetrisEvent, Piece } from "~/types";
@@ -105,6 +106,10 @@ const OpponentGame = forwardRef<
           pauseMultiplierRef.current = 1;
           setUiState((prev) => ({ ...prev, isPaused: false }));
           break;
+        case "hold-piece":
+          const { pieceType, newPieceToHold } = action;
+          gameStateRef.current.currentPiece = spawnPiece(undefined, pieceType);
+          setUiState((prev) => ({ ...prev, holdPiece: newPieceToHold }));
       }
     },
     [syncUIState, setUiState],

@@ -34,6 +34,8 @@ export type GameState = {
   score: number;
   level: number;
   userId: string;
+  holdPiece: TetrominoType | null;
+  canHold: boolean;
 };
 
 export type UIState = {
@@ -44,6 +46,7 @@ export type UIState = {
   canvasFlash: boolean;
   level: number;
   isPaused: boolean;
+  holdPiece: TetrominoType | null;
 };
 
 export type GameLoop = {
@@ -94,6 +97,12 @@ export type TetrisEvent =
   | { type: "game-resume"; timestamp: number }
   | { type: "game-over"; playerId: string; timestamp: number }
   // other
-  | { type: "initial-piece-spawn"; piece: Piece; timestamp: number };
+  | { type: "initial-piece-spawn"; piece: Piece; timestamp: number }
+  | {
+      type: "hold-piece";
+      pieceType: TetrominoType;
+      timestamp: number;
+      newPieceToHold: TetrominoType | null;
+    };
 
 export type GamepadState = { previousBtnStates: boolean[] };
