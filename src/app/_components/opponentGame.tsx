@@ -58,19 +58,19 @@ const OpponentGame = forwardRef<
       }
 
       switch (type) {
-        case "piece-player-move":
+        case "player-move":
           gameStateRef.current.currentPiece.x += action.deltaX;
           break;
-        case "piece-player-rotate":
+        case "player-rotate":
           gameStateRef.current.currentPiece.rotation = action.newRotation;
           break;
-        case "piece-soft-drop":
+        case "player-soft-drop":
           gameStateRef.current.currentPiece.y = action.newY;
           break;
         // my types for these are the same, need to test if the result is
         // the same in practice.
-        case "piece-soft-drop-lock":
-        case "piece-hard-drop-lock":
+        case "player-soft-drop-lock":
+        case "player-hard-drop-lock":
           placePiece({
             piece: action.lockedPiece,
             board: gameStateRef.current.board,
@@ -82,10 +82,10 @@ const OpponentGame = forwardRef<
           clearLines(gameStateRef.current.board);
           syncUIState(gameStateRef.current);
           break;
-        case "piece-gravity-drop":
+        case "gravity-drop":
           gameStateRef.current.currentPiece.y = action.newY;
           break;
-        case "piece-gravity-lock":
+        case "gravity-lock":
           gameStateRef.current.currentPiece.y = action.newY;
           placePiece({
             piece: action.lockedPiece,
@@ -106,7 +106,7 @@ const OpponentGame = forwardRef<
           pauseMultiplierRef.current = 1;
           setUiState((prev) => ({ ...prev, isPaused: false }));
           break;
-        case "hold-piece":
+        case "player-hold-piece":
           const { pieceType, newPieceToHold } = action;
           gameStateRef.current.currentPiece = spawnPiece(undefined, pieceType);
           setUiState((prev) => ({ ...prev, holdPiece: newPieceToHold }));

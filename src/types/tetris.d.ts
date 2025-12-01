@@ -59,11 +59,11 @@ export type GameLoop = {
 
 export type TetrisEvent =
   // Player-driven events
-  | { type: "piece-player-move"; deltaX: number; timestamp: number }
-  | { type: "piece-player-rotate"; newRotation: number; timestamp: number }
-  | { type: "piece-soft-drop"; newY: number; timestamp: number }
+  | { type: "player-move"; deltaX: number; timestamp: number }
+  | { type: "player-rotate"; newRotation: number; timestamp: number }
+  | { type: "player-soft-drop"; newY: number; timestamp: number }
   | {
-      type: "piece-soft-drop-lock";
+      type: "player-soft-drop-lock";
       lockedPiece: Piece;
       nextPiece: Piece;
       linesCleared: number;
@@ -72,18 +72,24 @@ export type TetrisEvent =
       timestamp: number;
     }
   | {
-      type: "piece-hard-drop-lock";
+      type: "player-hard-drop-lock";
       lockedPiece: Piece;
       nextPiece: Piece;
       linesCleared: number;
       newScore: number;
       newLevel: number;
       timestamp: number;
+    }
+  | {
+      type: "player-hold-piece";
+      pieceType: TetrominoType;
+      timestamp: number;
+      newPieceToHold: TetrominoType | null;
     }
   // Gravity-driven (game loop) events
-  | { type: "piece-gravity-drop"; newY: number; timestamp: number }
+  | { type: "gravity-drop"; newY: number; timestamp: number }
   | {
-      type: "piece-gravity-lock";
+      type: "gravity-lock";
       newY: number;
       lockedPiece: Piece;
       nextPiece: Piece;
@@ -97,12 +103,6 @@ export type TetrisEvent =
   | { type: "game-resume"; timestamp: number }
   | { type: "game-over"; playerId: string; timestamp: number }
   // other
-  | { type: "initial-piece-spawn"; piece: Piece; timestamp: number }
-  | {
-      type: "hold-piece";
-      pieceType: TetrominoType;
-      timestamp: number;
-      newPieceToHold: TetrominoType | null;
-    };
+  | { type: "initial-piece-spawn"; piece: Piece; timestamp: number };
 
 export type GamepadState = { previousBtnStates: boolean[] };

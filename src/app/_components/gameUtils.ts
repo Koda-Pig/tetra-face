@@ -371,7 +371,7 @@ export function handleKeyDown({
       const newScore = gameState.score;
       const newLevel = gameState.level;
       return {
-        type: "piece-hard-drop-lock",
+        type: "player-hard-drop-lock",
         lockedPiece,
         nextPiece,
         linesCleared,
@@ -389,7 +389,7 @@ export function handleKeyDown({
       ) {
         gameState.currentPiece.y++;
         return {
-          type: "piece-soft-drop",
+          type: "player-soft-drop",
           newY: gameState.currentPiece.y,
           timestamp: getTimestamp(),
         };
@@ -409,7 +409,7 @@ export function handleKeyDown({
         const newScore = gameState.score;
         const newLevel = gameState.level;
         return {
-          type: "piece-soft-drop-lock",
+          type: "player-soft-drop-lock",
           lockedPiece,
           nextPiece,
           linesCleared,
@@ -428,7 +428,7 @@ export function handleKeyDown({
       ) {
         gameState.currentPiece.x--;
         return {
-          type: "piece-player-move",
+          type: "player-move",
           deltaX: -1,
           timestamp: getTimestamp(),
         };
@@ -444,7 +444,7 @@ export function handleKeyDown({
       ) {
         gameState.currentPiece.x++;
         return {
-          type: "piece-player-move",
+          type: "player-move",
           deltaX: 1,
           timestamp: getTimestamp(),
         };
@@ -458,7 +458,7 @@ export function handleKeyDown({
       });
       if (didRotateClockwise) {
         return {
-          type: "piece-player-rotate",
+          type: "player-rotate",
           newRotation: gameState.currentPiece.rotation,
           timestamp: getTimestamp(),
         };
@@ -473,7 +473,7 @@ export function handleKeyDown({
       });
       if (didRotateAntiClockwise) {
         return {
-          type: "piece-player-rotate",
+          type: "player-rotate",
           newRotation: gameState.currentPiece.rotation,
           timestamp: getTimestamp(),
         };
@@ -485,7 +485,7 @@ export function handleKeyDown({
       if (newHoldPiece) {
         setUiState((prev) => ({ ...prev, holdPiece: newHoldPiece }));
         return {
-          type: "hold-piece",
+          type: "player-hold-piece",
           pieceType: gameState.currentPiece.tetrominoType,
           timestamp: getTimestamp(),
           newPieceToHold: newHoldPiece,
@@ -597,7 +597,7 @@ export function update({
   ) {
     gameState.currentPiece.y++;
     return {
-      type: "piece-gravity-drop",
+      type: "gravity-drop",
       newY: gameState.currentPiece.y,
       timestamp: getTimestamp(),
     };
@@ -616,7 +616,7 @@ export function update({
       return { type: "game-over", playerId, timestamp: getTimestamp() };
     }
     return {
-      type: "piece-gravity-lock",
+      type: "gravity-lock",
       newY: gameState.currentPiece.y,
       lockedPiece,
       nextPiece: gameState.currentPiece,
