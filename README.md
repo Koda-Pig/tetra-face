@@ -81,7 +81,7 @@ https://fonts.google.com/specimen/Teko?preview.text=TETRAFACE&query=te
   - [ ] add sub-feature to click opponents hold piece to make it drop
 - [ ] ensure implementation matches guidelines: https://tetris.fandom.com/wiki/Tetris_Guideline
 - [x] add controller support - refer to my implementation in [this repo](https://github.com/Koda-Pig/not-a-pig/blob/118776208c649313edd4dbf4d596bdd837a72aa4/src/input.ts#L53)
-- [ ] add feature to send lines cleared to opponent
+- [ ] add feature to send lines cleared to opponent - see: https://tetris.wiki/Garbage
 
 #### SCORING SYSTEM
 

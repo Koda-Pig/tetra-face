@@ -156,17 +156,13 @@ export function isGameOver(gameState: GameState) {
   const piece = gameState.currentPiece;
 
   // 1. Block Out - check if newly spawned piece overlaps existing blocks
-  if (!canPieceMove({ piece, board: gameState.board })) {
-    return true;
-  }
+  if (!canPieceMove({ piece, board: gameState.board })) return true;
 
   // 2. Lock out: check if any blocks exist above the visible area
   for (let row = 0; row < HIDDEN_ROWS - 2; row++) {
     // minus two because we're targeting rows 0 - 17, leaving the last 2 hidden rows as the spawn area
     for (let col = 0; col < COLS; col++) {
-      if (gameState.board[row]![col]!.occupied) {
-        return true;
-      }
+      if (gameState.board[row]![col]!.occupied) return true;
     }
   }
 
@@ -177,9 +173,7 @@ export function isGameOver(gameState: GameState) {
   for (let row = 0; row < gameState.board.length; row++) {
     if (row >= TOTAL_ROWS) {
       for (let col = 0; col < COLS; col++) {
-        if (gameState.board[row]![col]!.occupied) {
-          return true; // blocks pushed above buffer zone
-        }
+        if (gameState.board[row]![col]!.occupied) return true; // blocks pushed above buffer zone
       }
     }
   }
@@ -621,18 +615,14 @@ export function update({
     if (gameState.isGameOver) {
       return { type: "game-over", playerId, timestamp: getTimestamp() };
     }
-    const nextPiece = gameState.currentPiece;
-    const linesCleared = gameState.linesCleared;
-    const newScore = gameState.score;
-    const newLevel = gameState.level;
     return {
       type: "piece-gravity-lock",
       newY: gameState.currentPiece.y,
       lockedPiece,
-      nextPiece,
-      linesCleared,
-      newScore,
-      newLevel,
+      nextPiece: gameState.currentPiece,
+      linesCleared: gameState.linesCleared,
+      newScore: gameState.score,
+      newLevel: gameState.level,
       timestamp: getTimestamp(),
     };
   }

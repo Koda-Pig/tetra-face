@@ -179,6 +179,15 @@ main {
   background-color: currentColor;
   transition-property: background-color, box-shadow, transform;
   transition-duration: 0.2s;
+  &.J,
+  &.L,
+  &.T {
+    transform: translateY(5px);
+  }
+  &.S,
+  &.Z {
+    transform: translateY(-5px);
+  }
   &.I {
     transform: translateX(-5px);
     box-shadow:
@@ -187,14 +196,12 @@ main {
       22px 0;
   }
   &.J {
-    transform: translateY(5px);
     box-shadow:
       -11px 0,
       -11px -11px,
       11px 0;
   }
   &.L {
-    transform: translateY(5px);
     box-shadow:
       -11px 0,
       11px -11px,
@@ -208,21 +215,18 @@ main {
       0 11px;
   }
   &.S {
-    transform: translateY(-5px);
     box-shadow:
       11px 0,
       0 11px,
       -11px 11px;
   }
   &.Z {
-    transform: translateY(-5px);
     box-shadow:
       -11px 0,
       0 11px,
       11px 11px;
   }
   &.T {
-    transform: translateY(5px);
     box-shadow:
       11px 0,
       -11px 0,
