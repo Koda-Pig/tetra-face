@@ -28,7 +28,7 @@ export default function SocketDebugUi({
   return (
     <Drawer>
       <DrawerTrigger asChild>
-        <Button className="absolute right-4 bottom-38">
+        <Button className="absolute top-16 right-4">
           <Terminal />
           <p>Socket Testing</p>
         </Button>
