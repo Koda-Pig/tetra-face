@@ -37,6 +37,58 @@ import {
 import { useUIState } from "~/hooks/useUIState";
 import GameBoard from "./gameBoard";
 
+function handleReceiveGarbage(
+  garbageLines: BoardCell[][],
+  socket: Socket,
+  roomId: string,
+) {
+  socket.emit("game-action", {
+    roomId,
+    action: {
+      type: "receive-garbage",
+      garbageLines,
+      timestamp: getTimestamp(),
+    } as TetrisEvent,
+  });
+}
+
+function handleSendGarbage(
+  garbageLines: BoardCell[][],
+  socket: Socket,
+  roomId: string,
+) {
+  socket.emit("game-action", {
+    roomId,
+    action: {
+      type: "send-garbage",
+      garbageLines,
+      timestamp: getTimestamp(),
+    } as TetrisEvent,
+  });
+}
+
+function handleResume(socket: Socket, roomId: string) {
+  socket.emit("game-pause-event", {
+    roomId,
+    action: {
+      type: "game-resume",
+      timestamp: getTimestamp(),
+    },
+  });
+}
+
+function handleSurrender(socket: Socket, roomId: string, userId: string) {
+  // submit a loss
+  socket.emit("game-over-event", {
+    roomId,
+    action: {
+      type: "game-over",
+      playerId: userId,
+      timestamp: getTimestamp(),
+    },
+  });
+}
+
 type HostGameProps = {
   userId: string;
   socket: Socket;
@@ -44,7 +96,7 @@ type HostGameProps = {
   externalPause: boolean;
   externalGameOver: boolean;
   winner: Winner;
-  onReceiveGarbageCallback?: (
+  onReceiveGarbageCallback: (
     callback: (garbageLines: BoardCell[][]) => void,
   ) => void;
 };
@@ -74,50 +126,6 @@ export default function HostGame({
     if (!gameStateRef.current) return;
     gameStateRef.current.pendingGarbage = garbageLines;
   }, []);
-
-  function handleReceiveGarbage(garbageLines: BoardCell[][]) {
-    socket.emit("game-action", {
-      roomId,
-      action: {
-        type: "receive-garbage",
-        garbageLines,
-        timestamp: getTimestamp(),
-      } as TetrisEvent,
-    });
-  }
-
-  function handleSendGarbage(garbageLines: BoardCell[][]) {
-    socket.emit("game-action", {
-      roomId,
-      action: {
-        type: "send-garbage",
-        garbageLines,
-        timestamp: getTimestamp(),
-      } as TetrisEvent,
-    });
-  }
-
-  function handleResume() {
-    socket.emit("game-pause-event", {
-      roomId,
-      action: {
-        type: "game-resume",
-        timestamp: getTimestamp(),
-      },
-    });
-  }
-
-  function handleSurrender() {
-    // submit a loss
-    socket.emit("game-over-event", {
-      roomId,
-      action: {
-        type: "game-over",
-        playerId: userId,
-        timestamp: getTimestamp(),
-      },
-    });
-  }
 
   useEffect(() => {
     onReceiveGarbageCallback?.(receiveGarbage);
@@ -192,8 +200,10 @@ export default function HostGame({
             gameState: gameStateRef.current!,
             getNextPiece,
             onStateChange: syncUIState,
-            onSendGarbage: handleSendGarbage,
-            onReceiveGarbage: handleReceiveGarbage,
+            onSendGarbage: (garbageLines) =>
+              handleSendGarbage(garbageLines, socket, roomId),
+            onReceiveGarbage: (garbageLines) =>
+              handleReceiveGarbage(garbageLines, socket, roomId),
             pauseMultiplierRef,
             setUiState,
             playerId: userId,
@@ -220,8 +230,10 @@ export default function HostGame({
           step: gameLoop.step * pauseMultiplier,
           getNextPiece,
           onStateChange: syncUIState,
-          onSendGarbage: handleSendGarbage,
-          onReceiveGarbage: handleReceiveGarbage,
+          onSendGarbage: (garbageLines) =>
+            handleSendGarbage(garbageLines, socket, roomId),
+          onReceiveGarbage: (garbageLines) =>
+            handleReceiveGarbage(garbageLines, socket, roomId),
           playerId: userId,
         });
         if (action?.type === "game-over") {
@@ -258,8 +270,6 @@ export default function HostGame({
     canvasRef,
     getNextPiece,
     syncUIState,
-    handleSendGarbage,
-    handleReceiveGarbage,
     gamepadConnected,
   ]);
 
@@ -276,8 +286,10 @@ export default function HostGame({
         gameState: gameStateRef.current!,
         getNextPiece,
         onStateChange: syncUIState,
-        onSendGarbage: handleSendGarbage,
-        onReceiveGarbage: handleReceiveGarbage,
+        onSendGarbage: (garbageLines) =>
+          handleSendGarbage(garbageLines, socket, roomId),
+        onReceiveGarbage: (garbageLines) =>
+          handleReceiveGarbage(garbageLines, socket, roomId),
         pauseMultiplierRef,
         setUiState,
         playerId: userId,
@@ -310,15 +322,7 @@ export default function HostGame({
         handleGamepadDisconnected,
       );
     };
-  }, [
-    socket,
-    roomId,
-    setUiState,
-    userId,
-    getNextPiece,
-    syncUIState,
-    handleReceiveGarbage,
-  ]);
+  }, [socket, roomId, setUiState, userId, getNextPiece, syncUIState]);
 
   // sync external game
   useEffect(() => {
@@ -347,12 +351,20 @@ export default function HostGame({
     <GameBoard uiState={uiState} ref={canvasRef}>
       {uiState.isPaused && !uiState.isGameOver && (
         <div className="grid gap-4">
-          <Button onClick={handleResume} size="lg" className="text-lg">
+          <Button
+            onClick={() => handleResume(socket, roomId)}
+            size="lg"
+            className="text-lg"
+          >
             Resume
           </Button>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button size="lg" className="text-lg" onClick={handleSurrender}>
+              <Button
+                size="lg"
+                className="text-lg"
+                onClick={() => handleSurrender(socket, roomId, userId)}
+              >
                 Surrender
               </Button>
             </TooltipTrigger>

@@ -84,6 +84,7 @@ https://fonts.google.com/specimen/Teko?preview.text=TETRAFACE&query=te
 - [x] add feature to send lines cleared to opponent - see: https://tetris.wiki/Garbage
   - [x] Get base feature working
   - [x] Add checks to see what the number of incoming garbage lines is, and determine how much to process based on how many lines the user cleared while the garbage Q was waiting.
+  - [ ] Fix bug in opponent rendered game where the piece placed + garbage received events aren't being processed in the correct order.
   - [ ] double check this meets all the requirements for the garbage system.
 
 #### SCORING SYSTEM

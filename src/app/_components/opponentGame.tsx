@@ -46,8 +46,6 @@ const OpponentGame = forwardRef<
 
   const triggerActionRef = useCallback(
     (action: TetrisEvent) => {
-      console.log("📨 Opponent action received:", action.type);
-
       const { type } = action;
 
       if (type === "initial-piece-spawn") {
@@ -150,21 +148,10 @@ const OpponentGame = forwardRef<
 
   // game loop
   useEffect(() => {
-    console.log("🔄 OpponentGame useEffect re-running", {
-      canvasRef: canvasRef.current,
-      gameStateRef: gameStateRef.current,
-      initialPiece,
-    });
-    if (!canvasRef.current || !gameStateRef.current) {
-      console.log("❌ Early return - missing refs");
-      return;
-    }
+    if (!canvasRef.current || !gameStateRef.current) return;
     const gameState = gameStateRef.current;
     const canvas = canvasRef.current;
-    if (!canvas.getContext("2d")) {
-      console.error("Failed to get canvas context");
-      return;
-    }
+    if (!canvas.getContext("2d")) return;
     const ctx = canvas.getContext("2d")!;
     const cellWidth = canvas.width / COLS;
     const cellHeight = canvas.height / VISIBLE_ROWS;
@@ -172,8 +159,6 @@ const OpponentGame = forwardRef<
     function animate() {
       const gameLoop = gameLoopRef.current;
       const pauseMultiplier = pauseMultiplierRef.current;
-
-      console.log("🎬 Animate frame", gameLoop.animationId);
 
       if (!gameLoop || pauseMultiplier === undefined) {
         const problemVar = !gameLoop ? gameLoop : pauseMultiplier;
@@ -212,27 +197,16 @@ const OpponentGame = forwardRef<
       gameLoop.animationId = requestAnimationFrame(animate);
     }
 
-    console.log("🚀 Starting new animation loop");
     const gameLoop = gameLoopRef.current;
     gameLoop.animationId = requestAnimationFrame(animate);
 
     return () => {
-      console.log("🛑 Cleanup - canceling animation", gameLoop.animationId);
-
       if (gameLoop.animationId) {
         cancelAnimationFrame(gameLoop.animationId);
         gameLoop.animationId = null;
       }
     };
   }, [canvasRef, syncUIState, initialPiece]);
-
-  useEffect(() => {
-    console.log("🔄 External props changed", {
-      userId,
-      externalPause,
-      externalGameOver,
-    });
-  }, [userId, externalPause, externalGameOver]);
 
   // sync external game
   useEffect(() => {
