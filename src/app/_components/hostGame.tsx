@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useBag } from "~/hooks/useBag";
 import type { Socket } from "socket.io-client";
 import { Button } from "~/components/ui/button";
@@ -14,7 +14,14 @@ import {
   pollGamepadInput,
 } from "./gameUtils";
 import { getTimestamp } from "~/lib/utils";
-import type { GameState, GameLoop, Winner, GamepadState } from "~/types";
+import type {
+  GameState,
+  GameLoop,
+  Winner,
+  GamepadState,
+  TetrisEvent,
+  BoardCell,
+} from "~/types";
 import {
   COLS,
   VISIBLE_ROWS,
@@ -30,6 +37,18 @@ import {
 import { useUIState } from "~/hooks/useUIState";
 import GameBoard from "./gameBoard";
 
+type HostGameProps = {
+  userId: string;
+  socket: Socket;
+  roomId: string;
+  externalPause: boolean;
+  externalGameOver: boolean;
+  winner: Winner;
+  onReceiveGarbageCallback?: (
+    callback: (garbageLines: BoardCell[][]) => void,
+  ) => void;
+};
+
 export default function HostGame({
   userId,
   socket,
@@ -37,14 +56,8 @@ export default function HostGame({
   externalPause,
   externalGameOver,
   winner,
-}: {
-  userId: string;
-  socket: Socket;
-  roomId: string;
-  externalPause: boolean;
-  externalGameOver: boolean;
-  winner: Winner;
-}) {
+  onReceiveGarbageCallback,
+}: HostGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<GameLoop>(INITIAL_GAMELOOP);
   const pauseMultiplierRef = useRef(1); //  0 = paused
@@ -56,6 +69,33 @@ export default function HostGame({
   const { uiState, setUiState, syncUIState } = useUIState();
   const [gamepadConnected, setGamepadConnected] = useState(false);
   const getNextPiece = useBag();
+
+  const receiveGarbage = useCallback((garbageLines: BoardCell[][]) => {
+    if (!gameStateRef.current) return;
+    gameStateRef.current.pendingGarbage = garbageLines;
+  }, []);
+
+  function handleReceiveGarbage(garbageLines: BoardCell[][]) {
+    socket.emit("game-action", {
+      roomId,
+      action: {
+        type: "receive-garbage",
+        garbageLines,
+        timestamp: getTimestamp(),
+      } as TetrisEvent,
+    });
+  }
+
+  function handleSendGarbage(garbageLines: BoardCell[][]) {
+    socket.emit("game-action", {
+      roomId,
+      action: {
+        type: "send-garbage",
+        garbageLines,
+        timestamp: getTimestamp(),
+      } as TetrisEvent,
+    });
+  }
 
   function handleResume() {
     socket.emit("game-pause-event", {
@@ -78,6 +118,10 @@ export default function HostGame({
       },
     });
   }
+
+  useEffect(() => {
+    onReceiveGarbageCallback?.(receiveGarbage);
+  }, [onReceiveGarbageCallback, receiveGarbage]);
 
   // initialize the game state
   useEffect(() => {
@@ -148,6 +192,8 @@ export default function HostGame({
             gameState: gameStateRef.current!,
             getNextPiece,
             onStateChange: syncUIState,
+            onSendGarbage: handleSendGarbage,
+            onReceiveGarbage: handleReceiveGarbage,
             pauseMultiplierRef,
             setUiState,
             playerId: userId,
@@ -174,6 +220,8 @@ export default function HostGame({
           step: gameLoop.step * pauseMultiplier,
           getNextPiece,
           onStateChange: syncUIState,
+          onSendGarbage: handleSendGarbage,
+          onReceiveGarbage: handleReceiveGarbage,
           playerId: userId,
         });
         if (action?.type === "game-over") {
@@ -210,6 +258,8 @@ export default function HostGame({
     canvasRef,
     getNextPiece,
     syncUIState,
+    handleSendGarbage,
+    handleReceiveGarbage,
     gamepadConnected,
   ]);
 
@@ -226,6 +276,8 @@ export default function HostGame({
         gameState: gameStateRef.current!,
         getNextPiece,
         onStateChange: syncUIState,
+        onSendGarbage: handleSendGarbage,
+        onReceiveGarbage: handleReceiveGarbage,
         pauseMultiplierRef,
         setUiState,
         playerId: userId,
@@ -258,7 +310,15 @@ export default function HostGame({
         handleGamepadDisconnected,
       );
     };
-  }, [socket, roomId, userId, getNextPiece, syncUIState, setUiState]);
+  }, [
+    socket,
+    roomId,
+    setUiState,
+    userId,
+    getNextPiece,
+    syncUIState,
+    handleReceiveGarbage,
+  ]);
 
   // sync external game
   useEffect(() => {

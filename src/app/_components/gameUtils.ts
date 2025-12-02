@@ -9,6 +9,7 @@ import type {
   GameLoop,
   GamepadState,
   TetrisEvent,
+  BoardCell,
 } from "~/types";
 import {
   TETRAMINOS,
@@ -27,6 +28,7 @@ import {
   VISIBLE_ROWS,
   INITIAL_GAME_STATE,
   GAMEPAD_KEY_MAP,
+  GARBAGE_COLOR,
 } from "~/constants";
 import { getTimestamp } from "~/lib/utils";
 
@@ -180,17 +182,78 @@ export function isGameOver(gameState: GameState) {
 
   return false;
 }
+function calcGarbageLines(linesCleared: number): number {
+  switch (linesCleared) {
+    case 1:
+      return 0; // Singles send no garbage
+    case 2:
+      return 1; // Doubles send 1 line
+    case 3:
+      return 2; // Triples send 2 lines
+    case 4:
+      return 4; // Tetrises send 4 lines
+    default:
+      return 0;
+  }
+}
+export function generateGarbageLines({
+  numLines,
+}: {
+  numLines: number;
+}): BoardCell[][] {
+  const garbageLines = [];
+  for (let i = 0; i < numLines; i++) {
+    const garbageLine = Array(COLS)
+      .fill(null)
+      .map(() => ({ occupied: true, color: GARBAGE_COLOR }));
+    const holePos = Math.floor(Math.random() * COLS); // random hole per line
+    garbageLine[holePos] = { occupied: false, color: "transparent" };
+    garbageLines.push(garbageLine);
+  }
+  return garbageLines;
+}
+export function addGarbageLines({
+  board,
+  garbage,
+}: {
+  board: GameState["board"];
+  garbage: BoardCell[][];
+}) {
+  board.splice(0, garbage.length); // remove top lines
+  board.push(...garbage);
+}
 export function lockPieceAndSpawnNext({
   gameState,
   getNextPiece,
   onStateChange,
+  onSendGarbage,
+  onReceiveGarbage,
 }: {
   gameState: GameState;
   getNextPiece: () => TetrominoType;
   onStateChange?: (gameState: GameState) => void;
+  onSendGarbage?: (garbageLines: BoardCell[][]) => void;
+  onReceiveGarbage?: (garbageLines: BoardCell[][]) => void;
 }) {
   const linesCleared = clearLines(gameState.board);
   gameState.linesCleared += linesCleared;
+  // send garbage to opponent
+  if (linesCleared > 0 && onSendGarbage) {
+    const numLines = calcGarbageLines(linesCleared);
+    const garbage = generateGarbageLines({ numLines });
+    onSendGarbage(garbage);
+  }
+  // process incoming garbage
+  if (linesCleared === 0 && gameState.pendingGarbage) {
+    const garbageToProcess = gameState.pendingGarbage;
+    addGarbageLines({
+      garbage: garbageToProcess,
+      board: gameState.board,
+    });
+    gameState.pendingGarbage = null;
+    onReceiveGarbage?.(garbageToProcess);
+  }
+
   gameState.currentPiece = spawnPiece(getNextPiece);
   const oldLevel = gameState.level;
   const newLevel = Math.floor(gameState.linesCleared / LINES_PER_LEVEL);
@@ -236,8 +299,6 @@ export function placePiece({
       }
     }
   }
-
-  return true;
 }
 
 export function handleHoldPiece({
@@ -324,6 +385,8 @@ export function handleKeyDown({
   pauseMultiplierRef,
   setUiState,
   playerId,
+  onSendGarbage,
+  onReceiveGarbage,
 }: {
   currentKey: string;
   gameState: GameState;
@@ -332,6 +395,8 @@ export function handleKeyDown({
   pauseMultiplierRef: React.RefObject<number>;
   setUiState: React.Dispatch<React.SetStateAction<UIState>>;
   playerId: string;
+  onSendGarbage?: (garbageLines: BoardCell[][]) => void;
+  onReceiveGarbage?: (garbageLines: BoardCell[][]) => void;
 }): TetrisEvent | null {
   if (!GAME_INPUT_KEYS.includes(currentKey)) return null;
 
@@ -362,6 +427,8 @@ export function handleKeyDown({
         gameState,
         getNextPiece,
         onStateChange,
+        onSendGarbage,
+        onReceiveGarbage,
       });
       if (gameState.isGameOver) {
         return { type: "game-over", playerId, timestamp: getTimestamp() };
@@ -400,6 +467,8 @@ export function handleKeyDown({
           gameState,
           getNextPiece,
           onStateChange,
+          onSendGarbage,
+          onReceiveGarbage,
         });
         if (gameState.isGameOver) {
           return { type: "game-over", playerId, timestamp: getTimestamp() };
@@ -572,20 +641,20 @@ export function update({
   step,
   getNextPiece,
   onStateChange,
+  onSendGarbage,
   playerId,
+  onReceiveGarbage,
 }: {
   gameState: GameState;
   step: number;
   getNextPiece: () => TetrominoType;
   onStateChange?: (gameState: GameState) => void;
+  onSendGarbage?: (garbageLines: BoardCell[][]) => void;
   playerId: string;
+  onReceiveGarbage?: (garbageLines: BoardCell[][]) => void;
 }): TetrisEvent | null {
   gameState.dropTimer += step;
-
-  if (gameState.dropTimer < gameState.dropIntervalSeconds) {
-    return null;
-  }
-
+  if (gameState.dropTimer < gameState.dropIntervalSeconds) return null;
   gameState.dropTimer = 0; // reset drop timer
 
   if (
@@ -603,12 +672,13 @@ export function update({
     };
   } else {
     const lockedPiece = gameState.currentPiece;
-
     placePiece({ piece: gameState.currentPiece, board: gameState.board });
     lockPieceAndSpawnNext({
       gameState,
       getNextPiece,
       onStateChange,
+      onSendGarbage,
+      onReceiveGarbage,
     });
     // need to check here for gameover, as the above function is the only place
     // gameOver state is changed

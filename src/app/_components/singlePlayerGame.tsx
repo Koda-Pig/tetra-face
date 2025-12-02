@@ -163,6 +163,7 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
     canvasRef,
     getNextPiece,
     syncUIState,
+    setUiState,
     restartTrigger,
     gamepadConnected,
   ]);

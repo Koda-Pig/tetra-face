@@ -15,6 +15,7 @@ import {
   placePiece,
   clearLines,
   spawnPiece,
+  addGarbageLines,
 } from "./gameUtils";
 import { getTimestamp } from "~/lib/utils";
 import type { GameState, GameLoop, TetrisEvent, Piece } from "~/types";
@@ -45,6 +46,8 @@ const OpponentGame = forwardRef<
 
   const triggerActionRef = useCallback(
     (action: TetrisEvent) => {
+      console.log("📨 Opponent action received:", action.type);
+
       const { type } = action;
 
       if (type === "initial-piece-spawn") {
@@ -110,6 +113,13 @@ const OpponentGame = forwardRef<
           const { pieceType, newPieceToHold } = action;
           gameStateRef.current.currentPiece = spawnPiece(undefined, pieceType);
           setUiState((prev) => ({ ...prev, holdPiece: newPieceToHold }));
+          break;
+        case "receive-garbage":
+          addGarbageLines({
+            garbage: action.garbageLines,
+            board: gameStateRef.current.board,
+          });
+          break;
       }
     },
     [syncUIState, setUiState],
@@ -140,8 +150,15 @@ const OpponentGame = forwardRef<
 
   // game loop
   useEffect(() => {
-    if (!canvasRef.current || !gameStateRef.current) return;
-
+    console.log("🔄 OpponentGame useEffect re-running", {
+      canvasRef: canvasRef.current,
+      gameStateRef: gameStateRef.current,
+      initialPiece,
+    });
+    if (!canvasRef.current || !gameStateRef.current) {
+      console.log("❌ Early return - missing refs");
+      return;
+    }
     const gameState = gameStateRef.current;
     const canvas = canvasRef.current;
     if (!canvas.getContext("2d")) {
@@ -155,6 +172,8 @@ const OpponentGame = forwardRef<
     function animate() {
       const gameLoop = gameLoopRef.current;
       const pauseMultiplier = pauseMultiplierRef.current;
+
+      console.log("🎬 Animate frame", gameLoop.animationId);
 
       if (!gameLoop || pauseMultiplier === undefined) {
         const problemVar = !gameLoop ? gameLoop : pauseMultiplier;
@@ -193,16 +212,27 @@ const OpponentGame = forwardRef<
       gameLoop.animationId = requestAnimationFrame(animate);
     }
 
+    console.log("🚀 Starting new animation loop");
     const gameLoop = gameLoopRef.current;
     gameLoop.animationId = requestAnimationFrame(animate);
 
     return () => {
+      console.log("🛑 Cleanup - canceling animation", gameLoop.animationId);
+
       if (gameLoop.animationId) {
         cancelAnimationFrame(gameLoop.animationId);
         gameLoop.animationId = null;
       }
     };
   }, [canvasRef, syncUIState, initialPiece]);
+
+  useEffect(() => {
+    console.log("🔄 External props changed", {
+      userId,
+      externalPause,
+      externalGameOver,
+    });
+  }, [userId, externalPause, externalGameOver]);
 
   // sync external game
   useEffect(() => {

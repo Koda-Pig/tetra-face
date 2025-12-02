@@ -81,7 +81,10 @@ https://fonts.google.com/specimen/Teko?preview.text=TETRAFACE&query=te
   - [ ] add sub-feature to click opponents hold piece to make it drop
 - [ ] ensure implementation matches guidelines: https://tetris.fandom.com/wiki/Tetris_Guideline
 - [x] add controller support - refer to my implementation in [this repo](https://github.com/Koda-Pig/not-a-pig/blob/118776208c649313edd4dbf4d596bdd837a72aa4/src/input.ts#L53)
-- [ ] add feature to send lines cleared to opponent - see: https://tetris.wiki/Garbage
+- [x] add feature to send lines cleared to opponent - see: https://tetris.wiki/Garbage
+  - [x] Get base feature working
+  - [x] Add checks to see what the number of incoming garbage lines is, and determine how much to process based on how many lines the user cleared while the garbage Q was waiting.
+  - [ ] double check this meets all the requirements for the garbage system.
 
 #### SCORING SYSTEM
 

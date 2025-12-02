@@ -36,6 +36,7 @@ export type GameState = {
   userId: string;
   holdPiece: TetrominoType | null;
   canHold: boolean;
+  pendingGarbage: BoardCell[][] | null; // lines of garbage queued to be added
 };
 
 export type UIState = {
@@ -103,6 +104,8 @@ export type TetrisEvent =
   | { type: "game-resume"; timestamp: number }
   | { type: "game-over"; playerId: string; timestamp: number }
   // other
-  | { type: "initial-piece-spawn"; piece: Piece; timestamp: number };
+  | { type: "initial-piece-spawn"; piece: Piece; timestamp: number }
+  | { type: "send-garbage"; garbageLines: BoardCell[][]; timestamp: number }
+  | { type: "receive-garbage"; garbageLines: BoardCell[][]; timestamp: number }; // this should happen when the garbage is processed (ie: when piece is locked), not immediately when it's generated
 
 export type GamepadState = { previousBtnStates: boolean[] };

@@ -364,6 +364,7 @@ export const INITIAL_GAME_STATE: Omit<
   level: 0,
   holdPiece: null,
   canHold: true,
+  pendingGarbage: null,
 };
 
 export const LINE_CLEAR_SCORES = {
@@ -394,3 +395,5 @@ export const INITIAL_GAMELOOP = {
   deltaTime: 0,
   step: 1 / 60,
 };
+
+export const GARBAGE_COLOR = "#808080";

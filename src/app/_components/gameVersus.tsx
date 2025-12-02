@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSocket } from "~/hooks/useSocket";
-import type { GameRoom, TetrisEvent, Winner } from "~/types";
+import type { BoardCell, GameRoom, TetrisEvent, Winner } from "~/types";
 import type { Session } from "next-auth";
 import CopyButton from "./copyButton";
 import { Play } from "lucide-react";
@@ -31,6 +31,9 @@ export default function GameVersus({ session }: { session: Session | null }) {
     (p) => p.userId === session?.user?.id,
   );
   const isCurrentPlayerReady = currentPlayer?.ready ?? false;
+  const hostGameReceiveGarbageRef = useRef<
+    ((garbageLines: BoardCell[][]) => void) | null
+  >(null);
 
   function addMessage(message: string) {
     setMessages((prev) => [
@@ -117,7 +120,12 @@ export default function GameVersus({ session }: { session: Session | null }) {
     );
     socket.on("opponent-action", (data: { action: TetrisEvent }) => {
       addMessage(`Received opponent action: ${JSON.stringify(data?.action)}`);
-      opponentGameRef.current?.triggerAction(data.action);
+      if (data.action.type === "send-garbage") {
+        // 'send-garbage' is the one event that needs to be handled by the host game, as it affects the host game's state
+        hostGameReceiveGarbageRef.current?.(data?.action?.garbageLines);
+      } else {
+        opponentGameRef.current?.triggerAction(data.action);
+      }
     });
     socket.on("game-pause-event", (data: { action: TetrisEvent }) => {
       addMessage(`game pause event global ${data.action.type}`);
@@ -191,6 +199,9 @@ export default function GameVersus({ session }: { session: Session | null }) {
                 externalPause={gamePaused}
                 externalGameOver={isGameOver}
                 winner={winner}
+                onReceiveGarbageCallback={(callback) =>
+                  (hostGameReceiveGarbageRef.current = callback)
+                }
               />
             )}
           </div>
