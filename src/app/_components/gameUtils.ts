@@ -546,7 +546,7 @@ export function handleKeyDown({
       } else {
         return null;
       }
-    case "KeyH":
+    case "KeyC":
       const newHoldPiece = handleHoldPiece({ gameState, getNextPiece });
       if (newHoldPiece) {
         setUiState((prev) => ({ ...prev, holdPiece: newHoldPiece }));

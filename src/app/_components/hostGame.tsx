@@ -17,7 +17,6 @@ import { getTimestamp } from "~/lib/utils";
 import type {
   GameState,
   GameLoop,
-  Winner,
   GamepadState,
   TetrisEvent,
   BoardCell,
@@ -116,7 +115,6 @@ type HostGameProps = {
   roomId: string;
   externalPause: boolean;
   externalGameOver: boolean;
-  winner: Winner;
   onReceiveGarbageCallback: (
     callback: (garbageLines: BoardCell[][]) => void,
   ) => void;
@@ -128,7 +126,6 @@ export default function HostGame({
   roomId,
   externalPause,
   externalGameOver,
-  winner,
   onReceiveGarbageCallback,
 }: HostGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -379,7 +376,6 @@ export default function HostGame({
           </Tooltip>
         </div>
       )}
-      {winner && <p>YOU {winner === "you" ? "WON" : "LOST"}!</p>}
     </GameBoard>
   );
 }

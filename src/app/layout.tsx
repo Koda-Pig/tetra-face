@@ -1,6 +1,7 @@
 import "~/styles/globals.css";
 
 import { type Metadata } from "next";
+import { Outfit } from "next/font/google";
 import { Silkscreen } from "next/font/google";
 
 export const metadata: Metadata = {
@@ -9,17 +10,21 @@ export const metadata: Metadata = {
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
+const base_font = Outfit({
+  subsets: ["latin"],
+  variable: "--font-base",
+});
 const retro_font = Silkscreen({
   subsets: ["latin"],
   weight: "400",
-  variable: "--font-retro_font",
+  variable: "--font-retro",
 });
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${retro_font.variable}`}>
+    <html lang="en" className={`${base_font.variable} ${retro_font.variable}`}>
       {/* <head>
         <script
           crossOrigin="anonymous"

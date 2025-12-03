@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { useSocket } from "~/hooks/useSocket";
 import type { BoardCell, GameRoom, TetrisEvent, Winner } from "~/types";
 import type { Session } from "next-auth";
-import CopyButton from "./copyButton";
 import { Play } from "lucide-react";
 import HostGame from "./hostGame";
 import { getTimestamp } from "~/lib/utils";
@@ -16,7 +15,6 @@ import { cn } from "~/lib/utils";
 export default function GameVersus({ session }: { session: Session | null }) {
   const { socket, isConnected } = useSocket();
   const [currentRoom, setCurrentRoom] = useState<GameRoom | null>(null);
-  const [roomIdToJoin, setRoomIdToJoin] = useState("");
   const [availableRooms, setAvailableRooms] = useState<GameRoom[]>([]);
   const [messages, setMessages] = useState<string[]>([]);
   const [isRoomHost, setIsRoomHost] = useState<boolean>(false);
@@ -49,22 +47,22 @@ export default function GameVersus({ session }: { session: Session | null }) {
     socket.emit("create-room", session.user.id);
   }
 
-  function joinRoomById() {
-    if (!socket || !session?.user?.id || !roomIdToJoin.trim()) return;
-    addMessage(`Attempting to join room: ${roomIdToJoin}`);
+  function joinRoom(roomId: string) {
+    if (!socket || !session?.user?.id) return;
+    addMessage(`Attempting to join room: ${roomId}`);
     setIsRoomHost(false);
     socket.emit("join-room", {
-      roomId: roomIdToJoin,
+      roomId,
       userId: session.user.id,
     });
   }
 
-  function joinListedRoom(roomId: string) {
+  function leaveRoom(roomId: string) {
     if (!socket || !session?.user?.id) return;
-
-    addMessage(`Attempting to join room: ${roomId}`);
+    addMessage(`Attempting to leave room: ${roomId}`);
     setIsRoomHost(false);
-    socket.emit("join-room", {
+    setCurrentRoom(null);
+    socket.emit("leave-room", {
       roomId,
       userId: session.user.id,
     });
@@ -198,7 +196,6 @@ export default function GameVersus({ session }: { session: Session | null }) {
                 roomId={currentRoom.id}
                 externalPause={gamePaused}
                 externalGameOver={isGameOver}
-                winner={winner}
                 onReceiveGarbageCallback={(callback) =>
                   (hostGameReceiveGarbageRef.current = callback)
                 }
@@ -247,7 +244,7 @@ export default function GameVersus({ session }: { session: Session | null }) {
 
           {availableRooms.length > 0 && (
             <div className="mb-4">
-              <h4 className="mb-2 font-semibold">Available Rooms</h4>
+              <h4 className="mb-2 text-xl font-semibold">Available Rooms</h4>
               <div className="space-y-2 overflow-y-auto rounded border p-2">
                 {availableRooms.map((room) => (
                   <div
@@ -264,12 +261,15 @@ export default function GameVersus({ session }: { session: Session | null }) {
                     </div>
                     <Button
                       size="sm"
-                      onClick={() => joinListedRoom(room.id)}
-                      disabled={
-                        room.players.length >= 2 || currentRoom !== null
-                      }
+                      onClick={() => {
+                        if (currentRoom?.id === room.id) leaveRoom(room.id);
+                        else joinRoom(room.id);
+                      }}
+                      // disabled={
+                      //   room.players.length >= 2 || currentRoom !== null
+                      // }
                     >
-                      Join
+                      {currentRoom?.id === room.id ? "Leave" : "Join"}
                     </Button>
                   </div>
                 ))}
@@ -285,34 +285,13 @@ export default function GameVersus({ session }: { session: Session | null }) {
             >
               Create Room
             </Button>
-
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={roomIdToJoin}
-                onChange={(e) => setRoomIdToJoin(e.target.value)}
-                placeholder="Room ID"
-                className="w-full rounded border"
-              />
-              <Button
-                onClick={joinRoomById}
-                disabled={
-                  !isConnected || !session?.user || !roomIdToJoin.trim()
-                }
-              >
-                Join
-              </Button>
-            </div>
           </div>
           {/* Current Room Info */}
 
           {currentRoom && (
             <div className="mb-4 rounded bg-gray-500 p-2">
               <h4 className="font-semibold">Current Room</h4>
-              <p className="text-sm">
-                ID: {currentRoom.id}
-                <CopyButton content={currentRoom.id} />
-              </p>
+              <p className="text-sm">ID: {currentRoom.id}</p>
               <p className="text-sm">Players: {currentRoom.players.length}/2</p>
               <ul className="text-xs">
                 {currentRoom.players.map((player, idx) => (

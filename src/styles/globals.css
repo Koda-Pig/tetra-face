@@ -5,8 +5,9 @@
 
 @theme {
   --font-sans:
-    var(--font-retro_font), ui-sans-serif, system-ui, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    var(--font-base), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-heading: var(--font-retro), ui-sans-serif, system-ui, sans-serif;
 }
 
 @theme inline {
@@ -129,7 +130,15 @@
   body {
     @apply bg-background text-foreground;
   }
-  button:not(:disabled):hover {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
+  }
+  button:not(:disabled) {
     cursor: pointer;
   }
 }

@@ -19,7 +19,7 @@ export const GAME_INPUT_KEYS = [
   "ArrowRight",
   "Space",
   "KeyZ",
-  "KeyH",
+  "KeyC",
   "Escape",
 ];
 // use values same as GAME_INPUT_KEYS so that the function can be reused for the existing
@@ -50,7 +50,7 @@ export const GAMEPAD_KEY_MAP = {
   15: "ArrowRight", // Right button in left cluster (D-pad right)
 
   // Center button (if present)
-  // 16: "KeyH", // Center button in center cluster (Home/Guide/PS)
+  // 16: "KeyC", // Center button in center cluster (Home/Guide/PS)
 } as const;
 
 // prettier-ignore

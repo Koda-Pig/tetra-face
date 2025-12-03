@@ -92,6 +92,30 @@ export function initializeSocket(httpServer: HttpServer) {
       broadcastRoomUpdate(io);
     });
 
+    socket.on("leave-room", (data: { roomId: string; userId: string }) => {
+      const { roomId, userId } = data;
+      const room = gameRooms.get(roomId);
+
+      if (!room) {
+        socket.emit("error", { message: "room not found" });
+        return;
+      }
+
+      const playerIndex = room.players.findIndex((p) => p.userId === userId);
+      if (playerIndex === -1) {
+        socket.emit("error", { message: "player not found" });
+        return;
+      }
+
+      room.players.splice(playerIndex, 1);
+      void socket.leave(roomId);
+
+      if (room.players.length === 0) gameRooms.delete(roomId);
+      else socket.to(roomId).emit("player-disconnected", { roomId, userId });
+
+      broadcastRoomUpdate(io);
+    });
+
     socket.on("toggle-ready", (data: { roomId: string; userId: string }) => {
       const { roomId, userId } = data;
       const room = gameRooms.get(roomId);
