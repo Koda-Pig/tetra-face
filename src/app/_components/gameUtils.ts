@@ -1,11 +1,9 @@
 import { type RefObject } from "react";
-
 import type {
   GameState,
   Piece,
   TetrominoType,
   UIState,
-  Tetromino,
   GameLoop,
   GamepadState,
   TetrisEvent,
@@ -32,7 +30,7 @@ import {
 } from "~/constants";
 import { getTimestamp } from "~/lib/utils";
 
-export function canPieceMove({
+function canPieceMove({
   piece,
   board,
   deltaX = 0,
@@ -68,7 +66,7 @@ export function canPieceMove({
   return true;
 }
 
-export function calcDropSpeed(level: number): number {
+function calcDropSpeed(level: number): number {
   let frames;
   if (level === 0) frames = 48;
   else if (level === 1) frames = 43;
@@ -89,13 +87,10 @@ export function calcDropSpeed(level: number): number {
 }
 
 // function overloads
-export function spawnPiece(getNext: () => TetrominoType): Piece;
-export function spawnPiece(
-  getNext: undefined,
-  newTetrominoType: TetrominoType,
-): Piece;
+function spawnPiece(getNext: () => TetrominoType): Piece;
+function spawnPiece(getNext: undefined, newTetrominoType: TetrominoType): Piece;
 
-export function spawnPiece(
+function spawnPiece(
   getNext?: () => TetrominoType,
   newTetrominoType?: TetrominoType,
 ): Piece {
@@ -111,7 +106,7 @@ export function spawnPiece(
   };
 }
 
-export function tryRotatePiece({
+function tryRotatePiece({
   piece,
   board,
   direction,
@@ -152,7 +147,7 @@ export function tryRotatePiece({
 
   return false;
 }
-export function isGameOver(gameState: GameState) {
+function isGameOver(gameState: GameState) {
   // check the 3 conditions for game over
 
   const piece = gameState.currentPiece;
@@ -196,7 +191,7 @@ function calcGarbageLines(linesCleared: number): number {
       return 0;
   }
 }
-export function generateGarbageLines({
+function generateGarbageLines({
   numLines,
 }: {
   numLines: number;
@@ -212,7 +207,7 @@ export function generateGarbageLines({
   }
   return garbageLines;
 }
-export function addGarbageLines({
+function addGarbageLines({
   board,
   garbage,
 }: {
@@ -223,7 +218,7 @@ export function addGarbageLines({
   board.push(...garbage);
 }
 // returns the garbage to be added if any
-export function lockPieceAndSpawnNext({
+function lockPieceAndSpawnNext({
   gameState,
   getNextPiece,
   onStateChange,
@@ -274,7 +269,7 @@ export function lockPieceAndSpawnNext({
   onStateChange?.(gameState);
   return garbage;
 }
-export function placePiece({
+function placePiece({
   piece,
   board,
 }: {
@@ -299,8 +294,7 @@ export function placePiece({
     }
   }
 }
-
-export function handleHoldPiece({
+function handleHoldPiece({
   gameState,
   getNextPiece,
 }: {
@@ -322,15 +316,14 @@ export function handleHoldPiece({
   gameState.canHold = false;
   return currentPiece.tetrominoType;
 }
-export function hardDrop({
+function hardDrop({
   piece,
   board,
 }: {
   piece: GameState["currentPiece"];
   board: GameState["board"];
-}) {
+}): number {
   let dropDistance = 0;
-
   // keep moving down until you can't
   while (
     canPieceMove({
@@ -341,11 +334,9 @@ export function hardDrop({
   ) {
     dropDistance++;
   }
-
-  // apply new position
-  piece.y += dropDistance;
+  return dropDistance;
 }
-export function clearLines(board: GameState["board"]): number {
+function clearLines(board: GameState["board"]): number {
   let linesCleared = 0;
 
   // check from bottom up
@@ -365,9 +356,8 @@ export function clearLines(board: GameState["board"]): number {
   }
   return linesCleared;
 }
-
 // make sure this is generated to avoid shared object references
-export const createEmptyBoard = () =>
+const createEmptyBoard = () =>
   Array(TOTAL_ROWS)
     .fill(null)
     .map(() =>
@@ -376,7 +366,7 @@ export const createEmptyBoard = () =>
         .map(() => ({ occupied: false })),
     );
 
-export function handleKeyDown({
+function handleKeyDown({
   currentKey,
   gameState,
   getNextPiece,
@@ -414,10 +404,12 @@ export function handleKeyDown({
   switch (currentKey) {
     case "ArrowUp":
       const lockedPiece = gameState.currentPiece;
-      hardDrop({
+      const dropDistance = hardDrop({
         piece: gameState.currentPiece,
         board: gameState.board,
       });
+      // apply new position
+      gameState.currentPiece.y += dropDistance;
       // place piece immediately
       placePiece({ piece: gameState.currentPiece, board: gameState.board });
       const garbageToSend = lockPieceAndSpawnNext({
@@ -564,7 +556,7 @@ export function handleKeyDown({
   }
 }
 
-export function drawBoard({
+function drawBoard({
   ctx,
   board,
   cellWidth,
@@ -591,19 +583,14 @@ export function drawBoard({
   }
 }
 
-export function drawTetromino({
+function drawTetromino({
   ctx,
-  tetromino,
-  rotation,
-  x,
-  y,
+  piece,
 }: {
   ctx: CanvasRenderingContext2D;
-  tetromino: Tetromino;
-  x: number;
-  y: number;
-  rotation: number;
+  piece: GameState["currentPiece"];
 }) {
+  const { tetromino, x, y, rotation } = piece;
   const { rotations, color } = tetromino;
   const cellWidth = ctx.canvas.width / COLS;
   const cellHeight = ctx.canvas.height / VISIBLE_ROWS;
@@ -618,22 +605,59 @@ export function drawTetromino({
     }
 
     for (let j = 0; j < row.length; j++) {
-      if (row[j] === FILLED_CELL) {
-        const canvasY = (y + i - HIDDEN_ROWS) * cellHeight; // adjust for hidden rows
-        const canvasX = (x + j) * cellWidth;
+      if (row[j] !== FILLED_CELL) continue;
+      const canvasY = (y + i - HIDDEN_ROWS) * cellHeight; // adjust for hidden rows
+      const canvasX = (x + j) * cellWidth;
 
-        const isWithinVisibleArea = y + i >= HIDDEN_ROWS;
+      const isWithinVisibleArea = y + i >= HIDDEN_ROWS;
 
-        if (isWithinVisibleArea) {
-          ctx.fillStyle = color;
-          ctx.fillRect(canvasX, canvasY, cellWidth, cellHeight);
-        }
-      }
+      if (!isWithinVisibleArea) continue;
+      ctx.fillStyle = color;
+      ctx.fillRect(canvasX + 0.5, canvasY + 0.5, cellWidth - 1, cellHeight - 1);
     }
   }
 }
 
-export function update({
+function drawGhost({
+  ctx,
+  piece,
+  board,
+}: {
+  ctx: CanvasRenderingContext2D;
+  piece: GameState["currentPiece"];
+  board: GameState["board"];
+}) {
+  const { tetromino, x, y, rotation } = piece;
+  const { rotations, color } = tetromino;
+  const cellWidth = ctx.canvas.width / COLS;
+  const cellHeight = ctx.canvas.height / VISIBLE_ROWS;
+  const cells = rotations[rotation];
+  const dropDistance = hardDrop({ piece, board });
+  const ghostY = y + dropDistance;
+
+  ctx.save();
+
+  for (let i = 0; i < cells!.length; i++) {
+    const row = cells![i];
+    if (!row) continue;
+
+    for (let j = 0; j < row.length; j++) {
+      if (row[j] !== FILLED_CELL) continue;
+      const canvasY = (ghostY + i - HIDDEN_ROWS) * cellHeight;
+      const canvasX = (x + j) * cellWidth;
+
+      const isWithinVisibleArea = ghostY + i >= HIDDEN_ROWS;
+
+      if (!isWithinVisibleArea) continue;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(canvasX, canvasY, cellWidth, cellHeight);
+    }
+  }
+  ctx.restore();
+}
+
+function update({
   gameState,
   step,
   getNextPiece,
@@ -693,7 +717,7 @@ export function update({
   }
 }
 
-export function render({
+function render({
   ctx,
   canvas,
   cellWidth,
@@ -709,18 +733,19 @@ export function render({
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  drawBoard({ ctx, board: gameState.board, cellWidth, cellHeight });
+  drawGhost({
+    ctx,
+    piece: gameState.currentPiece,
+    board: gameState.board,
+  });
   drawTetromino({
     ctx,
-    rotation: gameState.currentPiece.rotation,
-    tetromino: gameState.currentPiece.tetromino,
-    x: gameState.currentPiece.x,
-    y: gameState.currentPiece.y,
+    piece: gameState.currentPiece,
   });
-
-  drawBoard({ ctx, board: gameState.board, cellWidth, cellHeight });
 }
 
-export function restartGame({
+function restartGame({
   gameStateRef,
   pauseMultiplierRef,
   gameLoopRef,
@@ -770,7 +795,6 @@ export function restartGame({
   setRestartTrigger((prev) => prev + 1);
 }
 
-export // returns keycode
 function pollGamepadInput({
   gamepadStateRef,
 }: {
@@ -800,3 +824,18 @@ function pollGamepadInput({
 
   return null;
 }
+
+export {
+  createEmptyBoard,
+  calcDropSpeed,
+  spawnPiece,
+  isGameOver,
+  addGarbageLines,
+  placePiece,
+  clearLines,
+  handleKeyDown,
+  update,
+  render,
+  restartGame,
+  pollGamepadInput,
+};
