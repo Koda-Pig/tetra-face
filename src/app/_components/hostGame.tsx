@@ -308,9 +308,17 @@ export default function HostGame({
       gamepadStateRef.current.previousBtnStates.fill(false);
     };
 
+    function handlePause() {
+      socket.emit("game-pause-event", {
+        roomId,
+        action: { type: "game-pause", timestamp: getTimestamp() },
+      });
+    }
+
     window.addEventListener("keydown", handleKeyDownWrapper);
     window.addEventListener("gamepadconnected", handleGamepadConnected);
     window.addEventListener("gamepaddisconnected", handleGamepadDisconnected);
+    window.addEventListener("blur", handlePause);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDownWrapper);
@@ -319,6 +327,7 @@ export default function HostGame({
         "gamepaddisconnected",
         handleGamepadDisconnected,
       );
+      window.removeEventListener("blur", handlePause);
     };
   }, [socket, roomId, setUiState, userId, getNextPiece, syncUIState]);
 

@@ -86,7 +86,7 @@ https://fonts.google.com/specimen/Teko?preview.text=TETRAFACE&query=te
   - [x] Add checks to see what the number of incoming garbage lines is, and determine how much to process based on how many lines the user cleared while the garbage Q was waiting.
   - [x] Fix bug in opponent rendered game where the piece placed + garbage received events aren't being processed in the correct order.
   - [ ] double check this meets all the requirements for the garbage system.
-  - [ ] fix scenario where player browser window loses focus and their animation loop stops. This should pause the game or keep running, one of the two.
+  - [x] fix scenario where player browser window loses focus and their animation loop stops. This should pause the game or keep running, one of the two.
 
 #### SCORING SYSTEM
 
