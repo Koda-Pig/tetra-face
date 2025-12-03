@@ -74,6 +74,7 @@ https://play.tetris.com/
   - [x] Fix bug in opponent rendered game where the piece placed + garbage received events aren't being processed in the correct order.
   - [ ] double check this meets all the requirements for the garbage system.
   - [x] fix scenario where player browser window loses focus and their animation loop stops. This should pause the game or keep running, one of the two.
+- [x] implement ghost pieces
 
 #### SCORING SYSTEM
 
