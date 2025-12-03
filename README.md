@@ -46,19 +46,6 @@ pnpm run dev
 Refer to the oldschool UI to make sure I have everything I need. This is a convenient source for that.
 https://play.tetris.com/
 
-Game UI categories:
-
-1. diegetic -> invokes game world and narrative, only applies for games with characters (unapplicable for this)
-2. Non diegetic -> game tells info immediately, regardless, like healthbars
-3. spatial -> UI existing in gamespace, think instructions on actual walls
-4. meta -> like blood on screen to portray health in a FPS game
-
-The all rely on game world + narrative
-
-#### Font options:
-
-https://fonts.google.com/specimen/Teko?preview.text=TETRAFACE&query=te
-
 ### Gameplay
 
 - [x] Implement the 7-bag randomizer method for selecting tetrominos
@@ -90,14 +77,14 @@ https://fonts.google.com/specimen/Teko?preview.text=TETRAFACE&query=te
 
 #### SCORING SYSTEM
 
-- Basic Line Clears:
+- Basic Line Clears: [implemented]
 -
 - Single: 100 × level
 - Double: 300 × level
 - Triple: 500 × level
 - Tetris (4 lines): 800 × level
 -
-- T-Spins:
+- T-Spins: [not-implemented]
 -
 - T-Spin Single: 800 × level
 - T-Spin Double: 1200 × level
@@ -132,27 +119,7 @@ Only discord auth set up for now.
 
 - [x] Deploy web app
 
-Options to consider
-
-- fly.io
-  - free tier covers $5 usage per month
-  - cold starts are fast AF
-  - they have redis
-  - they have postgres
-  - pay as you go
-  - free trial should work for now https://fly.io/trial
-
-Notes about deployment:
-
-Might need to add this postbuild script to package.json, but lets test first without it.
-
-```json
-"postbuild": "prisma migrate deploy"
-```
-
 ### Other
-
-host game has a restart button when paused. This makes more sense for single player. For multiplayer, it should probably just have a resume button.
 
 - [ ] replace restart button with resume + rematch buttons in host game
   - [x] remove restart btn
@@ -162,7 +129,7 @@ host game has a restart button when paused. This makes more sense for single pla
 - [x] re-implement single player (low priority)
 - [ ] Update game events to only send over tetromino type, not the whole piece. It's unnecessary usage of bandwidth
   - Actually need to double check this. I think the whole piece may need to be sent for most cases, as the whole piece is needed for the `placePiece` function in the opponent game. Maybe, maybe not.
-- [ ] clean up this readme
+- [x] clean up this readme
 - [ ] performance checks
 - [ ] security checks
 
