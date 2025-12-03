@@ -200,8 +200,6 @@ export default function HostGame({
             gameState: gameStateRef.current!,
             getNextPiece,
             onStateChange: syncUIState,
-            onSendGarbage: (garbageLines) =>
-              handleSendGarbage(garbageLines, socket, roomId),
             onReceiveGarbage: (garbageLines) =>
               handleReceiveGarbage(garbageLines, socket, roomId),
             pauseMultiplierRef,
@@ -213,7 +211,15 @@ export default function HostGame({
           } else if (action?.type === "game-over") {
             socket.emit("game-over-event", { roomId, action });
           } else if (action) {
-            socket.emit("game-action", { roomId, action });
+            if ("garbageToSend" in action) {
+              // extract garbage (don't send that data unnecessarily)
+              const { garbageToSend, ...cleanAction } = action;
+              socket.emit("game-action", { roomId, action: cleanAction });
+              if (garbageToSend)
+                handleSendGarbage(garbageToSend, socket, roomId);
+            } else {
+              socket.emit("game-action", { roomId, action });
+            }
           }
         }
       }
@@ -230,8 +236,6 @@ export default function HostGame({
           step: gameLoop.step * pauseMultiplier,
           getNextPiece,
           onStateChange: syncUIState,
-          onSendGarbage: (garbageLines) =>
-            handleSendGarbage(garbageLines, socket, roomId),
           onReceiveGarbage: (garbageLines) =>
             handleReceiveGarbage(garbageLines, socket, roomId),
           playerId: userId,
@@ -239,7 +243,19 @@ export default function HostGame({
         if (action?.type === "game-over") {
           socket.emit("game-over-event", { roomId, action });
         } else if (action) {
-          socket.emit("game-action", { roomId, action });
+          if ("garbageToSend" in action) {
+            // extract garbage (don't send that data unnecessarily)
+            const { garbageToSend, ...cleanAction } = action;
+            socket.emit("game-action", { roomId, action: cleanAction });
+            if (garbageToSend) {
+              setTimeout(
+                () => handleSendGarbage(garbageToSend, socket, roomId),
+                1000,
+              );
+            }
+          } else {
+            socket.emit("game-action", { roomId, action });
+          }
         }
       }
       // draw the game
@@ -286,8 +302,6 @@ export default function HostGame({
         gameState: gameStateRef.current!,
         getNextPiece,
         onStateChange: syncUIState,
-        onSendGarbage: (garbageLines) =>
-          handleSendGarbage(garbageLines, socket, roomId),
         onReceiveGarbage: (garbageLines) =>
           handleReceiveGarbage(garbageLines, socket, roomId),
         pauseMultiplierRef,
@@ -300,7 +314,19 @@ export default function HostGame({
       } else if (action?.type === "game-over") {
         socket.emit("game-over-event", { roomId, action });
       } else if (action) {
-        socket.emit("game-action", { roomId, action });
+        if ("garbageToSend" in action) {
+          // extract garbage (don't send that data unnecessarily)
+          const { garbageToSend, ...cleanAction } = action;
+          socket.emit("game-action", { roomId, action: cleanAction });
+          if (garbageToSend) {
+            setTimeout(
+              () => handleSendGarbage(garbageToSend, socket, roomId),
+              1000,
+            );
+          }
+        } else {
+          socket.emit("game-action", { roomId, action });
+        }
       }
     }
 

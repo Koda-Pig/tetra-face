@@ -71,6 +71,7 @@ export type TetrisEvent =
       newScore: number;
       newLevel: number;
       timestamp: number;
+      garbageToSend: BoardCell[][] | null;
     }
   | {
       type: "player-hard-drop-lock";
@@ -80,6 +81,7 @@ export type TetrisEvent =
       newScore: number;
       newLevel: number;
       timestamp: number;
+      garbageToSend: BoardCell[][] | null;
     }
   | {
       type: "player-hold-piece";
@@ -98,6 +100,7 @@ export type TetrisEvent =
       newScore: number;
       newLevel: number;
       timestamp: number;
+      garbageToSend: BoardCell[][] | null;
     }
   // Game state events
   | { type: "game-pause"; timestamp: number }

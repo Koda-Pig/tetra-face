@@ -222,26 +222,24 @@ export function addGarbageLines({
   board.splice(0, garbage.length); // remove top lines
   board.push(...garbage);
 }
+// returns the garbage to be added if any
 export function lockPieceAndSpawnNext({
   gameState,
   getNextPiece,
   onStateChange,
-  onSendGarbage,
   onReceiveGarbage,
 }: {
   gameState: GameState;
   getNextPiece: () => TetrominoType;
   onStateChange?: (gameState: GameState) => void;
-  onSendGarbage?: (garbageLines: BoardCell[][]) => void;
   onReceiveGarbage?: (garbageLines: BoardCell[][]) => void;
-}) {
+}): BoardCell[][] | null {
+  let garbage = null;
   const linesCleared = clearLines(gameState.board);
   gameState.linesCleared += linesCleared;
-  // send garbage to opponent
-  if (linesCleared > 0 && onSendGarbage) {
+  if (linesCleared > 0) {
     const numLines = calcGarbageLines(linesCleared);
-    const garbage = generateGarbageLines({ numLines });
-    onSendGarbage(garbage);
+    garbage = generateGarbageLines({ numLines });
   }
   // process incoming garbage
   if (linesCleared === 0 && gameState.pendingGarbage) {
@@ -274,6 +272,7 @@ export function lockPieceAndSpawnNext({
   // reset 'canHold' after a new piece is spawned
   gameState.canHold = true;
   onStateChange?.(gameState);
+  return garbage;
 }
 export function placePiece({
   piece,
@@ -385,7 +384,6 @@ export function handleKeyDown({
   pauseMultiplierRef,
   setUiState,
   playerId,
-  onSendGarbage,
   onReceiveGarbage,
 }: {
   currentKey: string;
@@ -395,7 +393,6 @@ export function handleKeyDown({
   pauseMultiplierRef: React.RefObject<number>;
   setUiState: React.Dispatch<React.SetStateAction<UIState>>;
   playerId: string;
-  onSendGarbage?: (garbageLines: BoardCell[][]) => void;
   onReceiveGarbage?: (garbageLines: BoardCell[][]) => void;
 }): TetrisEvent | null {
   if (!GAME_INPUT_KEYS.includes(currentKey)) return null;
@@ -423,11 +420,10 @@ export function handleKeyDown({
       });
       // place piece immediately
       placePiece({ piece: gameState.currentPiece, board: gameState.board });
-      lockPieceAndSpawnNext({
+      const garbageToSend = lockPieceAndSpawnNext({
         gameState,
         getNextPiece,
         onStateChange,
-        onSendGarbage,
         onReceiveGarbage,
       });
       if (gameState.isGameOver) {
@@ -444,6 +440,7 @@ export function handleKeyDown({
         linesCleared,
         newScore,
         newLevel,
+        garbageToSend,
         timestamp: getTimestamp(),
       };
     case "ArrowDown":
@@ -463,11 +460,10 @@ export function handleKeyDown({
       } else {
         const lockedPiece = gameState.currentPiece;
         placePiece({ piece: gameState.currentPiece, board: gameState.board });
-        lockPieceAndSpawnNext({
+        const garbageToSend = lockPieceAndSpawnNext({
           gameState,
           getNextPiece,
           onStateChange,
-          onSendGarbage,
           onReceiveGarbage,
         });
         if (gameState.isGameOver) {
@@ -484,6 +480,7 @@ export function handleKeyDown({
           linesCleared,
           newScore,
           newLevel,
+          garbageToSend,
           timestamp: getTimestamp(),
         };
       }
@@ -641,7 +638,6 @@ export function update({
   step,
   getNextPiece,
   onStateChange,
-  onSendGarbage,
   playerId,
   onReceiveGarbage,
 }: {
@@ -649,7 +645,6 @@ export function update({
   step: number;
   getNextPiece: () => TetrominoType;
   onStateChange?: (gameState: GameState) => void;
-  onSendGarbage?: (garbageLines: BoardCell[][]) => void;
   playerId: string;
   onReceiveGarbage?: (garbageLines: BoardCell[][]) => void;
 }): TetrisEvent | null {
@@ -673,11 +668,10 @@ export function update({
   } else {
     const lockedPiece = gameState.currentPiece;
     placePiece({ piece: gameState.currentPiece, board: gameState.board });
-    lockPieceAndSpawnNext({
+    const garbageToSend = lockPieceAndSpawnNext({
       gameState,
       getNextPiece,
       onStateChange,
-      onSendGarbage,
       onReceiveGarbage,
     });
     // need to check here for gameover, as the above function is the only place
@@ -694,6 +688,7 @@ export function update({
       newScore: gameState.score,
       newLevel: gameState.level,
       timestamp: getTimestamp(),
+      garbageToSend,
     };
   }
 }

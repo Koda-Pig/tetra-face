@@ -82,6 +82,13 @@ const OpponentGame = forwardRef<
           gameStateRef.current.level = action.newLevel;
           clearLines(gameStateRef.current.board);
           syncUIState(gameStateRef.current);
+          if (gameStateRef.current.pendingGarbage) {
+            addGarbageLines({
+              garbage: gameStateRef.current.pendingGarbage,
+              board: gameStateRef.current.board,
+            });
+            gameStateRef.current.pendingGarbage = null;
+          }
           break;
         case "gravity-drop":
           gameStateRef.current.currentPiece.y = action.newY;
@@ -98,6 +105,13 @@ const OpponentGame = forwardRef<
           gameStateRef.current.level = action.newLevel;
           clearLines(gameStateRef.current.board);
           syncUIState(gameStateRef.current);
+          if (gameStateRef.current.pendingGarbage) {
+            addGarbageLines({
+              garbage: gameStateRef.current.pendingGarbage,
+              board: gameStateRef.current.board,
+            });
+            gameStateRef.current.pendingGarbage = null;
+          }
           break;
         case "game-pause":
           pauseMultiplierRef.current = 0;
@@ -113,10 +127,7 @@ const OpponentGame = forwardRef<
           setUiState((prev) => ({ ...prev, holdPiece: newPieceToHold }));
           break;
         case "receive-garbage":
-          addGarbageLines({
-            garbage: action.garbageLines,
-            board: gameStateRef.current.board,
-          });
+          gameStateRef.current.pendingGarbage = action.garbageLines;
           break;
       }
     },
