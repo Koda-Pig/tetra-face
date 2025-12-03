@@ -89,6 +89,27 @@ function handleSurrender(socket: Socket, roomId: string, userId: string) {
   });
 }
 
+function handleAction(
+  action: TetrisEvent | null,
+  socket: Socket,
+  roomId: string,
+) {
+  if (action?.type === "game-pause" || action?.type === "game-resume") {
+    socket.emit("game-pause-event", { roomId, action });
+  } else if (action?.type === "game-over") {
+    socket.emit("game-over-event", { roomId, action });
+  } else if (action) {
+    if ("garbageToSend" in action) {
+      // extract garbage (don't send that data unnecessarily)
+      const { garbageToSend, ...cleanAction } = action;
+      socket.emit("game-action", { roomId, action: cleanAction });
+      if (garbageToSend) handleSendGarbage(garbageToSend, socket, roomId);
+    } else {
+      socket.emit("game-action", { roomId, action });
+    }
+  }
+}
+
 type HostGameProps = {
   userId: string;
   socket: Socket;
@@ -206,21 +227,7 @@ export default function HostGame({
             setUiState,
             playerId: userId,
           });
-          if (action?.type === "game-pause" || action?.type === "game-resume") {
-            socket.emit("game-pause-event", { roomId, action });
-          } else if (action?.type === "game-over") {
-            socket.emit("game-over-event", { roomId, action });
-          } else if (action) {
-            if ("garbageToSend" in action) {
-              // extract garbage (don't send that data unnecessarily)
-              const { garbageToSend, ...cleanAction } = action;
-              socket.emit("game-action", { roomId, action: cleanAction });
-              if (garbageToSend)
-                handleSendGarbage(garbageToSend, socket, roomId);
-            } else {
-              socket.emit("game-action", { roomId, action });
-            }
-          }
+          handleAction(action, socket, roomId);
         }
       }
 
@@ -240,20 +247,7 @@ export default function HostGame({
             handleReceiveGarbage(garbageLines, socket, roomId),
           playerId: userId,
         });
-        if (action?.type === "game-over") {
-          socket.emit("game-over-event", { roomId, action });
-        } else if (action) {
-          if ("garbageToSend" in action) {
-            // extract garbage (don't send that data unnecessarily)
-            const { garbageToSend, ...cleanAction } = action;
-            socket.emit("game-action", { roomId, action: cleanAction });
-            if (garbageToSend) {
-              handleSendGarbage(garbageToSend, socket, roomId);
-            }
-          } else {
-            socket.emit("game-action", { roomId, action });
-          }
-        }
+        handleAction(action, socket, roomId);
       }
       // draw the game
       render({
@@ -305,23 +299,7 @@ export default function HostGame({
         setUiState,
         playerId: userId,
       });
-
-      if (action?.type === "game-pause" || action?.type === "game-resume") {
-        socket.emit("game-pause-event", { roomId, action });
-      } else if (action?.type === "game-over") {
-        socket.emit("game-over-event", { roomId, action });
-      } else if (action) {
-        if ("garbageToSend" in action) {
-          // extract garbage (don't send that data unnecessarily)
-          const { garbageToSend, ...cleanAction } = action;
-          socket.emit("game-action", { roomId, action: cleanAction });
-          if (garbageToSend) {
-            handleSendGarbage(garbageToSend, socket, roomId);
-          }
-        } else {
-          socket.emit("game-action", { roomId, action });
-        }
-      }
+      handleAction(action, socket, roomId);
     }
 
     const handleGamepadConnected = () => setGamepadConnected(true);
