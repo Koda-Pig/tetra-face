@@ -111,9 +111,9 @@ https://play.tetris.com/
 
 Only discord auth set up for now.
 
-- [ ] attach user id to game session
+- [x] attach user id to game session
 - [x] discord auth: https://discord.com/developers/applications
-- [ ] add google auth using next auth. https://next-auth.js.org/providers/google
+- [x] add google auth using next auth. https://next-auth.js.org/providers/google
 
 ### Deployment
 
