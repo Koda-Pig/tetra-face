@@ -248,10 +248,7 @@ export default function HostGame({
             const { garbageToSend, ...cleanAction } = action;
             socket.emit("game-action", { roomId, action: cleanAction });
             if (garbageToSend) {
-              setTimeout(
-                () => handleSendGarbage(garbageToSend, socket, roomId),
-                1000,
-              );
+              handleSendGarbage(garbageToSend, socket, roomId);
             }
           } else {
             socket.emit("game-action", { roomId, action });
@@ -319,10 +316,7 @@ export default function HostGame({
           const { garbageToSend, ...cleanAction } = action;
           socket.emit("game-action", { roomId, action: cleanAction });
           if (garbageToSend) {
-            setTimeout(
-              () => handleSendGarbage(garbageToSend, socket, roomId),
-              1000,
-            );
+            handleSendGarbage(garbageToSend, socket, roomId);
           }
         } else {
           socket.emit("game-action", { roomId, action });
