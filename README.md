@@ -180,3 +180,9 @@ Note about the `DATABASE_URL` var in fly.io deployment:
 
 Don't use localhost, host.docker.internal, or 0.0.0.0 for production - those are only for local Docker testing. Fly.io uses internal networking with .flycast domains for database connections.
 The fly postgres attach command will replace the current `DATABASE_URL` secret with the correct production value automatically.
+
+remember to set any new env secrets on fly.io using
+
+```bash
+fly secrets set {SECRET=VALUE}
+```
