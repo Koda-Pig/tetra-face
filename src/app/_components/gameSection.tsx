@@ -5,13 +5,7 @@ import SinglePlayerGame from "./singlePlayerGame";
 import GameplayControls from "./gameplayControls";
 import GameVersus from "./gameVersus";
 import { Button } from "~/components/ui/button";
-import {
-  ArrowLeftFromLine,
-  LogOut,
-  // HomeIcon
-  BedSingle,
-  BedDouble,
-} from "lucide-react";
+import { ArrowLeftFromLine, LogOut, BedSingle, BedDouble } from "lucide-react";
 import Link from "next/link";
 import type { Session } from "next-auth";
 import {
@@ -20,7 +14,7 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 
-export default function GameSection({ session }: { session: Session | null }) {
+export default function GameSection({ session }: { session: Session }) {
   const [gameMode, setGameMode] = useState<"single-player" | "versus" | null>(
     null,
   );
@@ -37,12 +31,6 @@ export default function GameSection({ session }: { session: Session | null }) {
           <ArrowLeftFromLine />
           <p>back</p>
         </Button>
-        {/* <Button asChild className="border-background border">
-          <Link href="/">
-            <HomeIcon />
-            <p>home page</p>
-          </Link>
-        </Button> */}
         <Button asChild className="border-background border">
           <Link href="/api/auth/signout">
             <LogOut />
@@ -52,7 +40,7 @@ export default function GameSection({ session }: { session: Session | null }) {
       </div>
 
       {gameMode === null && (
-        <div className="grid h-full grid-cols-2 items-center gap-4">
+        <div className="mx-auto mt-6 grid h-full w-max grid-cols-2 items-center gap-4">
           <Button
             size="lg"
             className="text-md w-full px-4 py-8 text-xl"

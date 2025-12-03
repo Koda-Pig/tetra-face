@@ -12,7 +12,7 @@ import SocketDebugUi from "./socketDebugUi";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 
-export default function GameVersus({ session }: { session: Session | null }) {
+export default function GameVersus({ session }: { session: Session }) {
   const { socket, isConnected } = useSocket();
   const [currentRoom, setCurrentRoom] = useState<GameRoom | null>(null);
   const [availableRooms, setAvailableRooms] = useState<GameRoom[]>([]);
@@ -158,8 +158,6 @@ export default function GameVersus({ session }: { session: Session | null }) {
     };
   }, [socket, session?.user?.id]);
 
-  if (!session?.user.id) return <div>loading...</div>;
-
   return (
     <div>
       {/* games */}
@@ -189,9 +187,9 @@ export default function GameVersus({ session }: { session: Session | null }) {
               {isRoomHost ? "Player 1" : "Player 2"} (YOU)
             </h2>
             {/* host */}
-            {currentRoom && socket && (
+            {currentRoom && socket && session?.user?.id && (
               <HostGame
-                userId={session?.user.id}
+                userId={session.user.id}
                 socket={socket}
                 roomId={currentRoom.id}
                 externalPause={gamePaused}
@@ -277,16 +275,13 @@ export default function GameVersus({ session }: { session: Session | null }) {
             </div>
           )}
 
-          <div className="mb-4 space-y-2">
-            <Button
-              onClick={createRoom}
-              className="w-full"
-              disabled={!isConnected || !session?.user}
-            >
-              Create Room
-            </Button>
-          </div>
-          {/* Current Room Info */}
+          <Button
+            onClick={createRoom}
+            disabled={!isConnected || !session?.user}
+            className="my-4"
+          >
+            Create Room
+          </Button>
 
           {currentRoom && (
             <div className="mb-4 rounded bg-gray-500 p-2">
