@@ -133,7 +133,9 @@ Only discord auth set up for now.
 - [x] clean up this readme
 - [ ] performance checks
 - [ ] security checks
-- [ ] Hide 'create room' button if a player has already created a room and is waiting for players to join
+- [x] Hide 'create room' button if a player has already created a room and is waiting for players to join
+- [ ] add line clearing animation to the blocks
+- [ ] replace user ids with username in frontend
 
 ---
 

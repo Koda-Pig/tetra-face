@@ -9,9 +9,11 @@ export default async function Home() {
 
   return (
     <main className="text-(--retro-green)">
-      <div className="container mx-auto flex h-full min-h-svh flex-col px-4 py-8 text-center">
-        <h1 className="text-5xl font-bold tracking-wide">TETRA FACE</h1>
-        <p className="mt-6 text-lg">
+      <div className="container mx-auto flex h-full min-h-svh flex-col px-4 py-8">
+        <h1 className="text-center text-5xl font-bold tracking-wide">
+          TETRA FACE
+        </h1>
+        <p className="mt-6 text-center text-lg">
           Multiplayer online tetris.
           <br />
           {!session && "Sign in to start a versus match."}

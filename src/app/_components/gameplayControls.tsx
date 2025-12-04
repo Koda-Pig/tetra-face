@@ -21,8 +21,8 @@ export default function GameplayControls() {
   return (
     <Drawer direction="top">
       <Button asChild>
-        <DrawerTrigger className="fixed top-4 right-4 flex flex-col">
-          <p className="flex items-center gap-4">
+        <DrawerTrigger className="flex flex-col">
+          <p className="flex items-center justify-between gap-4">
             <span>controls</span>
             <Gamepad2 className="size-6" />
           </p>

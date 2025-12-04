@@ -21,20 +21,19 @@ export default function GameSection({ session }: { session: Session }) {
 
   return (
     <div className="my-8">
-      {gameMode !== null && <GameplayControls />}
-
       <div className="fixed top-4 left-4 grid gap-2">
         <Button
           onClick={() => setGameMode(null)}
-          className="border-background border"
+          className="border-background justify-between border"
         >
-          <ArrowLeftFromLine />
           <p>back</p>
+          <ArrowLeftFromLine />
         </Button>
-        <Button asChild className="border-background border">
+        {gameMode !== null && <GameplayControls />}
+        <Button asChild className="border-background justify-between border">
           <Link href="/api/auth/signout">
-            <LogOut />
             <p>sign out</p>
+            <LogOut />
           </Link>
         </Button>
       </div>

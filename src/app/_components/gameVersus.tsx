@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSocket } from "~/hooks/useSocket";
 import type { BoardCell, GameRoom, TetrisEvent, Winner } from "~/types";
 import type { Session } from "next-auth";
-import { Play } from "lucide-react";
+import { Play, HourglassIcon } from "lucide-react";
 import HostGame from "./hostGame";
 import { getTimestamp } from "~/lib/utils";
 import OpponentGame, { type OpponentGameRef } from "./opponentGame";
@@ -219,7 +219,7 @@ export default function GameVersus({ session }: { session: Session }) {
           </div>
         </div>
       ) : (
-        <div>
+        <div className="mx-auto max-w-2xl">
           {currentRoom?.players.length === 2 ? (
             <div className="flex flex-col items-center gap-4">
               {/* ready to play button */}
@@ -228,74 +228,124 @@ export default function GameVersus({ session }: { session: Session }) {
                 onClick={toggleReady}
                 className="m-12 mx-auto flex"
               >
-                {isCurrentPlayerReady ? "Ready ✅" : "Not Ready ⏳"}
-                <Play />
+                {isCurrentPlayerReady ? (
+                  <>
+                    Ready <Play className="inline-block" />
+                  </>
+                ) : (
+                  <>
+                    Not Ready{" "}
+                    <HourglassIcon className="hourglass-icon inline-block" />
+                  </>
+                )}
               </Button>
             </div>
           ) : (
-            <p className="m-12 text-center text-lg">
+            <h6 className="my-16 text-center text-xl">
               {currentRoom
                 ? "Waiting for second player to join..."
                 : "Create or join a room to start"}
-            </p>
+            </h6>
           )}
 
-          {availableRooms.length > 0 && (
+          {currentRoom?.players.length !== 2 && (
             <div className="mb-4">
-              <h4 className="mb-2 text-xl font-semibold">Available Rooms</h4>
+              <h4 className="mb-2 text-center text-xl font-semibold">
+                Available Rooms
+              </h4>
               <div className="space-y-2 overflow-y-auto rounded border p-2">
-                {availableRooms.map((room) => (
-                  <div
-                    key={room.id}
-                    className="bg-background flex items-center justify-between rounded p-2 text-sm"
-                  >
-                    <div className="flex flex-col">
-                      <span className="font-medium">
-                        Room {room.id.slice(5, 13)}
-                      </span>
-                      <span className="text-xs text-gray-600">
-                        {room.players.length}/2 players
-                      </span>
-                    </div>
+                {availableRooms.length > 0 && (
+                  <>
+                    {availableRooms.map((room) => (
+                      <div
+                        key={room.id}
+                        className="bg-background flex items-center justify-between rounded p-2 text-sm"
+                      >
+                        <div>
+                          <p className="text-lg font-medium">
+                            Room {room.id.slice(5, 13)}
+                          </p>
+                          <p className="text-lg text-gray-600">
+                            {room.players.length}/2 players
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            if (currentRoom?.id === room.id) leaveRoom(room.id);
+                            else joinRoom(room.id);
+                          }}
+                          // disabled={
+                          //   room.players.length >= 2 || currentRoom !== null
+                          // }
+                        >
+                          {currentRoom?.id === room.id ? "Leave" : "Join"}
+                        </Button>
+                      </div>
+                    ))}
+                  </>
+                )}
+
+                {availableRooms.length === 0 && !currentRoom && (
+                  <p className="text-center text-sm">
+                    No available rooms.
                     <Button
-                      size="sm"
-                      onClick={() => {
-                        if (currentRoom?.id === room.id) leaveRoom(room.id);
-                        else joinRoom(room.id);
-                      }}
-                      // disabled={
-                      //   room.players.length >= 2 || currentRoom !== null
-                      // }
+                      variant="ghost"
+                      className="ml-2 inline-block"
+                      onClick={createRoom}
+                      disabled={!isConnected || !session?.user}
                     >
-                      {currentRoom?.id === room.id ? "Leave" : "Join"}
+                      make one!
                     </Button>
-                  </div>
-                ))}
+                  </p>
+                )}
               </div>
             </div>
           )}
 
-          <Button
-            onClick={createRoom}
-            disabled={!isConnected || !session?.user}
-            className="my-4"
-          >
-            Create Room
-          </Button>
-
           {currentRoom && (
-            <div className="mb-4 rounded bg-gray-500 p-2">
-              <h4 className="font-semibold">Current Room</h4>
-              <p className="text-sm">ID: {currentRoom.id}</p>
-              <p className="text-sm">Players: {currentRoom.players.length}/2</p>
-              <ul className="text-xs">
+            <div className="relative mb-4 rounded bg-gray-800/50 p-2">
+              <h4 className="text-xl font-semibold">Current Room</h4>
+              <p className="text-sm">
+                Room ID: <span className="text-white">{currentRoom.id}</span>
+              </p>
+              <p className="text-sm">
+                Players:{" "}
+                <span className="text-white">
+                  {currentRoom.players.length}/2
+                </span>
+              </p>
+              <ul className="text-lg">
                 {currentRoom.players.map((player, idx) => (
                   <li key={idx}>
-                    {player.userId} {player.ready ? "✅" : "⏳"}
+                    {player.ready ? (
+                      <Play className="inline-block" />
+                    ) : (
+                      <HourglassIcon className="hourglass-icon inline-block" />
+                    )}{" "}
+                    {player.userId}
                   </li>
                 ))}
               </ul>
+              <Button
+                onClick={() => leaveRoom(currentRoom.id)}
+                className="absolute top-2 right-2 mt-2"
+                variant="destructive"
+              >
+                Leave Room
+              </Button>
             </div>
+          )}
+
+          {/* can only create a new room if not already in one */}
+          {!currentRoom && (
+            <Button
+              onClick={createRoom}
+              disabled={!isConnected || !session?.user}
+              className="mx-auto my-8 flex"
+            >
+              create room
+            </Button>
           )}
         </div>
       )}
