@@ -3,7 +3,7 @@
 import { useSocket } from "~/hooks/useSocket";
 import type { GameRoom } from "~/types";
 import type { Session } from "next-auth";
-import { Terminal } from "lucide-react";
+import { MessageCircleIcon } from "lucide-react";
 import {
   Drawer,
   DrawerHeader,
@@ -14,7 +14,7 @@ import {
 } from "~/components/ui/drawer";
 import { Button } from "~/components/ui/button";
 
-export default function SocketDebugUi({
+export default function ChatWindow({
   currentRoom,
   messages,
   session,
@@ -29,16 +29,14 @@ export default function SocketDebugUi({
     <Drawer>
       <DrawerTrigger asChild>
         <Button className="absolute top-38 left-4">
-          <p>debugging</p>
-          <Terminal />
+          <p>Chat</p>
+          <MessageCircleIcon />
         </Button>
       </DrawerTrigger>
       <DrawerContent>
         <DrawerHeader>
           <DrawerTitle>
-            <p className="mb-3 text-center text-lg font-semibold">
-              Socket Testing
-            </p>
+            <p className="mb-3 text-center text-lg font-semibold">Chat</p>
           </DrawerTitle>
           <DrawerDescription>
             Use this to test the socket connection and room creation.

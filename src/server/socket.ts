@@ -9,6 +9,10 @@ interface GameActionData {
   [key: string]: unknown;
 }
 
+// random enough
+// prettier-ignore
+const TETRIS_WORDS = ["block", "tetro", "piece", "mino", "drop", "spin", "rotate", "hold", "lock", "clear", "tspin", "twist", "tuck", "slide", "finesse", "combo", "tetris", "quad", "single", "double", "triple", "gravity", "sonic", "hyper", "fast", "instant", "stack", "well", "matrix", "queue", "ghost", "preview"];
+
 const getAvailableRooms = (): GameRoom[] =>
   Array.from(gameRooms.values()).filter(
     (room) => room.players.length < 2 && !room.gameState?.isActive,
@@ -43,15 +47,15 @@ export function initializeSocket(httpServer: HttpServer) {
       socket.emit("rooms-list", getAvailableRooms());
     });
 
-    socket.on("create-room", (userId: string) => {
-      const roomId = `room_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-      // const roomId = `room_${Math.random().toString(6).slice(0, 1)}`;
+    socket.on("create-room", (userId: string, username: string) => {
+      const roomId = `${TETRIS_WORDS[Math.floor(Math.random() * TETRIS_WORDS.length)]}-${Math.random().toString(36).slice(2, 7)}`;
 
       const newRoom: GameRoom = {
         id: roomId,
         players: [
           {
             userId,
+            username,
             socketId: socket.id,
             ready: false,
           },
@@ -66,31 +70,35 @@ export function initializeSocket(httpServer: HttpServer) {
       broadcastRoomUpdate(io);
     });
 
-    socket.on("join-room", (data: { roomId: string; userId: string }) => {
-      const { roomId, userId } = data;
-      const room = gameRooms.get(roomId);
+    socket.on(
+      "join-room",
+      (data: { roomId: string; userId: string; username: string }) => {
+        const { roomId, userId, username } = data;
+        const room = gameRooms.get(roomId);
 
-      if (!room) {
-        socket.emit("error", { message: "room not found" });
-        return;
-      }
+        if (!room) {
+          socket.emit("error", { message: "room not found" });
+          return;
+        }
 
-      if (room.players.length >= 2) {
-        socket.emit("error", { message: "room is full" });
-        return;
-      }
+        if (room.players.length >= 2) {
+          socket.emit("error", { message: "room is full" });
+          return;
+        }
 
-      room.players.push({
-        userId,
-        socketId: socket.id,
-        ready: false,
-      });
+        room.players.push({
+          userId,
+          username,
+          socketId: socket.id,
+          ready: false,
+        });
 
-      void socket.join(roomId); // void for floating promise
+        void socket.join(roomId); // void for floating promise
 
-      io.to(roomId).emit("player-joined", { roomId, room });
-      broadcastRoomUpdate(io);
-    });
+        io.to(roomId).emit("player-joined", { roomId, room });
+        broadcastRoomUpdate(io);
+      },
+    );
 
     socket.on("leave-room", (data: { roomId: string; userId: string }) => {
       const { roomId, userId } = data;

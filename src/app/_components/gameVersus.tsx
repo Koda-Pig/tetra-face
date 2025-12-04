@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useSocket } from "~/hooks/useSocket";
 import type { BoardCell, GameRoom, TetrisEvent, Winner } from "~/types";
 import type { Session } from "next-auth";
@@ -8,7 +8,7 @@ import { Play, HourglassIcon } from "lucide-react";
 import HostGame from "./hostGame";
 import { getTimestamp } from "~/lib/utils";
 import OpponentGame, { type OpponentGameRef } from "./opponentGame";
-import SocketDebugUi from "./socketDebugUi";
+import ChatWindow from "./chatWindow";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 import type { Socket } from "socket.io-client";
@@ -17,6 +17,7 @@ function GameInProgress({
   isRoomHost,
   isGameOver,
   winner,
+  opponentPlayer,
   currentRoom,
   socket,
   session,
@@ -27,6 +28,7 @@ function GameInProgress({
   isRoomHost: boolean;
   isGameOver: boolean;
   winner: Winner;
+  opponentPlayer: GameRoom["players"][number];
   currentRoom: GameRoom;
   socket: Socket;
   session: Session;
@@ -59,7 +61,7 @@ function GameInProgress({
         )}
       >
         <h2 className="text-center text-xl font-bold">
-          {isRoomHost ? "Player 1" : "Player 2"} (YOU)
+          {isRoomHost ? session.user.name + " (YOU)" : opponentPlayer.username}
         </h2>
         <HostGame
           userId={session.user.id}
@@ -79,11 +81,11 @@ function GameInProgress({
         )}
       >
         <h2 className="text-center text-xl font-bold">
-          {isRoomHost ? "Player 2" : "Player 1"}
+          {isRoomHost ? opponentPlayer.username : session.user.name}
         </h2>
         <OpponentGame
           ref={opponentGameRef}
-          userId={`${session?.user.id}-opponent`}
+          userId={opponentPlayer.userId}
           externalPause={gamePaused}
           externalGameOver={isGameOver}
         />
@@ -170,7 +172,7 @@ function RoomList({
             className="bg-background flex items-center justify-between rounded p-2 text-sm"
           >
             <div>
-              <p className="text-lg font-medium">Room {room.id.slice(5, 13)}</p>
+              <p className="text-lg font-medium">Room ID: {room.id}</p>
               <p className="text-lg text-gray-600">
                 {room.players.length}/2 players
               </p>
@@ -216,7 +218,7 @@ function CurrentRoomInfo({
             ) : (
               <HourglassIcon className="hourglass-icon inline-block" />
             )}{" "}
-            {player.userId}
+            {player.username}
           </li>
         ))}
       </ul>
@@ -289,6 +291,11 @@ function RoomLobby({
   );
 }
 
+// type UserMessage = {
+//   content: string;
+//   username: string;
+// };
+
 export default function GameVersus({ session }: { session: Session }) {
   const { socket, isConnected } = useSocket();
   const [currentRoom, setCurrentRoom] = useState<GameRoom | null>(null);
@@ -308,6 +315,9 @@ export default function GameVersus({ session }: { session: Session }) {
   const currentPlayer = currentRoom?.players.find(
     (p) => p.userId === session?.user?.id,
   );
+  const opponentPlayer = useMemo(() => {
+    return currentRoom?.players.find((p) => p.userId !== session?.user?.id);
+  }, [currentRoom?.players, session?.user?.id]);
   const isCurrentPlayerReady = currentPlayer?.ready ?? false;
 
   function addMessage(message: string) {
@@ -321,7 +331,7 @@ export default function GameVersus({ session }: { session: Session }) {
     if (!socket || !session?.user?.id) return;
     addMessage("Creating room...");
     setIsRoomHost(true);
-    socket.emit("create-room", session.user.id);
+    socket.emit("create-room", session.user.id, session.user.name);
   }
 
   function joinRoom(roomId: string) {
@@ -331,6 +341,7 @@ export default function GameVersus({ session }: { session: Session }) {
     socket.emit("join-room", {
       roomId,
       userId: session.user.id,
+      username: session.user.name,
     });
   }
 
@@ -439,11 +450,12 @@ export default function GameVersus({ session }: { session: Session }) {
 
   return (
     <div>
-      {bothPlayersReady && currentRoom ? (
+      {bothPlayersReady && currentRoom && opponentPlayer?.username ? (
         <GameInProgress
           isRoomHost={isRoomHost}
           isGameOver={isGameOver}
           winner={winner}
+          opponentPlayer={opponentPlayer}
           currentRoom={currentRoom}
           socket={socket}
           session={session}
@@ -471,7 +483,7 @@ export default function GameVersus({ session }: { session: Session }) {
         />
       )}
 
-      <SocketDebugUi
+      <ChatWindow
         messages={messages}
         currentRoom={currentRoom}
         session={session}
