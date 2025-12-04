@@ -64,6 +64,7 @@ https://play.tetris.com/
   - [ ] double check this meets all the requirements for the garbage system.
   - [x] fix scenario where player browser window loses focus and their animation loop stops. This should pause the game or keep running, one of the two.
 - [x] implement ghost pieces
+- [ ] implement 'next piece' preview
 
 #### SCORING SYSTEM
 

@@ -21,13 +21,19 @@ export default function GameStats({ uiState }: { uiState: UIState }) {
           />
         </div>
       </div>
+      <div className={cn(gameStatClasses, "top-26")}>
+        <p className="font-heading text-sm">NEXT</p>
+        <div className="relative grid h-10 w-10 place-items-center">
+          {/* next piece preview */}
+        </div>
+      </div>
       <div
         style={{
           transitionDuration: `${FLASH_TRANSITION_DURATION_MS}ms`,
         }}
         className={cn(
           gameStatClasses,
-          "top-26",
+          "top-48",
           uiState.scoreFlash && "game-stat-flash",
         )}
       >
@@ -40,7 +46,7 @@ export default function GameStats({ uiState }: { uiState: UIState }) {
         }}
         className={cn(
           gameStatClasses,
-          "top-48",
+          "top-70",
           uiState.levelFlash && "game-stat-flash",
         )}
       >
