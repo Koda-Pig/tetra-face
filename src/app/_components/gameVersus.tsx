@@ -11,6 +11,283 @@ import OpponentGame, { type OpponentGameRef } from "./opponentGame";
 import SocketDebugUi from "./socketDebugUi";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
+import type { Socket } from "socket.io-client";
+
+function GameInProgress({
+  isRoomHost,
+  isGameOver,
+  winner,
+  currentRoom,
+  socket,
+  session,
+  gamePaused,
+  opponentGameRef,
+  hostGameReceiveGarbageRef,
+}: {
+  isRoomHost: boolean;
+  isGameOver: boolean;
+  winner: Winner;
+  currentRoom: GameRoom;
+  socket: Socket;
+  session: Session;
+  gamePaused: boolean;
+  opponentGameRef: React.RefObject<OpponentGameRef | null>;
+  hostGameReceiveGarbageRef: React.RefObject<
+    ((garbageLines: BoardCell[][]) => void) | null
+  >;
+}) {
+  return (
+    <div
+      className={cn(
+        "relative flex justify-center gap-36",
+        isRoomHost ? "flex-row" : "flex-row-reverse",
+      )}
+    >
+      <p
+        className={cn(
+          "absolute inset-0 z-10 grid place-items-center p-8 text-center text-9xl transition-opacity",
+          isGameOver ? "opacity-100" : "pointer-events-none opacity-0",
+          winner === null && "hidden",
+        )}
+      >
+        YOU {winner === "you" ? "WON" : "LOST"}!
+      </p>
+      <div
+        className={cn(
+          "transition-opacity duration-300",
+          isGameOver ? "opacity-50" : "opacity-100",
+        )}
+      >
+        <h2 className="text-center text-xl font-bold">
+          {isRoomHost ? "Player 1" : "Player 2"} (YOU)
+        </h2>
+        <HostGame
+          userId={session.user.id}
+          socket={socket}
+          roomId={currentRoom.id}
+          externalPause={gamePaused}
+          externalGameOver={isGameOver}
+          onReceiveGarbageCallback={(callback) =>
+            (hostGameReceiveGarbageRef.current = callback)
+          }
+        />
+      </div>
+      <div
+        className={cn(
+          "transition-opacity duration-300",
+          isGameOver ? "opacity-50" : "opacity-100",
+        )}
+      >
+        <h2 className="text-center text-xl font-bold">
+          {isRoomHost ? "Player 2" : "Player 1"}
+        </h2>
+        <OpponentGame
+          ref={opponentGameRef}
+          userId={`${session?.user.id}-opponent`}
+          externalPause={gamePaused}
+          externalGameOver={isGameOver}
+        />
+      </div>
+    </div>
+  );
+}
+
+function WaitingForReady({
+  isCurrentPlayerReady,
+  onToggleReady,
+}: {
+  isCurrentPlayerReady: boolean;
+  onToggleReady: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <Button size="lg" onClick={onToggleReady} className="m-12 mx-auto flex">
+        {isCurrentPlayerReady ? (
+          <>
+            Ready <Play className="inline-block" />
+          </>
+        ) : (
+          <>
+            Not Ready <HourglassIcon className="hourglass-icon inline-block" />
+          </>
+        )}
+      </Button>
+    </div>
+  );
+}
+
+function RoomList({
+  availableRooms,
+  currentRoom,
+  isConnected,
+  session,
+  onJoinRoom,
+  onLeaveRoom,
+  onCreateRoom,
+}: {
+  availableRooms: GameRoom[];
+  currentRoom: GameRoom | null;
+  isConnected: boolean;
+  session: Session;
+  onJoinRoom: (roomId: string) => void;
+  onLeaveRoom: (roomId: string) => void;
+  onCreateRoom: () => void;
+}) {
+  if (availableRooms.length === 0 && !currentRoom) {
+    return (
+      <div className="mb-4">
+        <h4 className="mb-2 text-center text-xl font-semibold">
+          Available Rooms
+        </h4>
+        <div className="space-y-2 overflow-y-auto rounded border p-2">
+          <p className="text-center text-sm">
+            No available rooms.
+            <Button
+              variant="ghost"
+              className="ml-2 inline-block"
+              onClick={onCreateRoom}
+              disabled={!isConnected || !session?.user}
+            >
+              make one!
+            </Button>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (availableRooms.length === 0) return null;
+
+  return (
+    <div className="mb-4">
+      <h4 className="mb-2 text-center text-xl font-semibold">
+        Available Rooms
+      </h4>
+      <div className="space-y-2 overflow-y-auto rounded border p-2">
+        {availableRooms.map((room) => (
+          <div
+            key={room.id}
+            className="bg-background flex items-center justify-between rounded p-2 text-sm"
+          >
+            <div>
+              <p className="text-lg font-medium">Room {room.id.slice(5, 13)}</p>
+              <p className="text-lg text-gray-600">
+                {room.players.length}/2 players
+              </p>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => {
+                if (currentRoom?.id === room.id) onLeaveRoom(room.id);
+                else onJoinRoom(room.id);
+              }}
+            >
+              {currentRoom?.id === room.id ? "Leave" : "Join"}
+            </Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CurrentRoomInfo({
+  currentRoom,
+  onLeaveRoom,
+}: {
+  currentRoom: GameRoom;
+  onLeaveRoom: (roomId: string) => void;
+}) {
+  return (
+    <div className="relative mb-4 rounded bg-gray-800/50 p-2">
+      <h4 className="text-xl font-semibold">Current Room</h4>
+      <p className="text-sm">
+        Room ID: <span className="text-white">{currentRoom.id}</span>
+      </p>
+      <p className="text-sm">
+        Players:{" "}
+        <span className="text-white">{currentRoom.players.length}/2</span>
+      </p>
+      <ul className="text-lg">
+        {currentRoom.players.map((player, idx) => (
+          <li key={idx}>
+            {player.ready ? (
+              <Play className="inline-block" />
+            ) : (
+              <HourglassIcon className="hourglass-icon inline-block" />
+            )}{" "}
+            {player.userId}
+          </li>
+        ))}
+      </ul>
+      <Button
+        onClick={() => onLeaveRoom(currentRoom.id)}
+        className="absolute top-2 right-2 mt-2"
+        variant="destructive"
+      >
+        Leave Room
+      </Button>
+    </div>
+  );
+}
+
+function RoomLobby({
+  currentRoom,
+  availableRooms,
+  isConnected,
+  session,
+  onCreateRoom,
+  onJoinRoom,
+  onLeaveRoom,
+}: {
+  currentRoom: GameRoom | null;
+  availableRooms: GameRoom[];
+  isConnected: boolean;
+  session: Session;
+  onCreateRoom: () => void;
+  onJoinRoom: (roomId: string) => void;
+  onLeaveRoom: (roomId: string) => void;
+}) {
+  return (
+    <div className="mx-auto max-w-2xl">
+      {!currentRoom && (
+        <h6 className="my-16 text-center text-xl">
+          Create or join a room to start
+        </h6>
+      )}
+
+      {currentRoom && (
+        <h6 className="my-16 text-center text-xl">
+          Waiting for second player to join...
+        </h6>
+      )}
+
+      <RoomList
+        availableRooms={availableRooms}
+        currentRoom={currentRoom}
+        isConnected={isConnected}
+        session={session}
+        onJoinRoom={onJoinRoom}
+        onLeaveRoom={onLeaveRoom}
+        onCreateRoom={onCreateRoom}
+      />
+
+      {currentRoom && (
+        <CurrentRoomInfo currentRoom={currentRoom} onLeaveRoom={onLeaveRoom} />
+      )}
+
+      {!currentRoom && (
+        <Button
+          onClick={onCreateRoom}
+          disabled={!isConnected || !session?.user}
+          className="mx-auto my-8 flex"
+        >
+          create room
+        </Button>
+      )}
+    </div>
+  );
+}
 
 export default function GameVersus({ session }: { session: Session }) {
   const { socket, isConnected } = useSocket();
@@ -22,6 +299,9 @@ export default function GameVersus({ session }: { session: Session }) {
   const [isGameOver, setIsGameOver] = useState(false);
   const [winner, setWinner] = useState<Winner>(null);
   const opponentGameRef = useRef<OpponentGameRef>(null);
+  const hostGameReceiveGarbageRef = useRef<
+    ((garbageLines: BoardCell[][]) => void) | null
+  >(null);
   const bothPlayersReady =
     currentRoom?.players.length === 2 &&
     currentRoom?.players?.every((player) => player.ready);
@@ -29,9 +309,6 @@ export default function GameVersus({ session }: { session: Session }) {
     (p) => p.userId === session?.user?.id,
   );
   const isCurrentPlayerReady = currentPlayer?.ready ?? false;
-  const hostGameReceiveGarbageRef = useRef<
-    ((garbageLines: BoardCell[][]) => void) | null
-  >(null);
 
   function addMessage(message: string) {
     setMessages((prev) => [
@@ -158,199 +435,42 @@ export default function GameVersus({ session }: { session: Session }) {
     };
   }, [socket, session?.user?.id]);
 
+  if (!socket) return null;
+
   return (
     <div>
-      {/* games */}
-      {bothPlayersReady ? (
-        <div
-          className={cn(
-            "relative flex justify-center gap-36",
-            isRoomHost ? "flex-row" : "flex-row-reverse",
-          )}
-        >
-          <p
-            className={cn(
-              "absolute inset-0 z-10 grid place-items-center p-8 text-center text-9xl transition-opacity",
-              isGameOver ? "opacity-100" : "pointer-events-none opacity-0",
-              winner === null && "hidden",
-            )}
-          >
-            YOU {winner === "you" ? "WON" : "LOST"}!
-          </p>
-          <div
-            className={cn(
-              "transition-opacity duration-300",
-              isGameOver ? "opacity-50" : "opacity-100",
-            )}
-          >
-            <h2 className="text-center text-xl font-bold">
-              {isRoomHost ? "Player 1" : "Player 2"} (YOU)
-            </h2>
-            {/* host */}
-            {currentRoom && socket && session?.user?.id && (
-              <HostGame
-                userId={session.user.id}
-                socket={socket}
-                roomId={currentRoom.id}
-                externalPause={gamePaused}
-                externalGameOver={isGameOver}
-                onReceiveGarbageCallback={(callback) =>
-                  (hostGameReceiveGarbageRef.current = callback)
-                }
-              />
-            )}
-          </div>
-          <div
-            className={cn(
-              "transition-opacity duration-300",
-              isGameOver ? "opacity-50" : "opacity-100",
-            )}
-          >
-            <h2 className="text-center text-xl font-bold">
-              {isRoomHost ? "Player 2" : "Player 1"}
-            </h2>
-            {/* opponent */}
-            <OpponentGame
-              ref={opponentGameRef}
-              userId={`${session?.user.id}-opponent`}
-              externalPause={gamePaused}
-              externalGameOver={isGameOver}
-            />
-          </div>
+      {bothPlayersReady && currentRoom ? (
+        <GameInProgress
+          isRoomHost={isRoomHost}
+          isGameOver={isGameOver}
+          winner={winner}
+          currentRoom={currentRoom}
+          socket={socket}
+          session={session}
+          gamePaused={gamePaused}
+          opponentGameRef={opponentGameRef}
+          hostGameReceiveGarbageRef={hostGameReceiveGarbageRef}
+        />
+      ) : currentRoom?.players.length === 2 ? (
+        <div className="mx-auto max-w-2xl">
+          <WaitingForReady
+            isCurrentPlayerReady={isCurrentPlayerReady}
+            onToggleReady={toggleReady}
+          />
+          <CurrentRoomInfo currentRoom={currentRoom} onLeaveRoom={leaveRoom} />
         </div>
       ) : (
-        <div className="mx-auto max-w-2xl">
-          {currentRoom?.players.length === 2 ? (
-            <div className="flex flex-col items-center gap-4">
-              {/* ready to play button */}
-              <Button
-                size="lg"
-                onClick={toggleReady}
-                className="m-12 mx-auto flex"
-              >
-                {isCurrentPlayerReady ? (
-                  <>
-                    Ready <Play className="inline-block" />
-                  </>
-                ) : (
-                  <>
-                    Not Ready{" "}
-                    <HourglassIcon className="hourglass-icon inline-block" />
-                  </>
-                )}
-              </Button>
-            </div>
-          ) : (
-            <h6 className="my-16 text-center text-xl">
-              {currentRoom
-                ? "Waiting for second player to join..."
-                : "Create or join a room to start"}
-            </h6>
-          )}
-
-          {currentRoom?.players.length !== 2 && (
-            <div className="mb-4">
-              <h4 className="mb-2 text-center text-xl font-semibold">
-                Available Rooms
-              </h4>
-              <div className="space-y-2 overflow-y-auto rounded border p-2">
-                {availableRooms.length > 0 && (
-                  <>
-                    {availableRooms.map((room) => (
-                      <div
-                        key={room.id}
-                        className="bg-background flex items-center justify-between rounded p-2 text-sm"
-                      >
-                        <div>
-                          <p className="text-lg font-medium">
-                            Room {room.id.slice(5, 13)}
-                          </p>
-                          <p className="text-lg text-gray-600">
-                            {room.players.length}/2 players
-                          </p>
-                        </div>
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            if (currentRoom?.id === room.id) leaveRoom(room.id);
-                            else joinRoom(room.id);
-                          }}
-                          // disabled={
-                          //   room.players.length >= 2 || currentRoom !== null
-                          // }
-                        >
-                          {currentRoom?.id === room.id ? "Leave" : "Join"}
-                        </Button>
-                      </div>
-                    ))}
-                  </>
-                )}
-
-                {availableRooms.length === 0 && !currentRoom && (
-                  <p className="text-center text-sm">
-                    No available rooms.
-                    <Button
-                      variant="ghost"
-                      className="ml-2 inline-block"
-                      onClick={createRoom}
-                      disabled={!isConnected || !session?.user}
-                    >
-                      make one!
-                    </Button>
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {currentRoom && (
-            <div className="relative mb-4 rounded bg-gray-800/50 p-2">
-              <h4 className="text-xl font-semibold">Current Room</h4>
-              <p className="text-sm">
-                Room ID: <span className="text-white">{currentRoom.id}</span>
-              </p>
-              <p className="text-sm">
-                Players:{" "}
-                <span className="text-white">
-                  {currentRoom.players.length}/2
-                </span>
-              </p>
-              <ul className="text-lg">
-                {currentRoom.players.map((player, idx) => (
-                  <li key={idx}>
-                    {player.ready ? (
-                      <Play className="inline-block" />
-                    ) : (
-                      <HourglassIcon className="hourglass-icon inline-block" />
-                    )}{" "}
-                    {player.userId}
-                  </li>
-                ))}
-              </ul>
-              <Button
-                onClick={() => leaveRoom(currentRoom.id)}
-                className="absolute top-2 right-2 mt-2"
-                variant="destructive"
-              >
-                Leave Room
-              </Button>
-            </div>
-          )}
-
-          {/* can only create a new room if not already in one */}
-          {!currentRoom && (
-            <Button
-              onClick={createRoom}
-              disabled={!isConnected || !session?.user}
-              className="mx-auto my-8 flex"
-            >
-              create room
-            </Button>
-          )}
-        </div>
+        <RoomLobby
+          currentRoom={currentRoom}
+          availableRooms={availableRooms}
+          isConnected={isConnected}
+          session={session}
+          onCreateRoom={createRoom}
+          onJoinRoom={joinRoom}
+          onLeaveRoom={leaveRoom}
+        />
       )}
 
-      {/* socket testing */}
       <SocketDebugUi
         messages={messages}
         currentRoom={currentRoom}
