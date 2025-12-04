@@ -61,7 +61,7 @@ function GameInProgress({
         )}
       >
         <h2 className="text-center text-xl font-bold">
-          {isRoomHost ? session.user.name + " (YOU)" : opponentPlayer.username}
+          {session.user.name} (YOU)
         </h2>
         <HostGame
           userId={session.user.id}
@@ -81,7 +81,7 @@ function GameInProgress({
         )}
       >
         <h2 className="text-center text-xl font-bold">
-          {isRoomHost ? opponentPlayer.username : session.user.name}
+          {opponentPlayer.username}
         </h2>
         <OpponentGame
           ref={opponentGameRef}
