@@ -5,10 +5,10 @@ import GameStats from "./gameStats";
 import GameUi from "./gameUi";
 import { CANVAS_ANIMATION_DURATION_MS } from "~/constants";
 
-interface GameBoardProps {
+type GameBoardProps = {
   uiState: UIState;
   children?: React.ReactNode;
-}
+};
 
 const GameBoard = forwardRef<HTMLCanvasElement, GameBoardProps>(
   ({ uiState, children }, ref) => (
@@ -19,9 +19,10 @@ const GameBoard = forwardRef<HTMLCanvasElement, GameBoardProps>(
         height={600}
         style={{ animationDuration: `${CANVAS_ANIMATION_DURATION_MS}ms` }}
         className={cn(
-          "game-canvas rounded-md border-2 border-[var(--retro-green)] shadow shadow-[var(--retro-green)]",
+          "game-canvas rounded-md border-2 border-(--retro-green) shadow-(--retro-green)",
           (uiState.isGameOver || uiState.isPaused) && "opacity-30",
           uiState.canvasFlash && "game-canvas-flash",
+          `game-canvas-score-multiplier-${uiState.scoreMultiplier}`,
         )}
       />
       <GameStats uiState={uiState} />

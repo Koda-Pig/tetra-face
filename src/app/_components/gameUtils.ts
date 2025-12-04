@@ -27,6 +27,8 @@ import {
   INITIAL_GAME_STATE,
   GAMEPAD_KEY_MAP,
   GARBAGE_COLOR,
+  GARBAGE_LINES,
+  INITIAL_UI_STATE,
 } from "~/constants";
 import { getTimestamp } from "~/lib/utils";
 
@@ -177,20 +179,6 @@ function isGameOver(gameState: GameState) {
 
   return false;
 }
-function calcGarbageLines(linesCleared: number): number {
-  switch (linesCleared) {
-    case 1:
-      return 0; // Singles send no garbage
-    case 2:
-      return 1; // Doubles send 1 line
-    case 3:
-      return 2; // Triples send 2 lines
-    case 4:
-      return 4; // Tetrises send 4 lines
-    default:
-      return 0;
-  }
-}
 function generateGarbageLines({
   numLines,
 }: {
@@ -233,7 +221,7 @@ function lockPieceAndSpawnNext({
   const linesCleared = clearLines(gameState.board);
   gameState.linesCleared += linesCleared;
   if (linesCleared > 0) {
-    const numLines = calcGarbageLines(linesCleared);
+    const numLines = GARBAGE_LINES[linesCleared as keyof typeof GARBAGE_LINES];
     garbage = generateGarbageLines({ numLines });
   }
   // process incoming garbage
@@ -777,16 +765,7 @@ function restartGame({
   pauseMultiplierRef.current = 1;
 
   // 3. Reset UI state completely
-  setUiState({
-    isGameOver: false,
-    score: 0,
-    scoreFlash: false,
-    levelFlash: false,
-    canvasFlash: false,
-    level: 0,
-    isPaused: false,
-    holdPiece: null,
-  });
+  setUiState(INITIAL_UI_STATE);
 
   // 4. Reset game loop timing
   const gameLoop = gameLoopRef.current;

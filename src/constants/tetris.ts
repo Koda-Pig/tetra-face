@@ -351,7 +351,7 @@ export const WALL_KICK_DATA_I: Record<
 };
 
 export const FLASH_TRANSITION_DURATION_MS = 300;
-export const CANVAS_ANIMATION_DURATION_MS = 500;
+export const CANVAS_ANIMATION_DURATION_MS = 600;
 
 export const INITIAL_GAME_STATE: Omit<
   GameState,
@@ -374,6 +374,12 @@ export const LINE_CLEAR_SCORES = {
   3: 500,
   4: 800,
 };
+export const GARBAGE_LINES = {
+  1: 0,
+  2: 1,
+  3: 2,
+  4: 4,
+};
 
 export const LINES_PER_LEVEL = 10;
 
@@ -386,6 +392,8 @@ export const INITIAL_UI_STATE: UIState = {
   level: 0,
   isPaused: false,
   holdPiece: null,
+  scoreMultiplier: 0,
+  prevLinesCleared: 0,
 };
 
 export const INITIAL_GAMELOOP = {

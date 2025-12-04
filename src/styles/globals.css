@@ -143,17 +143,92 @@ main {
   min-height: 100svh;
 }
 
+.game-canavs {
+  will-change: filter, drop-shadow;
+}
 .game-canvas.game-canvas-flash {
   /* animation duration set via JS */
-  animation: shadow-anim ease forwards;
+  animation: ease forwards;
+}
+/* Single line - subtle pulse */
+.game-canvas.game-canvas-score-multiplier-1 {
+  animation-name: flash-1;
 }
 
-@keyframes shadow-anim {
+/* Double - stronger pulse with color shift */
+.game-canvas.game-canvas-score-multiplier-2 {
+  animation-name: flash-2;
+}
+
+/* Triple - pulse + shake */
+.game-canvas.game-canvas-score-multiplier-3 {
+  animation-name: flash-3;
+}
+
+/* Tetris - explosive effect */
+.game-canvas.game-canvas-score-multiplier-4 {
+  animation-name: flash-4;
+}
+
+@keyframes flash-1 {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 var(--retro-green-dull));
+  }
+  50% {
+    filter: drop-shadow(0 0 40px var(--retro-green-dull));
+  }
+}
+
+@keyframes flash-2 {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 lime);
+  }
+  50% {
+    filter: drop-shadow(0 0 60px lime) drop-shadow(0 0 80px lime);
+  }
+}
+
+@keyframes flash-3 {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 yellow);
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-3px);
+  }
+  75% {
+    transform: translateX(3px);
+  }
+  50% {
+    filter: drop-shadow(0 0 80px yellow) drop-shadow(0 0 100px orange);
+  }
+}
+
+@keyframes flash-4 {
   0% {
-    box-shadow: 0 0 0 var(--retro-green-dull);
+    filter: drop-shadow(0 0 50px red);
+    transform: scale(1);
+  }
+  20% {
+    filter: drop-shadow(0 0 100px red) drop-shadow(0 0 150px orange)
+      drop-shadow(0 0 200px yellow);
+    transform: scale(1.02);
+  }
+  40% {
+    transform: scale(0.98) rotate(-1deg);
+  }
+  60% {
+    transform: scale(1.02) rotate(1deg);
+  }
+  80% {
+    transform: scale(0.99);
   }
   100% {
-    box-shadow: 0 0 200px transparent;
+    filter: drop-shadow(0 0 20px transparent);
+    transform: scale(1) rotate(0);
   }
 }
 

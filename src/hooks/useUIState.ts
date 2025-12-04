@@ -14,6 +14,7 @@ export function useUIState() {
       const scoreChanged = prev.score !== gameState.score;
       const levelChanged = prev.level !== gameState.level;
       const performCanvasFlash = scoreChanged || levelChanged;
+      const linesCleared = gameState.linesCleared - prev.prevLinesCleared;
 
       // remove flash after animation
       if (scoreChanged || levelChanged) {
@@ -47,6 +48,8 @@ export function useUIState() {
         scoreFlash: prev.score !== gameState.score,
         levelFlash: prev.level !== gameState.level,
         canvasFlash: scoreChanged || levelChanged,
+        scoreMultiplier: linesCleared,
+        prevLinesCleared: gameState.linesCleared,
       };
     });
   }, []);

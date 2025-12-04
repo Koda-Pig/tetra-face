@@ -43,6 +43,8 @@ export type UIState = {
   isGameOver: boolean;
   score: number;
   scoreFlash: boolean;
+  scoreMultiplier: number;
+  prevLinesCleared: number;
   levelFlash: boolean;
   canvasFlash: boolean;
   level: number;
