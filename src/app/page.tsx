@@ -3,12 +3,14 @@ import Image from "next/image";
 import { Button } from "~/components/ui/button";
 import GameSection from "~/app/_components/gameSection";
 import { auth } from "~/server/auth";
+import BackgroundAnimation from "./_components/backgroundAnimation";
 
 export default async function Home() {
   const session = await auth();
 
   return (
     <main className="text-(--retro-green)">
+      <BackgroundAnimation />
       <div className="container mx-auto flex h-full min-h-svh flex-col px-4 py-8">
         <h1 className="text-center text-5xl font-bold tracking-wide">
           TETRA FACE

@@ -13,17 +13,22 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
+import { useGameInPlay } from "~/contexts/gameInPlayContext";
 
 export default function GameSection({ session }: { session: Session }) {
   const [gameMode, setGameMode] = useState<"single-player" | "versus" | null>(
     null,
   );
+  const { setIsGameInPlay } = useGameInPlay();
 
   return (
     <div className="my-8">
       <div className="fixed top-4 left-4 grid gap-2">
         <Button
-          onClick={() => setGameMode(null)}
+          onClick={() => {
+            setGameMode(null);
+            setIsGameInPlay(false);
+          }}
           className="border-background justify-between border"
         >
           <p>back</p>
@@ -43,7 +48,10 @@ export default function GameSection({ session }: { session: Session }) {
           <Button
             size="lg"
             className="text-md w-full px-4 py-8 text-xl"
-            onClick={() => setGameMode("single-player")}
+            onClick={() => {
+              setGameMode("single-player");
+              setIsGameInPlay(true);
+            }}
           >
             SINGLE PLAYER
             <BedSingle className="size-8" />

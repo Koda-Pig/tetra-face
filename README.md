@@ -124,7 +124,7 @@ https://play.tetris.com/
 - [x] Hide 'create room' button if a player has already created a room and is waiting for players to join
 - [ ] add line clearing animation to the blocks
 - [x] replace user ids with username in frontend
-- [ ] add background animation for non-gameplay states. Tetris matrix
+- [x] add background animation for non-gameplay states. Tetris matrix
 
 ---
 

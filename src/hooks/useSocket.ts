@@ -10,15 +10,8 @@ export function useSocket() {
 
   useEffect(() => {
     const socketInstance = io();
-
-    socketInstance.on("connect", () => {
-      setIsConnected(true);
-    });
-
-    socketInstance.on("disconnect", () => {
-      setIsConnected(false);
-    });
-
+    socketInstance.on("connect", () => setIsConnected(true));
+    socketInstance.on("disconnect", () => setIsConnected(false));
     setSocket(socketInstance);
 
     return () => {

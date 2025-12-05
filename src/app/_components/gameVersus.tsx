@@ -12,6 +12,7 @@ import ChatWindow from "./chatWindow";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 import type { Socket } from "socket.io-client";
+import { useGameInPlay } from "~/contexts/gameInPlayContext";
 
 function GameInProgress({
   isRoomHost,
@@ -297,6 +298,7 @@ function RoomLobby({
 // };
 
 export default function GameVersus({ session }: { session: Session }) {
+  const { setIsGameInPlay } = useGameInPlay();
   const { socket, isConnected } = useSocket();
   const [currentRoom, setCurrentRoom] = useState<GameRoom | null>(null);
   const [availableRooms, setAvailableRooms] = useState<GameRoom[]>([]);
@@ -384,6 +386,12 @@ export default function GameVersus({ session }: { session: Session }) {
       (data: { roomId: string; room: GameRoom }) => {
         addMessage(`Player ready state changed in room: ${data.roomId}`);
         setCurrentRoom(data.room);
+        if (
+          data.room.players.length === 2 &&
+          data.room.players.every((p) => p.ready)
+        ) {
+          setIsGameInPlay(true);
+        }
       },
     );
     socket.on("error", (data: { message: string }) => {
@@ -420,6 +428,7 @@ export default function GameVersus({ session }: { session: Session }) {
     socket.on("game-over-event", (data: { action: TetrisEvent }) => {
       addMessage(`game over event global ${data.action.type}`);
       setIsGameOver(true);
+      setIsGameInPlay(false);
       if (data.action.type !== "game-over") return;
       // there is a potential for error here, as the winner is set based on whoever sends the gameover event first
       // so in a case where player 1's game ended first, they send a game over event. Meanwhile player 2's game also ended

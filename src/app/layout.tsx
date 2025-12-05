@@ -1,8 +1,8 @@
 import "~/styles/globals.css";
-
 import { type Metadata } from "next";
 import { Outfit } from "next/font/google";
 import { Silkscreen } from "next/font/google";
+import { GameInPlayProvider } from "~/contexts/gameInPlayContext";
 
 export const metadata: Metadata = {
   title: "Tetra Face",
@@ -31,7 +31,9 @@ export default function RootLayout({
           src="//unpkg.com/react-scan/dist/auto.global.js"
         />
       </head> */}
-      <body className="dark">{children}</body>
+      <body className="dark">
+        <GameInPlayProvider>{children}</GameInPlayProvider>
+      </body>
     </html>
   );
 }
