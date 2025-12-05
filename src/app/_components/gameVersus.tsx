@@ -2,7 +2,13 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useSocket } from "~/hooks/useSocket";
-import type { BoardCell, GameRoom, TetrisEvent, Winner } from "~/types";
+import type {
+  BoardCell,
+  GameRoom,
+  TetrisEvent,
+  Winner,
+  Message,
+} from "~/types";
 import type { Session } from "next-auth";
 import { Play, HourglassIcon } from "lucide-react";
 import HostGame from "./hostGame";
@@ -292,17 +298,12 @@ function RoomLobby({
   );
 }
 
-// type UserMessage = {
-//   content: string;
-//   username: string;
-// };
-
 export default function GameVersus({ session }: { session: Session }) {
   const { setIsGameInPlay } = useGameInPlay();
   const { socket, isConnected } = useSocket();
   const [currentRoom, setCurrentRoom] = useState<GameRoom | null>(null);
   const [availableRooms, setAvailableRooms] = useState<GameRoom[]>([]);
-  const [messages, setMessages] = useState<string[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isRoomHost, setIsRoomHost] = useState<boolean>(false);
   const [gamePaused, setGamePaused] = useState(false); // in versus mode, pause state must be synced
   const [isGameOver, setIsGameOver] = useState(false);
@@ -322,23 +323,25 @@ export default function GameVersus({ session }: { session: Session }) {
   }, [currentRoom?.players, session?.user?.id]);
   const isCurrentPlayerReady = currentPlayer?.ready ?? false;
 
-  function addMessage(message: string) {
-    setMessages((prev) => [
-      `${new Date().toLocaleDateString()}: ${message}`,
-      ...prev,
-    ]);
+  function addMessage(message: Message) {
+    if (!socket || !session?.user?.id || !currentRoom) return;
+
+    socket.emit("send-message", {
+      roomId: currentRoom.id,
+      message: message.content,
+      username: message.username,
+      timestamp: message.timestamp,
+    });
   }
 
   function createRoom() {
     if (!socket || !session?.user?.id) return;
-    addMessage("Creating room...");
     setIsRoomHost(true);
     socket.emit("create-room", session.user.id, session.user.name);
   }
 
   function joinRoom(roomId: string) {
     if (!socket || !session?.user?.id) return;
-    addMessage(`Attempting to join room: ${roomId}`);
     setIsRoomHost(false);
     socket.emit("join-room", {
       roomId,
@@ -349,7 +352,6 @@ export default function GameVersus({ session }: { session: Session }) {
 
   function leaveRoom(roomId: string) {
     if (!socket || !session?.user?.id) return;
-    addMessage(`Attempting to leave room: ${roomId}`);
     setIsRoomHost(false);
     setCurrentRoom(null);
     socket.emit("leave-room", {
@@ -374,17 +376,14 @@ export default function GameVersus({ session }: { session: Session }) {
     socket.on("rooms-list", (rooms: GameRoom[]) => setAvailableRooms(rooms));
     socket.on("rooms-updated", (rooms: GameRoom[]) => setAvailableRooms(rooms));
     socket.on("room-created", (data: { roomId: string; room: GameRoom }) => {
-      addMessage(`room created: ${data.roomId}`);
       setCurrentRoom(data.room);
     });
     socket.on("player-joined", (data: { roomId: string; room: GameRoom }) => {
-      addMessage(`Player joined room: ${data.roomId}`);
       setCurrentRoom(data.room);
     });
     socket.on(
       "player-ready-changed",
       (data: { roomId: string; room: GameRoom }) => {
-        addMessage(`Player ready state changed in room: ${data.roomId}`);
         setCurrentRoom(data.room);
         if (
           data.room.players.length === 2 &&
@@ -395,12 +394,20 @@ export default function GameVersus({ session }: { session: Session }) {
       },
     );
     socket.on("error", (data: { message: string }) => {
-      addMessage(`Error: ${data.message}`);
+      addMessage({
+        timestamp: getTimestamp(),
+        content: `Error: ${data.message}`,
+        username: "System",
+      });
     });
     socket.on(
       "player-disconnected",
       (data: { roomId: string; userId: string }) => {
-        addMessage(`Player disconnected from room: ${data.roomId}`);
+        addMessage({
+          timestamp: getTimestamp(),
+          content: `${session?.user?.name} disconnected from room`,
+          username: "System",
+        });
         const { roomId, userId } = data;
         socket.emit("game-over-event", {
           roomId,
@@ -413,7 +420,6 @@ export default function GameVersus({ session }: { session: Session }) {
       },
     );
     socket.on("opponent-action", (data: { action: TetrisEvent }) => {
-      addMessage(`Received opponent action: ${JSON.stringify(data?.action)}`);
       if (data.action.type === "send-garbage") {
         // 'send-garbage' is the one event that needs to be handled by the host game, as it affects the host game's state
         hostGameReceiveGarbageRef.current?.(data?.action?.garbageLines);
@@ -422,11 +428,9 @@ export default function GameVersus({ session }: { session: Session }) {
       }
     });
     socket.on("game-pause-event", (data: { action: TetrisEvent }) => {
-      addMessage(`game pause event global ${data.action.type}`);
       setGamePaused(data.action.type === "game-pause" ? true : false);
     });
     socket.on("game-over-event", (data: { action: TetrisEvent }) => {
-      addMessage(`game over event global ${data.action.type}`);
       setIsGameOver(true);
       setIsGameInPlay(false);
       if (data.action.type !== "game-over") return;
@@ -439,6 +443,24 @@ export default function GameVersus({ session }: { session: Session }) {
         data.action.playerId === session?.user?.id ? "opponent" : "you",
       );
     });
+    socket.on(
+      "message-sent",
+      (data: {
+        roomId: string;
+        message: string;
+        username: string;
+        timestamp: number;
+      }) => {
+        setMessages((prev) => [
+          {
+            timestamp: data.timestamp,
+            content: data.message,
+            username: data.username,
+          },
+          ...prev,
+        ]);
+      },
+    );
 
     // Cleanup listeners
     return () => {
@@ -492,11 +514,13 @@ export default function GameVersus({ session }: { session: Session }) {
         />
       )}
 
-      <ChatWindow
-        messages={messages}
-        currentRoom={currentRoom}
-        session={session}
-      />
+      {currentRoom && (
+        <ChatWindow
+          messages={messages}
+          session={session}
+          addMessage={addMessage}
+        />
+      )}
     </div>
   );
 }

@@ -100,6 +100,31 @@ export function initializeSocket(httpServer: HttpServer) {
       },
     );
 
+    socket.on(
+      "send-message",
+      (data: {
+        roomId: string;
+        message: string;
+        username: string;
+        timestamp: number;
+      }) => {
+        const { roomId, message, username, timestamp } = data;
+        const room = gameRooms.get(roomId);
+
+        if (!room) {
+          socket.emit("error", { message: "room not found" });
+          return;
+        }
+
+        io.to(roomId).emit("message-sent", {
+          roomId,
+          message,
+          username,
+          timestamp,
+        });
+      },
+    );
+
     socket.on("leave-room", (data: { roomId: string; userId: string }) => {
       const { roomId, userId } = data;
       const room = gameRooms.get(roomId);

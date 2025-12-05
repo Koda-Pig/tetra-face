@@ -17,3 +17,9 @@ export type Player = {
 };
 
 export type Winner = "opponent" | "you" | null;
+
+export type Message = {
+  timestamp: number;
+  content: string;
+  username: string;
+};

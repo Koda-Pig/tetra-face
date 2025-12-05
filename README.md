@@ -97,7 +97,7 @@ https://play.tetris.com/
     - [x] Game over and
     - [x] play/ pause state
   - [x] handle players leaving the room/ exiting the game
-- [ ] setup chat
+- [x] setup chat
 
 ### Auth
 

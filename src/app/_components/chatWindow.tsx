@@ -1,8 +1,7 @@
 "use client";
 
-import { useSocket } from "~/hooks/useSocket";
-import type { GameRoom } from "~/types";
-import type { Session } from "next-auth";
+import type { Message } from "~/types";
+import { cn } from "~/lib/utils";
 import { MessageCircleIcon } from "lucide-react";
 import {
   Drawer,
@@ -12,18 +11,30 @@ import {
   DrawerTrigger,
   DrawerDescription,
 } from "~/components/ui/drawer";
+import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
+import { useState } from "react";
+import { getTimestamp } from "~/lib/utils";
+import type { Session } from "next-auth";
 
 export default function ChatWindow({
-  currentRoom,
+  addMessage,
   messages,
   session,
 }: {
-  currentRoom: GameRoom | null;
-  messages: string[];
+  addMessage: (message: Message) => void;
+  messages: Message[];
   session: Session;
 }) {
-  const { isConnected } = useSocket();
+  const [message, setMessage] = useState("");
+  function handleSendMessage() {
+    addMessage({
+      timestamp: getTimestamp(),
+      content: message,
+      username: session.user.name ?? "Unknown",
+    });
+    setMessage("");
+  }
 
   return (
     <Drawer>
@@ -36,52 +47,45 @@ export default function ChatWindow({
       <DrawerContent>
         <DrawerHeader>
           <DrawerTitle>
-            <p className="mb-3 text-center text-lg font-semibold">Chat</p>
+            <p className="text-center text-2xl font-semibold">Chat</p>
           </DrawerTitle>
-          <DrawerDescription>
-            Use this to test the socket connection and room creation.
+          <DrawerDescription className="sr-only">
+            Use this to chat with your opponent.
           </DrawerDescription>
         </DrawerHeader>
-        <div className="mx-auto w-full rounded bg-gray-500 p-4 sm:max-w-xl">
-          {/* Connection Status */}
-          <div className="mb-4">
-            <p
-              className={`font-semibold ${isConnected ? "text-green-600" : "text-red-600"}`}
-            >
-              {isConnected ? "✅ Connected" : "❌ Disconnected"}
-            </p>
-            {session?.user && (
-              <p className="text-sm">User: {session.user.name}</p>
-            )}
+        <div className="mx-auto w-full rounded p-4 sm:max-w-xl">
+          <div className="mb-2 flex gap-2">
+            <Input
+              type="text"
+              placeholder="Type your message here..."
+              value={message}
+              name="message-input"
+              className="px-4 py-5 text-lg placeholder:text-lg"
+              onChange={(e) => setMessage(e.target.value)}
+            />
+            <Button onClick={handleSendMessage} className="text-lg">
+              Send
+            </Button>
           </div>
 
-          {/* Current Room Info */}
-          {currentRoom && (
-            <div className="mb-4 rounded bg-gray-500 p-2">
-              <h4 className="font-semibold">Current Room</h4>
-              <p className="text-sm">ID: {currentRoom.id}</p>
-              <p className="text-sm">Players: {currentRoom.players.length}/2</p>
-              <ul className="text-xs">
-                {currentRoom.players.map((player, idx) => (
-                  <li key={idx}>
-                    {player.userId} {player.ready ? "✅" : "⏳"}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
           {/* Message Log */}
-          <div>
-            <h4 className="mb-2 font-semibold">Event Log</h4>
-            <p className="bg-background h-40 overflow-y-auto rounded border p-2 text-xs">
-              {messages.map((msg, idx) => (
-                <span key={idx}>
-                  {msg}
-                  <br />
+          <div className="bg-background flex h-40 flex-col gap-2 overflow-y-auto rounded border p-2">
+            {messages.map((msg, idx) => (
+              <p
+                key={idx}
+                className={cn(
+                  "max-w-[40ch] rounded bg-gray-800/50 p-4",
+                  msg.username === session.user.name
+                    ? "mr-auto bg-blue-800/50"
+                    : "ml-auto bg-gray-800/50",
+                )}
+              >
+                <span className="font-semibold opacity-50">
+                  {msg.username}:{" "}
                 </span>
-              ))}
-            </p>
+                {msg.content}
+              </p>
+            ))}
           </div>
         </div>
       </DrawerContent>
