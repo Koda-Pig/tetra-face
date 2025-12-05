@@ -18,7 +18,13 @@ import {
   addGarbageLines,
 } from "./gameUtils";
 import { getTimestamp } from "~/lib/utils";
-import type { GameState, GameLoop, TetrisEvent, Piece } from "~/types";
+import type {
+  GameState,
+  GameLoop,
+  TetrisEvent,
+  Piece,
+  TetrominoType,
+} from "~/types";
 import {
   COLS,
   VISIBLE_ROWS,
@@ -43,6 +49,8 @@ const OpponentGame = forwardRef<
   const gameStateRef = useRef<GameState | null>(null);
   const { uiState, setUiState, syncUIState } = useUIState();
   const [initialPiece, setInitialPiece] = useState<Piece | null>(null);
+  const [initialPreviewPiece, setInitialPreviewPiece] =
+    useState<TetrominoType | null>(null);
 
   const triggerActionRef = useCallback(
     (action: TetrisEvent) => {
@@ -50,6 +58,7 @@ const OpponentGame = forwardRef<
 
       if (type === "initial-piece-spawn") {
         setInitialPiece(action.piece);
+        setInitialPreviewPiece(action.previewPiece);
         return;
       }
 
@@ -80,6 +89,7 @@ const OpponentGame = forwardRef<
           gameStateRef.current.linesCleared = action.linesCleared;
           gameStateRef.current.score = action.newScore;
           gameStateRef.current.level = action.newLevel;
+          gameStateRef.current.previewPiece = action.nextPreviewPiece;
           clearLines(gameStateRef.current.board);
           syncUIState(gameStateRef.current);
           if (gameStateRef.current.pendingGarbage) {
@@ -103,6 +113,7 @@ const OpponentGame = forwardRef<
           gameStateRef.current.linesCleared = action.linesCleared;
           gameStateRef.current.score = action.newScore;
           gameStateRef.current.level = action.newLevel;
+          gameStateRef.current.previewPiece = action.nextPreviewPiece;
           clearLines(gameStateRef.current.board);
           syncUIState(gameStateRef.current);
           if (gameStateRef.current.pendingGarbage) {
@@ -122,8 +133,9 @@ const OpponentGame = forwardRef<
           setUiState((prev) => ({ ...prev, isPaused: false }));
           break;
         case "player-hold-piece":
-          const { pieceType, newPieceToHold } = action;
-          gameStateRef.current.currentPiece = spawnPiece(undefined, pieceType);
+          const { pieceType, newPieceToHold, nextPreviewPiece } = action;
+          gameStateRef.current.currentPiece = spawnPiece(pieceType);
+          gameStateRef.current.previewPiece = nextPreviewPiece;
           setUiState((prev) => ({ ...prev, holdPiece: newPieceToHold }));
           break;
         case "receive-garbage":
@@ -145,17 +157,20 @@ const OpponentGame = forwardRef<
   // initialize the game state
   useEffect(() => {
     // don't initialize if already initialized or there's no piece
-    if (gameStateRef.current || !initialPiece) return;
+    if (gameStateRef.current || !initialPiece || !initialPreviewPiece) return;
     gameStateRef.current = {
       ...INITIAL_GAME_STATE,
       board: createEmptyBoard(),
       currentPiece: initialPiece,
+      previewPiece: initialPreviewPiece,
       dropIntervalSeconds: calcDropSpeed(0),
       userId,
     };
 
+    setUiState((prev) => ({ ...prev, previewPiece: initialPreviewPiece }));
+
     gameLoopRef.current.lastTime = getTimestamp();
-  }, [userId, initialPiece]);
+  }, [userId, initialPiece, initialPreviewPiece]);
 
   // game loop
   useEffect(() => {

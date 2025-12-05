@@ -8,6 +8,7 @@ import type {
   GamepadState,
   TetrisEvent,
   BoardCell,
+  NextPiece,
 } from "~/types";
 import {
   TETRAMINOS,
@@ -88,17 +89,8 @@ function calcDropSpeed(level: number): number {
   return frames / 60; // convert to seconds
 }
 
-// function overloads
-function spawnPiece(getNext: () => TetrominoType): Piece;
-function spawnPiece(getNext: undefined, newTetrominoType: TetrominoType): Piece;
-
-function spawnPiece(
-  getNext?: () => TetrominoType,
-  newTetrominoType?: TetrominoType,
-): Piece {
-  const tetrominoType = newTetrominoType ?? getNext!();
+function spawnPiece(tetrominoType: TetrominoType): Piece {
   const spawnYPos = tetrominoType === "I" ? SPAWN_ROW_I : SPAWN_ROW_OTHER;
-
   return {
     tetrominoType,
     tetromino: TETRAMINOS[tetrominoType],
@@ -213,7 +205,7 @@ function lockPieceAndSpawnNext({
   onReceiveGarbage,
 }: {
   gameState: GameState;
-  getNextPiece: () => TetrominoType;
+  getNextPiece: () => NextPiece;
   onStateChange?: (gameState: GameState) => void;
   onReceiveGarbage?: (garbageLines: BoardCell[][]) => void;
 }): BoardCell[][] | null {
@@ -235,7 +227,9 @@ function lockPieceAndSpawnNext({
     onReceiveGarbage?.(garbageToProcess);
   }
 
-  gameState.currentPiece = spawnPiece(getNextPiece);
+  const { piece, preview } = getNextPiece();
+  gameState.currentPiece = spawnPiece(piece);
+  gameState.previewPiece = preview;
   const oldLevel = gameState.level;
   const newLevel = Math.floor(gameState.linesCleared / LINES_PER_LEVEL);
 
@@ -287,18 +281,21 @@ function handleHoldPiece({
   getNextPiece,
 }: {
   gameState: GameState;
-  getNextPiece: () => TetrominoType;
+  getNextPiece: () => NextPiece;
 }): TetrominoType | null {
   if (!gameState.canHold) return null;
   const oldHold = gameState.holdPiece;
   const currentPiece = gameState.currentPiece;
+
   // this'll only  happen the first hold event
   if (!oldHold) {
+    const { piece, preview } = getNextPiece();
     gameState.holdPiece = gameState.currentPiece.tetrominoType;
-    gameState.currentPiece = spawnPiece(getNextPiece);
+    gameState.currentPiece = spawnPiece(piece);
+    gameState.previewPiece = preview;
   } else {
     gameState.holdPiece = gameState.currentPiece.tetrominoType;
-    gameState.currentPiece = spawnPiece(undefined, oldHold);
+    gameState.currentPiece = spawnPiece(oldHold);
   }
 
   gameState.canHold = false;
@@ -366,7 +363,7 @@ function handleKeyDown({
 }: {
   currentKey: string;
   gameState: GameState;
-  getNextPiece: () => TetrominoType;
+  getNextPiece: () => NextPiece;
   onStateChange?: (gameState: GameState) => void;
   pauseMultiplierRef: React.RefObject<number>;
   setUiState: React.Dispatch<React.SetStateAction<UIState>>;
@@ -413,10 +410,12 @@ function handleKeyDown({
       const linesCleared = gameState.linesCleared;
       const newScore = gameState.score;
       const newLevel = gameState.level;
+      const nextPreviewPiece = gameState.previewPiece;
       return {
         type: "player-hard-drop-lock",
         lockedPiece,
         nextPiece,
+        nextPreviewPiece,
         linesCleared,
         newScore,
         newLevel,
@@ -453,10 +452,12 @@ function handleKeyDown({
         const linesCleared = gameState.linesCleared;
         const newScore = gameState.score;
         const newLevel = gameState.level;
+        const nextPreviewPiece = gameState.previewPiece;
         return {
           type: "player-soft-drop-lock",
           lockedPiece,
           nextPiece,
+          nextPreviewPiece,
           linesCleared,
           newScore,
           newLevel,
@@ -533,6 +534,7 @@ function handleKeyDown({
         return {
           type: "player-hold-piece",
           pieceType: gameState.currentPiece.tetrominoType,
+          nextPreviewPiece: gameState.previewPiece,
           timestamp: getTimestamp(),
           newPieceToHold: newHoldPiece,
         };
@@ -655,7 +657,7 @@ function update({
 }: {
   gameState: GameState;
   step: number;
-  getNextPiece: () => TetrominoType;
+  getNextPiece: () => NextPiece;
   onStateChange?: (gameState: GameState) => void;
   playerId: string;
   onReceiveGarbage?: (garbageLines: BoardCell[][]) => void;
@@ -696,6 +698,7 @@ function update({
       newY: gameState.currentPiece.y,
       lockedPiece,
       nextPiece: gameState.currentPiece,
+      nextPreviewPiece: gameState.previewPiece,
       linesCleared: gameState.linesCleared,
       newScore: gameState.score,
       newLevel: gameState.level,
@@ -747,15 +750,17 @@ function restartGame({
   gameLoopRef: React.RefObject<GameLoop>;
   setUiState: React.Dispatch<React.SetStateAction<UIState>>;
   setRestartTrigger: React.Dispatch<React.SetStateAction<number>>;
-  getNextPiece: () => TetrominoType;
+  getNextPiece: () => NextPiece;
   userId: string;
 }) {
   if (!gameStateRef.current) return;
 
+  const { piece, preview } = getNextPiece();
   // 1. Reset game state (reuse existing object to maintain references)
   Object.assign(gameStateRef.current, {
     ...INITIAL_GAME_STATE,
-    currentPiece: spawnPiece(getNextPiece),
+    currentPiece: spawnPiece(piece),
+    previewPiece: preview,
     dropIntervalSeconds: calcDropSpeed(0),
     userId,
     board: createEmptyBoard(),

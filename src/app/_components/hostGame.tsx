@@ -152,24 +152,29 @@ export default function HostGame({
   // initialize the game state
   useEffect(() => {
     if (gameStateRef.current) return;
-    const newPiece = spawnPiece(getNextPiece);
+    const { piece, preview } = getNextPiece();
+    const newPiece = spawnPiece(piece);
 
     socket.emit("game-action", {
       roomId,
       action: {
         type: "initial-piece-spawn",
         piece: newPiece,
+        previewPiece: preview,
         timestamp: getTimestamp(),
-      },
+      } as TetrisEvent,
     });
 
     gameStateRef.current = {
       ...INITIAL_GAME_STATE,
       board: createEmptyBoard(),
       currentPiece: newPiece,
+      previewPiece: preview,
       dropIntervalSeconds: calcDropSpeed(0),
       userId,
     };
+
+    setUiState((prev) => ({ ...prev, previewPiece: preview }));
 
     gameLoopRef.current.lastTime = getTimestamp();
   }, [socket, getNextPiece, userId, roomId]);

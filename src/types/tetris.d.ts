@@ -24,8 +24,14 @@ export type Piece = {
   rotation: number; // 0, 1, 2, 3
 };
 
+export type NextPiece = {
+  piece: TetrominoType;
+  preview: TetrominoType;
+};
+
 export type GameState = {
   currentPiece: Piece;
+  previewPiece: TetrominoType;
   dropTimer: number; // accumulated time since last drop
   dropIntervalSeconds: number; // drop every 1 second (adjust for difficulty)
   board: BoardCell[][]; // 2D array representing placed pieces (ROWS x COLS)
@@ -50,6 +56,7 @@ export type UIState = {
   level: number;
   isPaused: boolean;
   holdPiece: TetrominoType | null;
+  previewPiece: TetrominoType | null;
 };
 
 export type GameLoop = {
@@ -69,6 +76,7 @@ export type TetrisEvent =
       type: "player-soft-drop-lock";
       lockedPiece: Piece;
       nextPiece: Piece;
+      nextPreviewPiece: TetrominoType;
       linesCleared: number;
       newScore: number;
       newLevel: number;
@@ -79,6 +87,7 @@ export type TetrisEvent =
       type: "player-hard-drop-lock";
       lockedPiece: Piece;
       nextPiece: Piece;
+      nextPreviewPiece: TetrominoType;
       linesCleared: number;
       newScore: number;
       newLevel: number;
@@ -88,6 +97,7 @@ export type TetrisEvent =
   | {
       type: "player-hold-piece";
       pieceType: TetrominoType;
+      nextPreviewPiece: TetrominoType;
       timestamp: number;
       newPieceToHold: TetrominoType | null;
     }
@@ -98,6 +108,7 @@ export type TetrisEvent =
       newY: number;
       lockedPiece: Piece;
       nextPiece: Piece;
+      nextPreviewPiece: TetrominoType;
       linesCleared: number;
       newScore: number;
       newLevel: number;
@@ -109,7 +120,12 @@ export type TetrisEvent =
   | { type: "game-resume"; timestamp: number }
   | { type: "game-over"; playerId: string; timestamp: number }
   // other
-  | { type: "initial-piece-spawn"; piece: Piece; timestamp: number }
+  | {
+      type: "initial-piece-spawn";
+      piece: Piece;
+      previewPiece: TetrominoType;
+      timestamp: number;
+    }
   | { type: "send-garbage"; garbageLines: BoardCell[][]; timestamp: number }
   | { type: "receive-garbage"; garbageLines: BoardCell[][]; timestamp: number }; // this should happen when the garbage is processed (ie: when piece is locked), not immediately when it's generated
 

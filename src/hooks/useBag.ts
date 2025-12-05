@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useRef } from "react";
 import { TETRAMINO_BAG } from "~/constants";
 import { shuffleArray } from "~/lib/utils";
-import type { TetrominoType } from "~/types";
+import type { TetrominoType, NextPiece } from "~/types";
 
 // generator function for the 7-bag randomizer method
 // (I've been JS-ing for nearly 10 years and have literally never used a generator before)
@@ -23,18 +23,22 @@ export function useBag() {
   const generatorRef = useRef<Generator<TetrominoType, void, unknown> | null>(
     null,
   );
+  const previewRef = useRef<TetrominoType | null>(null);
 
-  useEffect(() => {
-    generatorRef.current ??= randomTetrominoGenerator(); // initialize the generator if it's not already initialized
-  }, []);
+  if (!generatorRef.current) {
+    generatorRef.current = randomTetrominoGenerator();
+    previewRef.current = generatorRef.current.next().value as TetrominoType;
+  }
 
-  const getNextPiece = useCallback((): TetrominoType => {
-    if (!generatorRef.current) {
+  const getNextPiece = useCallback((): NextPiece => {
+    if (!generatorRef.current || !previewRef.current) {
       throw new Error("Piece generator is not initialized");
     }
+    const currentPiece = previewRef.current;
+    const nextPreview = generatorRef.current.next().value as TetrominoType;
+    previewRef.current = nextPreview;
 
-    const result = generatorRef.current.next();
-    return result.value as TetrominoType;
+    return { piece: currentPiece, preview: nextPreview };
   }, []);
 
   return getNextPiece;

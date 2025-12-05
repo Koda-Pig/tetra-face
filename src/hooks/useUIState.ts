@@ -50,6 +50,7 @@ export function useUIState() {
         canvasFlash: scoreChanged || levelChanged,
         scoreMultiplier: linesCleared,
         prevLinesCleared: gameState.linesCleared,
+        previewPiece: gameState.previewPiece,
       };
     });
   }, []);

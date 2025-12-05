@@ -12,7 +12,7 @@ export default function GameStats({ uiState }: { uiState: UIState }) {
         <p className="font-heading text-sm">HOLD</p>
         <div className="relative grid h-10 w-10 place-items-center">
           <div
-            className={cn("hold-tetro", uiState.holdPiece)}
+            className={cn("ui-tetro", uiState.holdPiece)}
             style={{
               color: uiState.holdPiece
                 ? TETRAMINOS[uiState.holdPiece].color
@@ -24,7 +24,14 @@ export default function GameStats({ uiState }: { uiState: UIState }) {
       <div className={cn(gameStatClasses, "top-26")}>
         <p className="font-heading text-sm">NEXT</p>
         <div className="relative grid h-10 w-10 place-items-center">
-          {/* next piece preview */}
+          <div
+            className={cn("ui-tetro", uiState.previewPiece)}
+            style={{
+              color: uiState.previewPiece
+                ? TETRAMINOS[uiState.previewPiece].color
+                : "transparent",
+            }}
+          />
         </div>
       </div>
       <div

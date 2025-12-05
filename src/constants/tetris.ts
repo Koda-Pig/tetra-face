@@ -355,7 +355,7 @@ export const CANVAS_ANIMATION_DURATION_MS = 600;
 
 export const INITIAL_GAME_STATE: Omit<
   GameState,
-  "currentPiece" | "dropIntervalSeconds" | "board" | "userId"
+  "currentPiece" | "previewPiece" | "dropIntervalSeconds" | "board" | "userId"
 > = {
   dropTimer: 0,
   linesCleared: 0,
@@ -392,6 +392,7 @@ export const INITIAL_UI_STATE: UIState = {
   level: 0,
   isPaused: false,
   holdPiece: null,
+  previewPiece: null,
   scoreMultiplier: 0,
   prevLinesCleared: 0,
 };

@@ -252,7 +252,7 @@ main {
   }
 }
 
-.hold-tetro {
+.ui-tetro {
   position: absolute;
   width: 10px;
   height: 10px;

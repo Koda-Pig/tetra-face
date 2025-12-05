@@ -60,13 +60,18 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
 
   // initialize the game state
   useEffect(() => {
-    gameStateRef.current ??= {
+    if (gameStateRef.current) return;
+    const { piece, preview } = getNextPiece();
+    gameStateRef.current = {
       ...INITIAL_GAME_STATE,
       board: createEmptyBoard(),
-      currentPiece: spawnPiece(getNextPiece),
+      currentPiece: spawnPiece(piece),
+      previewPiece: preview,
       dropIntervalSeconds: calcDropSpeed(0),
       userId,
     };
+
+    setUiState((prev) => ({ ...prev, previewPiece: preview }));
 
     gameLoopRef.current.lastTime = getTimestamp();
   }, [getNextPiece, userId]);
