@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "~/components/ui/button";
 import GameSection from "~/app/_components/gameSection";
 import { auth } from "~/server/auth";
+import Image from "~/app/_components/image";
 import BackgroundAnimation from "./_components/backgroundAnimation";
 
 export default async function Home() {
@@ -24,7 +25,7 @@ export default async function Home() {
             Logged in as
             <span className="font-bold">{session.user?.name}</span>
             {session.user?.image && (
-              <img
+              <Image
                 src={session.user.image}
                 alt={`${session.user.name}'s avatar`}
                 className="aspect-square rounded-full"

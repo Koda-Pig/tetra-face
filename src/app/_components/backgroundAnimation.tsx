@@ -81,12 +81,12 @@ class Effect {
     this.size = 25;
     this.columns = this.canvasWidth / this.size;
     this.accumulatedTime = 0;
-    this.updateIntervalSeconds = 1 / 2; // 2 updates per second
+    this.updateIntervalSeconds = 1 / 1; // 1 update per second
     this.tetrominoShapes = [];
     this.#initialize();
   }
   #initialize() {
-    const SPACING = 1;
+    const SPACING = 2;
     for (let i = 0; i < this.columns; i += SPACING) {
       this.tetrominoShapes[i] = new TetrominoShape(
         i,
@@ -141,7 +141,7 @@ function render({
   gradient.addColorStop(0.2, "#0f0");
   gradient.addColorStop(0.4, "#0f0");
   gradient.addColorStop(0.6, "#0f0");
-  ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+  ctx.fillStyle = "rgba(0, 0, 0, 0.03)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = gradient;
   effect.tetrominoShapes.forEach((tetrominoShape) => tetrominoShape.draw(ctx));
