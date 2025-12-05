@@ -1,4 +1,4 @@
-# Tetra Face (it's a bad name, I know)
+# Tetrus
 
 The idea for this project is to create a multiplayer game where users can log in, chat, and play against each other.
 

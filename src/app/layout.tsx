@@ -5,7 +5,7 @@ import { Silkscreen } from "next/font/google";
 import { GameInPlayProvider } from "~/contexts/gameInPlayContext";
 
 export const metadata: Metadata = {
-  title: "Tetra Face",
+  title: "Tetrus",
   description: "Real-time multiplayer tetris web app",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };

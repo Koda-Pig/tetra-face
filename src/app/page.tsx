@@ -12,9 +12,7 @@ export default async function Home() {
     <main className="text-(--retro-green)">
       <BackgroundAnimation />
       <div className="container mx-auto flex h-full min-h-svh flex-col px-4 py-8">
-        <h1 className="text-center text-5xl font-bold tracking-wide">
-          TETRA FACE
-        </h1>
+        <h1 className="text-center text-5xl font-bold tracking-wide">TETRUS</h1>
         <p className="mt-6 text-center text-lg">
           Multiplayer online tetris.
           <br />
