@@ -97,6 +97,7 @@ https://play.tetris.com/
     - [x] Game over and
     - [x] play/ pause state
   - [x] handle players leaving the room/ exiting the game
+- [ ] setup chat
 
 ### Auth
 
@@ -125,6 +126,7 @@ https://play.tetris.com/
 - [ ] add line clearing animation to the blocks
 - [x] replace user ids with username in frontend
 - [x] add background animation for non-gameplay states. Tetris matrix
+- [ ] fix bug where when a player leaves the match after winning, the opponents game will change from showing 'you lost' to 'you won'.
 
 ---
 

@@ -188,7 +188,5 @@ export default function BackgroundAnimation() {
     };
   }, [canvasRef, isGameInPlay]);
 
-  if (isGameInPlay) return null;
-
   return <canvas ref={canvasRef} className="fixed inset-0 -z-10 opacity-100" />;
 }
