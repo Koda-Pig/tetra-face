@@ -397,7 +397,7 @@ export const INITIAL_UI_STATE: UIState = {
   prevLinesCleared: 0,
 };
 
-export const INITIAL_GAMELOOP = {
+export const INITIAL_ANIMATION_LOOP = {
   now: 0,
   animationId: null,
   lastTime: 0,

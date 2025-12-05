@@ -4,7 +4,7 @@ import type {
   Piece,
   TetrominoType,
   UIState,
-  GameLoop,
+  AnimationLoop,
   GamepadState,
   TetrisEvent,
   BoardCell,
@@ -747,7 +747,7 @@ function restartGame({
 }: {
   gameStateRef: React.RefObject<GameState | null>;
   pauseMultiplierRef: React.RefObject<number>;
-  gameLoopRef: React.RefObject<GameLoop>;
+  gameLoopRef: React.RefObject<AnimationLoop>;
   setUiState: React.Dispatch<React.SetStateAction<UIState>>;
   setRestartTrigger: React.Dispatch<React.SetStateAction<number>>;
   getNextPiece: () => NextPiece;

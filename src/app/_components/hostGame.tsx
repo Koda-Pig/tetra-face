@@ -16,7 +16,7 @@ import {
 import { getTimestamp } from "~/lib/utils";
 import type {
   GameState,
-  GameLoop,
+  AnimationLoop,
   GamepadState,
   TetrisEvent,
   BoardCell,
@@ -26,7 +26,7 @@ import {
   VISIBLE_ROWS,
   GAME_INPUT_KEYS,
   INITIAL_GAME_STATE,
-  INITIAL_GAMELOOP,
+  INITIAL_ANIMATION_LOOP,
 } from "~/constants";
 import {
   Tooltip,
@@ -129,7 +129,7 @@ export default function HostGame({
   onReceiveGarbageCallback,
 }: HostGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const gameLoopRef = useRef<GameLoop>(INITIAL_GAMELOOP);
+  const gameLoopRef = useRef<AnimationLoop>(INITIAL_ANIMATION_LOOP);
   const pauseMultiplierRef = useRef(1); //  0 = paused
   // we're not using `useState` for this because we don't want to trigger re-renders while the game is playing
   const gameStateRef = useRef<GameState | null>(null);

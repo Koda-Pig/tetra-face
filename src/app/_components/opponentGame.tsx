@@ -20,7 +20,7 @@ import {
 import { getTimestamp } from "~/lib/utils";
 import type {
   GameState,
-  GameLoop,
+  AnimationLoop,
   TetrisEvent,
   Piece,
   TetrominoType,
@@ -29,7 +29,7 @@ import {
   COLS,
   VISIBLE_ROWS,
   INITIAL_GAME_STATE,
-  INITIAL_GAMELOOP,
+  INITIAL_ANIMATION_LOOP,
 } from "~/constants";
 import GameBoard from "./gameBoard";
 import { useUIState } from "~/hooks/useUIState";
@@ -43,7 +43,7 @@ const OpponentGame = forwardRef<
   { userId: string; externalPause: boolean; externalGameOver: boolean }
 >(({ userId, externalPause, externalGameOver }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const gameLoopRef = useRef<GameLoop>(INITIAL_GAMELOOP);
+  const gameLoopRef = useRef<AnimationLoop>(INITIAL_ANIMATION_LOOP);
   const pauseMultiplierRef = useRef(1); //  0 = paused
   // we're not using useState for this because we don't want to trigger re-renders while the game is playing
   const gameStateRef = useRef<GameState | null>(null);

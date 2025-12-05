@@ -59,7 +59,7 @@ export type UIState = {
   previewPiece: TetrominoType | null;
 };
 
-export type GameLoop = {
+export type AnimationLoop = {
   now: number;
   animationId: number | null;
   lastTime: number;
