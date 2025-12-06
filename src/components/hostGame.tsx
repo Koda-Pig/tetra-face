@@ -281,7 +281,6 @@ export default function HostGame({
     if (!gameStateRef.current) return;
 
     function handleKeyDownWrapper(event: KeyboardEvent) {
-      event.preventDefault();
       const action = handleKeyDown({
         currentKey: event.code,
         gameState: gameStateRef.current!,

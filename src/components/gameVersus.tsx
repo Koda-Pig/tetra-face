@@ -52,15 +52,16 @@ function GameInProgress({
         isRoomHost ? "flex-row" : "flex-row-reverse",
       )}
     >
-      <p
+      <div
         className={cn(
-          "absolute inset-0 z-10 grid place-items-center p-8 text-center text-9xl transition-opacity",
+          "gameover-bg absolute -inset-3 z-10 grid place-items-center rounded p-8 text-center text-8xl transition-opacity",
           isGameOver ? "opacity-100" : "pointer-events-none opacity-0",
           winner === null && "hidden",
         )}
       >
-        YOU {winner === "you" ? "WON" : "LOST"}!
-      </p>
+        <p>YOU {winner === "you" ? "WON" : "LOST"}!</p>
+        {/* <Button className="p-8 text-5xl">rematch?</Button> */}
+      </div>
       <div
         className={cn(
           "transition-opacity duration-300",
@@ -148,18 +149,16 @@ function RoomList({
         <h4 className="mb-2 text-center text-xl font-semibold">
           Available Rooms
         </h4>
-        <div className="space-y-2 overflow-y-auto rounded border p-2">
-          <p className="text-center text-sm">
-            No available rooms.
-            <Button
-              variant="ghost"
-              className="ml-2 inline-block"
-              onClick={onCreateRoom}
-              disabled={!isConnected || !session?.user}
-            >
-              make one!
-            </Button>
-          </p>
+        <div className="bg-background space-y-2 overflow-y-auto rounded border p-2">
+          <p className="mt-2 text-center text-sm">No available rooms.</p>
+          <Button
+            variant="ghost"
+            className="mx-auto block"
+            onClick={onCreateRoom}
+            disabled={!isConnected || !session?.user}
+          >
+            make one!
+          </Button>
         </div>
       </div>
     );
@@ -191,7 +190,7 @@ function RoomList({
                 else onJoinRoom(room.id);
               }}
             >
-              {currentRoom?.id === room.id ? "Leave" : "Join"}
+              {currentRoom?.id === room.id ? "leave" : "join"}
             </Button>
           </div>
         ))}
@@ -220,21 +219,21 @@ function CurrentRoomInfo({
       <ul className="text-lg">
         {currentRoom.players.map((player, idx) => (
           <li key={idx}>
+            {player.username}
             {player.ready ? (
               <Play className="inline-block" />
             ) : (
               <HourglassIcon className="hourglass-icon inline-block" />
-            )}{" "}
-            {player.username}
+            )}
           </li>
         ))}
       </ul>
       <Button
         onClick={() => onLeaveRoom(currentRoom.id)}
         className="absolute top-2 right-2 mt-2"
-        variant="destructive"
+        variant="outline"
       >
-        Leave Room
+        leave room
       </Button>
     </div>
   );

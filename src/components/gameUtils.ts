@@ -352,6 +352,7 @@ const createEmptyBoard = () =>
     );
 
 function handleKeyDown({
+  event,
   currentKey,
   gameState,
   getNextPiece,
@@ -361,6 +362,7 @@ function handleKeyDown({
   playerId,
   onReceiveGarbage,
 }: {
+  event?: KeyboardEvent;
   currentKey: string;
   gameState: GameState;
   getNextPiece: () => NextPiece;
@@ -371,6 +373,7 @@ function handleKeyDown({
   onReceiveGarbage?: (garbageLines: BoardCell[][]) => void;
 }): TetrisEvent | null {
   if (!GAME_INPUT_KEYS.includes(currentKey)) return null;
+  event?.preventDefault();
 
   const isPaused = pauseMultiplierRef.current === 0;
 

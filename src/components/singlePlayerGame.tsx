@@ -175,8 +175,8 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
     if (!gameStateRef.current) return;
 
     function handleKeyDownWrapper(event: KeyboardEvent) {
-      event.preventDefault();
       handleKeyDown({
+        event,
         currentKey: event.code,
         gameState: gameStateRef.current!,
         getNextPiece,
