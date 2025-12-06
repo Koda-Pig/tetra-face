@@ -409,6 +409,7 @@ export default function GameVersus({ session }: { session: Session }) {
           username: "System",
         });
         const { roomId, userId } = data;
+        if (isGameOver) return;
         socket.emit("game-over-event", {
           roomId,
           action: {
@@ -431,6 +432,7 @@ export default function GameVersus({ session }: { session: Session }) {
       setGamePaused(data.action.type === "game-pause" ? true : false);
     });
     socket.on("game-over-event", (data: { action: TetrisEvent }) => {
+      if (isGameOver) return;
       setIsGameOver(true);
       setIsGameInPlay(false);
       if (data.action.type !== "game-over") return;
@@ -475,7 +477,7 @@ export default function GameVersus({ session }: { session: Session }) {
       socket.off("game-pause-event");
       socket.off("game-over-event");
     };
-  }, [socket, session?.user?.id]);
+  }, [socket, session?.user?.id, isGameOver]);
 
   if (!socket) return null;
 
