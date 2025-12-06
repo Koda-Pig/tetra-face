@@ -188,5 +188,19 @@ export default function BackgroundAnimation() {
     };
   }, [canvasRef, isGameInPlay]);
 
+  useEffect(() => {
+    function handleResize() {
+      if (!canvasRef.current || !effectRef.current) return;
+      const canvas = canvasRef.current;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      effectRef.current.resize(window.innerWidth, window.innerHeight);
+    }
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   return <canvas ref={canvasRef} className="fixed inset-0 -z-10 opacity-100" />;
 }

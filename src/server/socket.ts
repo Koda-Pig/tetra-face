@@ -48,7 +48,9 @@ export function initializeSocket(httpServer: HttpServer) {
     });
 
     socket.on("create-room", (userId: string, username: string) => {
-      const roomId = `${TETRIS_WORDS[Math.floor(Math.random() * TETRIS_WORDS.length)]}-${Math.random().toString(36).slice(2, 7)}`;
+      const randomTetrisWord = () =>
+        TETRIS_WORDS[Math.floor(Math.random() * TETRIS_WORDS.length)];
+      const roomId = `${randomTetrisWord()}-${randomTetrisWord()}-${randomTetrisWord()}-${randomTetrisWord()}`;
 
       const newRoom: GameRoom = {
         id: roomId,
