@@ -98,6 +98,7 @@ https://play.tetris.com/
     - [x] play/ pause state
   - [x] handle players leaving the room/ exiting the game
 - [x] setup chat
+- [ ] set up way for host of room to accept or reject player joining
 
 ### Auth
 

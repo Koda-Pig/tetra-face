@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { Button } from "~/components/ui/button";
-import GameSection from "~/app/_components/gameSection";
+import GameSection from "~/components/gameSection";
 import { auth } from "~/server/auth";
-import Image from "~/app/_components/image";
-import BackgroundAnimation from "./_components/backgroundAnimation";
+import Image from "~/components/image";
+import BackgroundAnimation from "~/components/backgroundAnimation";
 
 export default async function Home() {
   const session = await auth();
