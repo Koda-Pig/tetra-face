@@ -5,7 +5,13 @@ import SinglePlayerGame from "./singlePlayerGame";
 import GameplayControls from "./gameplayControls";
 import GameVersus from "./gameVersus";
 import { Button } from "~/components/ui/button";
-import { ArrowLeftFromLine, LogOut, BedSingle, BedDouble } from "lucide-react";
+import {
+  ArrowLeftFromLine,
+  LogOut,
+  BedSingle,
+  BedDouble,
+  Gamepad2,
+} from "lucide-react";
 import Link from "next/link";
 import type { Session } from "next-auth";
 import {
@@ -14,27 +20,31 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 import { useGameInPlay } from "~/contexts/gameInPlayContext";
+import { useGamepad } from "~/hooks/useGamepad";
 
 export default function GameSection({ session }: { session: Session }) {
   const [gameMode, setGameMode] = useState<"single-player" | "versus" | null>(
     null,
   );
   const { setIsGameInPlay } = useGameInPlay();
+  const { gamepadConnected } = useGamepad();
 
   return (
     <div className="my-8">
       <div className="fixed top-4 left-4 grid gap-2">
-        <Button
-          onClick={() => {
-            setGameMode(null);
-            setIsGameInPlay(false);
-          }}
-          className="border-background justify-between border"
-        >
-          <p>back</p>
-          <ArrowLeftFromLine />
-        </Button>
-        {gameMode !== null && <GameplayControls />}
+        {gameMode !== null && (
+          <Button
+            onClick={() => {
+              setGameMode(null);
+              setIsGameInPlay(false);
+            }}
+            className="border-background justify-between border"
+          >
+            <p>back</p>
+            <ArrowLeftFromLine />
+          </Button>
+        )}
+        <GameplayControls />
         <Button asChild className="border-background justify-between border">
           <Link href="/api/auth/signout">
             <p>sign out</p>
@@ -81,6 +91,17 @@ export default function GameSection({ session }: { session: Session }) {
         <SinglePlayerGame userId={session.user.id} />
       )}
       {gameMode === "versus" && <GameVersus session={session} />}
+
+      {gamepadConnected && (
+        <Tooltip>
+          <TooltipTrigger className="fixed top-4 right-4 rounded-full bg-(--retro-green) p-1 text-black">
+            <Gamepad2 className="size-8" />
+          </TooltipTrigger>
+          <TooltipContent className="text-base">
+            controller connected
+          </TooltipContent>
+        </Tooltip>
+      )}
     </div>
   );
 }

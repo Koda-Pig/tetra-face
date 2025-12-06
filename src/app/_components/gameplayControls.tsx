@@ -8,18 +8,31 @@ import {
   DrawerTrigger,
 } from "~/components/ui/drawer";
 import { Button } from "~/components/ui/button";
-import { Gamepad2 } from "lucide-react";
+import {
+  Gamepad2,
+  ArrowLeft,
+  ArrowRight,
+  ArrowDown,
+  ArrowUp,
+  Triangle,
+} from "lucide-react";
 
-const Control = ({ label, value }: { label: string; value: string }) => (
-  <div className="flex items-center gap-2">
-    <span className="font-bold">{label}</span>
-    <span className="font-mono">{value}</span>
+const Control = ({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) => (
+  <div className="flex items-center justify-between gap-2 border-b pb-2 text-xl">
+    <span className="font">{label}</span>
+    <span className="font-bold">{value}</span>
   </div>
 );
 
 export default function GameplayControls() {
   return (
-    <Drawer direction="top">
+    <Drawer direction="right">
       <Button asChild>
         <DrawerTrigger className="flex flex-col">
           <p className="flex items-center justify-between gap-4">
@@ -29,23 +42,60 @@ export default function GameplayControls() {
         </DrawerTrigger>
       </Button>
 
-      <DrawerContent>
+      <DrawerContent className="max-w-[calc(min(600px,100%))]!">
         <DrawerHeader>
-          <DrawerTitle>
-            <p className="mb-3 text-center text-lg font-semibold">Controls</p>
+          <DrawerTitle className="mb-3 text-center text-2xl font-semibold">
+            Controls
           </DrawerTitle>
-          <DrawerDescription>These are the controls.</DrawerDescription>
+          <DrawerDescription className="sr-only">
+            gameplay controls
+          </DrawerDescription>
         </DrawerHeader>
-        <DrawerFooter>
-          <div className="flex justify-center">
-            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
-              <Control label="Move:" value="← →" />
-              <Control label="Soft Drop:" value="↓" />
-              <Control label="Hard Drop:" value="↑" />
-              <Control label="Rotate:" value="Space / Z" />
-              <Control label="Hold:" value="C" />
-              <Control label="Pause:" value="Escape" />
-            </div>
+        <DrawerFooter className="mt-2">
+          <h4 className="mb-3 text-xl">keyboard</h4>
+          <div className="flex flex-col justify-center gap-x-6 gap-y-2 text-sm">
+            <Control
+              label="Move:"
+              value={
+                <div className="flex items-center gap-2">
+                  <ArrowLeft /> <ArrowRight />
+                </div>
+              }
+            />
+            <Control label="Soft Drop:" value={<ArrowDown />} />
+            <Control label="Hard Drop:" value={<ArrowUp />} />
+            <Control label="Rotate:" value="Space / Z" />
+            <Control label="Hold / Swap:" value="C" />
+            <Control label="Pause:" value="Escape" />
+          </div>
+          <h4 className="mt-4 mb-2 text-xl">Controller</h4>
+          <div className="flex flex-col justify-center gap-x-6 gap-y-2 text-sm">
+            <Control
+              label="Move:"
+              value={
+                <div className="flex items-center gap-2">
+                  <ArrowLeft /> <ArrowRight />
+                </div>
+              }
+            />
+            <Control label="Soft Drop:" value={<ArrowDown />} />
+            <Control label="Hard Drop:" value={<ArrowUp />} />
+            <Control
+              label="Rotate:"
+              value="A / B (Xbox) | X / O (PlayStation)"
+            />
+            <Control
+              label="Hold / Swap:"
+              value={
+                <div className="flex items-center gap-2">
+                  Y (Xbox) | <Triangle className="inline-block" /> (PlayStation)
+                </div>
+              }
+            />
+            <Control
+              label="Pause / Resume:"
+              value="Start (Xbox) | Options (PlayStation)"
+            />
           </div>
         </DrawerFooter>
       </DrawerContent>

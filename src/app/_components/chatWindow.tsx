@@ -39,7 +39,7 @@ export default function ChatWindow({
   return (
     <Drawer>
       <DrawerTrigger asChild>
-        <Button className="absolute top-38 left-4">
+        <Button className="fixed top-37 left-4 w-[122.14px]">
           <p>Chat</p>
           <MessageCircleIcon />
         </Button>

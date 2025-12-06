@@ -60,7 +60,7 @@ class TetrominoShape {
       const blockX = x + bx! * blockSize;
       const blockY = y + by! * blockSize;
 
-      ctx.strokeStyle = "rgba(0, 255, 0, 0.05)";
+      ctx.strokeStyle = "rgba(0, 255, 0, 0.02)";
       ctx.lineWidth = 1;
       ctx.strokeRect(blockX, blockY, blockSize - 1, blockSize - 1);
     });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useBag } from "~/hooks/useBag";
 import type { Socket } from "socket.io-client";
 import { Button } from "~/components/ui/button";
@@ -14,17 +14,10 @@ import {
   pollGamepadInput,
 } from "./gameUtils";
 import { getTimestamp } from "~/lib/utils";
-import type {
-  GameState,
-  AnimationLoop,
-  GamepadState,
-  TetrisEvent,
-  BoardCell,
-} from "~/types";
+import type { GameState, AnimationLoop, TetrisEvent, BoardCell } from "~/types";
 import {
   COLS,
   VISIBLE_ROWS,
-  GAME_INPUT_KEYS,
   INITIAL_GAME_STATE,
   INITIAL_ANIMATION_LOOP,
 } from "~/constants";
@@ -34,6 +27,7 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 import { useUIState } from "~/hooks/useUIState";
+import { useGamepad } from "~/hooks/useGamepad";
 import GameBoard from "./gameBoard";
 
 function handleReceiveGarbage(
@@ -133,11 +127,8 @@ export default function HostGame({
   const pauseMultiplierRef = useRef(1); //  0 = paused
   // we're not using `useState` for this because we don't want to trigger re-renders while the game is playing
   const gameStateRef = useRef<GameState | null>(null);
-  const gamepadStateRef = useRef<GamepadState>({
-    previousBtnStates: Array.from({ length: 17 }, () => false), // gamepads have 17 buttons
-  });
   const { uiState, setUiState, syncUIState } = useUIState();
-  const [gamepadConnected, setGamepadConnected] = useState(false);
+  const { gamepadConnected, gamepadStateRef } = useGamepad();
   const getNextPiece = useBag();
 
   const receiveGarbage = useCallback((garbageLines: BoardCell[][]) => {
@@ -287,8 +278,6 @@ export default function HostGame({
     if (!gameStateRef.current) return;
 
     function handleKeyDownWrapper(event: KeyboardEvent) {
-      if (!GAME_INPUT_KEYS.includes(event.code)) return;
-
       event.preventDefault();
       const action = handleKeyDown({
         currentKey: event.code,
@@ -304,12 +293,6 @@ export default function HostGame({
       handleAction(action, socket, roomId);
     }
 
-    const handleGamepadConnected = () => setGamepadConnected(true);
-    const handleGamepadDisconnected = () => {
-      setGamepadConnected(false);
-      gamepadStateRef.current.previousBtnStates.fill(false);
-    };
-
     function handlePause() {
       socket.emit("game-pause-event", {
         roomId,
@@ -318,17 +301,10 @@ export default function HostGame({
     }
 
     window.addEventListener("keydown", handleKeyDownWrapper);
-    window.addEventListener("gamepadconnected", handleGamepadConnected);
-    window.addEventListener("gamepaddisconnected", handleGamepadDisconnected);
     window.addEventListener("blur", handlePause);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDownWrapper);
-      window.removeEventListener("gamepadconnected", handleGamepadConnected);
-      window.removeEventListener(
-        "gamepaddisconnected",
-        handleGamepadDisconnected,
-      );
       window.removeEventListener("blur", handlePause);
     };
   }, [socket, roomId, setUiState, userId, getNextPiece, syncUIState]);
@@ -346,15 +322,6 @@ export default function HostGame({
 
     setUiState((prev) => ({ ...prev, isPaused: externalPause }));
   }, [externalPause, externalGameOver, setUiState]);
-
-  // Check for already-connected gamepads on mount
-  useEffect(() => {
-    const gamepads = navigator.getGamepads();
-    const hasConnectedGamepad = Array.from(gamepads).some(
-      (gamepad) => gamepad?.connected,
-    );
-    if (hasConnectedGamepad) setGamepadConnected(true);
-  }, []);
 
   return (
     <GameBoard uiState={uiState} ref={canvasRef}>

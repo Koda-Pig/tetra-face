@@ -19,7 +19,8 @@ export const GAME_INPUT_KEYS = [
   "ArrowRight",
   "Space",
   "KeyZ",
-  "KeyC",
+  "ShiftLeft",
+  "ShiftRight",
   "Escape",
 ];
 // use values same as GAME_INPUT_KEYS so that the function can be reused for the existing
@@ -28,20 +29,20 @@ export const GAMEPAD_KEY_MAP = {
   // Face buttons (right cluster)
   0: "Space", // Bottom button (Xbox: A, PlayStation: Cross, Nintendo: B)
   1: "KeyZ", // Right button (Xbox: B, PlayStation: Circle, Nintendo: A)
-  // 2: "KeyC", // Left button (Xbox: X, PlayStation: Square, Nintendo: Y)
-  // 3: "Space", // Top button (Xbox: Y, PlayStation: Triangle, Nintendo: X)
+  // 2: "", // Left button (Xbox: X, PlayStation: Square, Nintendo: Y)
+  3: "ShiftLeft", // Top button (Xbox: Y, PlayStation: Triangle, Nintendo: X)
 
   // Shoulder buttons
-  // 4: "KeyQ", // Top left front button (L1/LB)
-  // 5: "KeyE", // Top right front button (R1/RB)
-  // 6: "KeyR", // Bottom left front button (L2/LT)
-  // 7: "KeyT", // Bottom right front button (R2/RT)
+  4: "KeyZ", // Top left front button (L1/LB)
+  5: "Space", // Top right front button (R1/RB)
+  // 6: "", // Bottom left front button (L2/LT)
+  // 7: "", // Bottom right front button (R2/RT)
 
   // Center cluster buttons
-  // 8: "KeyV", // Left button in center cluster (Back/Select/Share)
+  // 8: "", // Left button in center cluster (Back/Select/Share)
   9: "Escape", // Right button in center cluster (Start/Menu/Options)
-  // 10: "KeyF", // Left stick pressed button (L3/LS)
-  // 11: "KeyG", // Right stick pressed button (R3/RS)
+  // 10: "", // Left stick pressed button (L3/LS)
+  // 11: "", // Right stick pressed button (R3/RS)
 
   // D-pad (left cluster)
   12: "ArrowUp", // Top button in left cluster (D-pad up)
@@ -50,7 +51,7 @@ export const GAMEPAD_KEY_MAP = {
   15: "ArrowRight", // Right button in left cluster (D-pad right)
 
   // Center button (if present)
-  // 16: "KeyC", // Center button in center cluster (Home/Guide/PS)
+  // 16: "", // Center button in center cluster (Home/Guide/PS)
 } as const;
 
 // prettier-ignore
