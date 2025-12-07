@@ -131,6 +131,7 @@ https://play.tetris.com/
 - [x] update controller support
 - [ ] handle socket errors with a toast or something
 - [ ] make socket events typed. Type has been created, but not used yet.
+- [ ] add timeout for waiting for join room request response
 
 ---
 

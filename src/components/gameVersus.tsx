@@ -100,7 +100,7 @@ function GameInProgress({
     >
       <div
         className={cn(
-          "gameover-bg absolute -inset-3 z-10 grid place-items-center rounded p-8 text-center text-8xl transition-opacity",
+          "gameover-bg absolute -inset-2 z-10 grid place-items-center rounded p-8 text-center text-8xl transition-opacity",
           isGameOver ? "opacity-100" : "pointer-events-none opacity-0",
           winner === null && "hidden",
         )}
@@ -585,6 +585,7 @@ export default function GameVersus({ session }: { session: Session }) {
       socket.off("opponent-action");
       socket.off("game-pause-event");
       socket.off("game-over-event");
+      socket.off("message-sent");
     };
   }, [socket, session?.user?.id, isGameOver]);
 
