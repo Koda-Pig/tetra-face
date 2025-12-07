@@ -98,7 +98,7 @@ https://play.tetris.com/
     - [x] play/ pause state
   - [x] handle players leaving the room/ exiting the game
 - [x] setup chat
-- [ ] set up way for host of room to accept or reject player joining
+- [x] set up way for host of room to accept or reject player joining
 
 ### Auth
 
@@ -129,6 +129,8 @@ https://play.tetris.com/
 - [x] add background animation for non-gameplay states. Tetris matrix
 - [x] fix bug where when a player leaves the match after winning, the opponents game will change from showing 'you lost' to 'you won'.
 - [x] update controller support
+- [ ] handle socket errors with a toast or something
+- [ ] make socket events typed. Type has been created, but not used yet.
 
 ---
 

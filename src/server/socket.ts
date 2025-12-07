@@ -1,8 +1,11 @@
 import { Server as SocketIOServer } from "socket.io";
+import type { Socket } from "socket.io";
 import type { Server as HttpServer } from "http";
 import type { GameRoom } from "~/types";
+// import type { SocketEvent } from "~/types";
 
 const gameRooms = new Map<string, GameRoom>();
+const pendingJoinRequests = new Map<string, string>();
 
 interface GameActionData {
   roomId: string;
@@ -25,6 +28,18 @@ function broadcastRoomUpdate(io: SocketIOServer) {
 function roomIdCheck(data: GameActionData) {
   if (typeof data?.roomId !== "string") {
     console.error('Error, "roomId" is not a string');
+    return;
+  }
+}
+
+function validate(room: GameRoom | undefined, socket: Socket) {
+  if (!room) {
+    socket.emit("error", { message: "room not found" });
+    return;
+  }
+
+  if (room.players.length >= 2) {
+    socket.emit("error", { message: "room is full" });
     return;
   }
 }
@@ -73,31 +88,61 @@ export function initializeSocket(httpServer: HttpServer) {
     });
 
     socket.on(
-      "join-room",
+      "join-room-request",
       (data: { roomId: string; userId: string; username: string }) => {
+        console.log("join room request received from socket.ts");
         const { roomId, userId, username } = data;
         const room = gameRooms.get(roomId);
 
-        if (!room) {
-          socket.emit("error", { message: "room not found" });
+        validate(room, socket);
+
+        pendingJoinRequests.set(userId, socket.id); // store requesting socket's ID
+
+        // this may actually only need to send the userid and username who wants to join
+        io.to(roomId).emit("join-room-request", { room, userId, username });
+      },
+    );
+
+    socket.on(
+      "accept-join-room-request",
+      (data: { roomId: string; userId: string; username: string }) => {
+        const { roomId, userId, username } = data;
+        const room = gameRooms.get(roomId);
+        validate(room, socket);
+
+        const requestingSocketId = pendingJoinRequests.get(userId);
+        if (!requestingSocketId) {
+          console.error("ID of requesting socket not found");
           return;
         }
+        const requestingSocket = io.sockets.sockets.get(requestingSocketId);
+        void requestingSocket?.join(roomId);
 
-        if (room.players.length >= 2) {
-          socket.emit("error", { message: "room is full" });
-          return;
-        }
-
-        room.players.push({
+        room!.players.push({
           userId,
           username,
           socketId: socket.id,
           ready: false,
         });
+        io.to(roomId).emit("player-joined", { roomId, room, username });
+        broadcastRoomUpdate(io);
+      },
+    );
 
-        void socket.join(roomId); // void for floating promise
+    socket.on(
+      "decline-join-request",
+      (data: { roomId: string; userId: string }) => {
+        const { roomId, userId } = data;
+        const room = gameRooms.get(roomId);
+        validate(room, socket);
 
-        io.to(roomId).emit("player-joined", { roomId, room });
+        const requestingSocketId = pendingJoinRequests.get(userId);
+        if (!requestingSocketId) {
+          console.error("ID of requesting socket not found");
+          return;
+        }
+        const requestingSocket = io.sockets.sockets.get(requestingSocketId);
+        void requestingSocket?.emit("request-declined");
         broadcastRoomUpdate(io);
       },
     );

@@ -19,6 +19,52 @@ import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 import type { Socket } from "socket.io-client";
 import { useGameInPlay } from "~/contexts/gameInPlayContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog";
+import { toast } from "sonner";
+
+type JoinRoomRequestData = {
+  room: string;
+  userId: string;
+  username: string;
+};
+type JoinRoomRequest = null | "pending" | "rejected" | "accepted";
+
+// host of room will see this dialog when a player requests to join their room
+function JoinRoomRequestDialog({
+  open,
+  username,
+  onDecline,
+  onAccept,
+}: {
+  open: boolean;
+  username: string;
+  onDecline: () => void;
+  onAccept: () => void;
+}) {
+  return (
+    <AlertDialog open={open}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {username} wants to join your room
+          </AlertDialogTitle>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={onDecline}>Decline</AlertDialogCancel>
+          <AlertDialogAction onClick={onAccept}>Accept</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
 
 function GameInProgress({
   isRoomHost,
@@ -131,7 +177,8 @@ function RoomList({
   currentRoom,
   isConnected,
   session,
-  onJoinRoom,
+  waitingForJoinRoomResponse,
+  onJoinRoomRequest,
   onLeaveRoom,
   onCreateRoom,
 }: {
@@ -139,7 +186,8 @@ function RoomList({
   currentRoom: GameRoom | null;
   isConnected: boolean;
   session: Session;
-  onJoinRoom: (roomId: string) => void;
+  waitingForJoinRoomResponse: boolean;
+  onJoinRoomRequest: (roomId: string) => void;
   onLeaveRoom: (roomId: string) => void;
   onCreateRoom: () => void;
 }) {
@@ -183,14 +231,19 @@ function RoomList({
                 {room.players.length}/2 players
               </p>
             </div>
+
             <Button
               size="sm"
               onClick={() => {
                 if (currentRoom?.id === room.id) onLeaveRoom(room.id);
-                else onJoinRoom(room.id);
+                else onJoinRoomRequest(room.id);
               }}
             >
-              {currentRoom?.id === room.id ? "leave" : "join"}
+              {currentRoom?.id === room.id
+                ? "leave"
+                : waitingForJoinRoomResponse
+                  ? "waiting for response... "
+                  : "join"}
             </Button>
           </div>
         ))}
@@ -244,16 +297,18 @@ function RoomLobby({
   availableRooms,
   isConnected,
   session,
+  waitingForJoinRoomResponse,
   onCreateRoom,
-  onJoinRoom,
+  onJoinRoomRequest,
   onLeaveRoom,
 }: {
   currentRoom: GameRoom | null;
   availableRooms: GameRoom[];
   isConnected: boolean;
   session: Session;
+  waitingForJoinRoomResponse: boolean;
   onCreateRoom: () => void;
-  onJoinRoom: (roomId: string) => void;
+  onJoinRoomRequest: (roomId: string) => void;
   onLeaveRoom: (roomId: string) => void;
 }) {
   return (
@@ -275,7 +330,8 @@ function RoomLobby({
         currentRoom={currentRoom}
         isConnected={isConnected}
         session={session}
-        onJoinRoom={onJoinRoom}
+        waitingForJoinRoomResponse={waitingForJoinRoomResponse}
+        onJoinRoomRequest={onJoinRoomRequest}
         onLeaveRoom={onLeaveRoom}
         onCreateRoom={onCreateRoom}
       />
@@ -307,6 +363,12 @@ export default function GameVersus({ session }: { session: Session }) {
   const [gamePaused, setGamePaused] = useState(false); // in versus mode, pause state must be synced
   const [isGameOver, setIsGameOver] = useState(false);
   const [winner, setWinner] = useState<Winner>(null);
+  const [outgoingJoinRequest, setOutgoingJoinRequest] =
+    useState<JoinRoomRequest>(null);
+  const [incomingJoinRequest, setIncomingJoinRequest] =
+    useState<JoinRoomRequest>(null);
+  const [incomingJoinRequestData, setIncomingJoinRequestData] =
+    useState<JoinRoomRequestData | null>(null);
   const opponentGameRef = useRef<OpponentGameRef>(null);
   const hostGameReceiveGarbageRef = useRef<
     ((garbageLines: BoardCell[][]) => void) | null
@@ -339,10 +401,12 @@ export default function GameVersus({ session }: { session: Session }) {
     socket.emit("create-room", session.user.id, session.user.name);
   }
 
-  function joinRoom(roomId: string) {
+  function joinRoomRequest(roomId: string) {
     if (!socket || !session?.user?.id) return;
-    setIsRoomHost(false);
-    socket.emit("join-room", {
+    // setIsRoomHost(false);
+    console.log("joinRoomRequest", roomId);
+    setOutgoingJoinRequest("pending");
+    socket.emit("join-room-request", {
       roomId,
       userId: session.user.id,
       username: session.user.name,
@@ -368,6 +432,29 @@ export default function GameVersus({ session }: { session: Session }) {
     });
   }
 
+  function declineIncomingJoinRequest() {
+    if (!socket || !session?.user?.id || !incomingJoinRequestData?.userId)
+      return;
+    socket.emit("decline-join-request", {
+      roomId: currentRoom?.id,
+      userId: incomingJoinRequestData.userId, // the user who is being rejected
+    });
+    setIncomingJoinRequest("rejected"); // or null? maybe I don't need rejected state
+    setIncomingJoinRequestData(null);
+  }
+
+  function acceptIncomingJoinRequest() {
+    if (!socket || !session?.user?.id || !incomingJoinRequestData?.userId) {
+      return;
+    }
+    socket.emit("accept-join-room-request", {
+      roomId: currentRoom?.id,
+      userId: incomingJoinRequestData.userId,
+      username: incomingJoinRequestData.username,
+    });
+    setIncomingJoinRequest("accepted");
+  }
+
   // socket logic
   useEffect(() => {
     if (!socket || !session?.user?.id) return;
@@ -377,8 +464,29 @@ export default function GameVersus({ session }: { session: Session }) {
     socket.on("room-created", (data: { roomId: string; room: GameRoom }) => {
       setCurrentRoom(data.room);
     });
-    socket.on("player-joined", (data: { roomId: string; room: GameRoom }) => {
-      setCurrentRoom(data.room);
+    socket.on(
+      "player-joined",
+      (data: { roomId: string; room: GameRoom; username: string }) => {
+        setCurrentRoom(data.room);
+        toast.success(`${data.username} joined room`);
+      },
+    );
+    // this is an incoming join request
+    socket.on(
+      "join-room-request",
+      (data: { room: GameRoom; userId: string; username: string }) => {
+        console.log("incoming join room request registered");
+        setIncomingJoinRequest("pending");
+        setIncomingJoinRequestData({
+          room: data.room.id,
+          userId: data.userId,
+          username: data.username,
+        });
+      },
+    );
+    socket.on("request-declined", () => {
+      toast.error("Join request rejected");
+      setOutgoingJoinRequest("rejected");
     });
     socket.on(
       "player-ready-changed",
@@ -469,6 +577,8 @@ export default function GameVersus({ session }: { session: Session }) {
       socket.off("rooms-updated");
       socket.off("room-created");
       socket.off("player-joined");
+      socket.off("join-room-request");
+      socket.off("request-declined");
       socket.off("player-ready-changed");
       socket.off("error");
       socket.off("player-disconnected");
@@ -505,12 +615,13 @@ export default function GameVersus({ session }: { session: Session }) {
         </div>
       ) : (
         <RoomLobby
+          waitingForJoinRoomResponse={outgoingJoinRequest === "pending"}
           currentRoom={currentRoom}
           availableRooms={availableRooms}
           isConnected={isConnected}
           session={session}
           onCreateRoom={createRoom}
-          onJoinRoom={joinRoom}
+          onJoinRoomRequest={joinRoomRequest}
           onLeaveRoom={leaveRoom}
         />
       )}
@@ -520,6 +631,14 @@ export default function GameVersus({ session }: { session: Session }) {
           messages={messages}
           session={session}
           addMessage={addMessage}
+        />
+      )}
+      {incomingJoinRequest === "pending" && incomingJoinRequestData && (
+        <JoinRoomRequestDialog
+          open={!!incomingJoinRequest}
+          username={incomingJoinRequestData.username}
+          onDecline={declineIncomingJoinRequest}
+          onAccept={acceptIncomingJoinRequest}
         />
       )}
     </div>

@@ -3,6 +3,7 @@ import { type Metadata } from "next";
 import { Outfit } from "next/font/google";
 import { Silkscreen } from "next/font/google";
 import { GameInPlayProvider } from "~/contexts/gameInPlayContext";
+import { Toaster } from "~/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "Tetrus",
@@ -33,6 +34,7 @@ export default function RootLayout({
       </head> */}
       <body className="dark">
         <GameInPlayProvider>{children}</GameInPlayProvider>
+        <Toaster />
       </body>
     </html>
   );
