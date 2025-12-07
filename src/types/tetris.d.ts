@@ -130,3 +130,12 @@ export type TetrisEvent =
   | { type: "receive-garbage"; garbageLines: BoardCell[][]; timestamp: number }; // this should happen when the garbage is processed (ie: when piece is locked), not immediately when it's generated
 
 export type GamepadState = { previousBtnStates: boolean[] };
+
+export type LineClearAnimation = {
+  rowSnapshots: Array<{
+    originalRowIndex: number; // Original row index before removal
+    cells: BoardCell[]; // Snapshot of cells in that row
+  }>;
+  startTime: number; // Timestamp when animation started
+  duration: number; // Animation duration in seconds (e.g., 0.3)
+};

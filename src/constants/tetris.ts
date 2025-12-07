@@ -1,5 +1,7 @@
 import type { GameState, Tetromino, TetrominoType, UIState } from "~/types";
 
+export const CANVAS_WIDTH = 300;
+export const CANVAS_HEIGHT = 600;
 export const COLS = 10;
 export const TOTAL_ROWS = 40;
 // The main playfield players see and play on
@@ -353,6 +355,7 @@ export const WALL_KICK_DATA_I: Record<
 
 export const FLASH_TRANSITION_DURATION_MS = 300;
 export const CANVAS_ANIMATION_DURATION_MS = 600;
+export const LINE_CLEAR_ANIMATION_DURATION = 0.3; // 300ms
 
 export const INITIAL_GAME_STATE: Omit<
   GameState,

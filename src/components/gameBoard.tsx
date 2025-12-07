@@ -3,7 +3,12 @@ import { cn } from "~/lib/utils";
 import type { UIState } from "~/types";
 import GameStats from "./gameStats";
 import GameUi from "./gameUi";
-import { CANVAS_ANIMATION_DURATION_MS } from "~/constants";
+import {
+  CANVAS_ANIMATION_DURATION_MS,
+  CANVAS_HEIGHT,
+  CANVAS_WIDTH,
+} from "~/constants";
+import LineClearAnimation from "./lineClearAnimation";
 
 type GameBoardProps = {
   uiState: UIState;
@@ -12,11 +17,11 @@ type GameBoardProps = {
 
 const GameBoard = forwardRef<HTMLCanvasElement, GameBoardProps>(
   ({ uiState, children }, ref) => (
-    <div className="relative mx-auto h-[600px] w-[300px]">
+    <div className="relative mx-auto">
       <canvas
         ref={ref}
-        width={300}
-        height={600}
+        width={CANVAS_WIDTH}
+        height={CANVAS_HEIGHT}
         style={{ animationDuration: `${CANVAS_ANIMATION_DURATION_MS}ms` }}
         className={cn(
           "game-canvas rounded-md border-2 border-(--retro-green) shadow-(--retro-green)",
@@ -27,6 +32,7 @@ const GameBoard = forwardRef<HTMLCanvasElement, GameBoardProps>(
       />
       <GameStats uiState={uiState} />
       <GameUi uiState={uiState}>{children}</GameUi>
+      <LineClearAnimation uiState={uiState} />
     </div>
   ),
 );
