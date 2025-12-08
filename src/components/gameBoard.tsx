@@ -1,6 +1,9 @@
 import { forwardRef } from "react";
 import { cn } from "~/lib/utils";
-import type { UIState } from "~/types";
+import type {
+  UIState,
+  LineClearAnimation as LineClearAnimationType,
+} from "~/types";
 import GameStats from "./gameStats";
 import GameUi from "./gameUi";
 import {
@@ -12,12 +15,13 @@ import LineClearAnimation from "./lineClearAnimation";
 
 type GameBoardProps = {
   uiState: UIState;
+  lineClearAnimation?: LineClearAnimationType | null;
   children?: React.ReactNode;
 };
 
 const GameBoard = forwardRef<HTMLCanvasElement, GameBoardProps>(
-  ({ uiState, children }, ref) => (
-    <div className="relative mx-auto">
+  ({ uiState, lineClearAnimation = null, children }, ref) => (
+    <div className="relative mx-auto w-min">
       <canvas
         ref={ref}
         width={CANVAS_WIDTH}
@@ -32,7 +36,7 @@ const GameBoard = forwardRef<HTMLCanvasElement, GameBoardProps>(
       />
       <GameStats uiState={uiState} />
       <GameUi uiState={uiState}>{children}</GameUi>
-      <LineClearAnimation uiState={uiState} />
+      <LineClearAnimation animation={lineClearAnimation} uiState={uiState} />
     </div>
   ),
 );

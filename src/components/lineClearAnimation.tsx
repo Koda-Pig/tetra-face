@@ -43,7 +43,10 @@ export default function LineClearAnimation({
             }}
           >
             {/* Left half (cols 0-4) */}
-            <div className="line-clear-row-left absolute left-0 flex h-full w-[150px]">
+            <div
+              className="line-clear-row-left absolute left-0 flex h-full"
+              style={{ width: `${cellWidth * 5}px` }}
+            >
               {snapshot.cells.slice(0, 5).map((cell, col) => (
                 <div
                   key={col}
@@ -58,7 +61,13 @@ export default function LineClearAnimation({
               ))}
             </div>
             {/* Right half (cols 5-9) */}
-            <div className="line-clear-row-right absolute left-[150px] flex h-full w-[150px]">
+            <div
+              className="line-clear-row-right absolute flex h-full"
+              style={{
+                left: `${cellWidth * 5}px`,
+                width: `${cellWidth * 5}px`,
+              }}
+            >
               {snapshot.cells.slice(5, 10).map((cell, col) => (
                 <div
                   key={col + 5}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useBag } from "~/hooks/useBag";
 import type { Socket } from "socket.io-client";
 import { Button } from "~/components/ui/button";
@@ -12,6 +12,7 @@ import {
   createEmptyBoard,
   render,
   pollGamepadInput,
+  updateLineClearAnimation,
 } from "./gameUtils";
 import { getTimestamp } from "~/lib/utils";
 import type { GameState, AnimationLoop, TetrisEvent, BoardCell } from "~/types";
@@ -131,6 +132,7 @@ export default function HostGame({
   // we're not using `useState` for this because we don't want to trigger re-renders while the game is playing
   const gameStateRef = useRef<GameState | null>(null);
   const { uiState, setUiState, syncUIState } = useUIState();
+  const [lineClearAnimation, setLineClearAnimation] = useState<GameState["lineClearAnimation"]>(null);
   const { gamepadConnected, gamepadStateRef } = useGamepad();
   const getNextPiece = useBag();
 
@@ -245,6 +247,12 @@ export default function HostGame({
         });
         handleAction(action, socket, roomId);
       }
+      // update line clear animation state
+      updateLineClearAnimation(gameState);
+      // sync animation state to React for re-renders
+      if (gameState.lineClearAnimation !== lineClearAnimation) {
+        setLineClearAnimation(gameState.lineClearAnimation);
+      }
       // draw the game
       render({
         ctx,
@@ -326,7 +334,7 @@ export default function HostGame({
   }, [externalPause, externalGameOver, setUiState]);
 
   return (
-    <GameBoard uiState={uiState} ref={canvasRef}>
+    <GameBoard uiState={uiState} lineClearAnimation={lineClearAnimation} ref={canvasRef}>
       {uiState.isPaused && !uiState.isGameOver && (
         <div className="grid gap-4">
           <Button

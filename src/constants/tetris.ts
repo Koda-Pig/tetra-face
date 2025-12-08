@@ -369,6 +369,7 @@ export const INITIAL_GAME_STATE: Omit<
   holdPiece: null,
   canHold: true,
   pendingGarbage: null,
+  lineClearAnimation: null,
 };
 
 export const LINE_CLEAR_SCORES = {

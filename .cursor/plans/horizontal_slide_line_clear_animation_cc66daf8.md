@@ -3,35 +3,47 @@ name: Horizontal Slide Line Clear Animation
 overview: Add horizontal slide-out animation for cleared lines. Rows are removed from board immediately (as before), but snapshots are stored before removal to render the animation effect.
 todos:
   - id: add-animation-types
-    content: Add LineClearAnimation type with rowSnapshots array and update GameState type definition in tetris.d.ts
+    content: Add LineClearAnimation type with rowSnapshots array in tetris.d.ts
     status: completed
   - id: add-animation-constant
     content: Add LINE_CLEAR_ANIMATION_DURATION constant to tetris.ts
     status: completed
-  - id: modify-clear-lines
-    content: Modify clearLines to store snapshots of rows before removing them, return snapshots with original row indices
+  - id: create-component
+    content: Create LineClearAnimation React component in lineClearAnimation.tsx
     status: completed
+  - id: add-css-animations
+    content: Add CSS keyframes and classes for slide-out-left and slide-out-right animations
+    status: completed
+  - id: add-gamestate-property
+    content: Add lineClearAnimation property to GameState type definition in tetris.d.ts
+    status: pending
+  - id: initialize-gamestate
+    content: Initialize lineClearAnimation: null in INITIAL_GAME_STATE constant
+    status: pending
+  - id: modify-clear-lines
+    content: Modify clearLines to store snapshots of rows before removing them, return snapshots with original row indices (change return type from number to Array)
+    status: pending
   - id: add-animation-update
     content: Create updateLineClearAnimation function to track progress and clear animation state when complete
-    status: completed
+    status: pending
   - id: update-lock-piece
     content: Modify lockPieceAndSpawnNext to initialize lineClearAnimation with row snapshots when lines are cleared
-    status: completed
-  - id: update-draw-board
-    content: Modify drawBoard to render animating snapshot rows with horizontal slide offset after drawing normal board
-    status: completed
+    status: pending
   - id: integrate-render-loop
     content: Call updateLineClearAnimation in render/animate functions before drawing
-    status: completed
-  - id: fix-unused-import
-    content: Remove unused LineClearAnimation type import from gameUtils.ts (causes TS6196 build error)
+    status: pending
+  - id: wire-gameboard-props
+    content: Add lineClearAnimation prop to GameBoard component and pass it to LineClearAnimation component
+    status: pending
+  - id: wire-game-components
+    content: Pass lineClearAnimation from gameStateRef.current to GameBoard in singlePlayerGame.tsx and hostGame.tsx
     status: pending
   - id: fix-hardcoded-widths
-    content: Replace hard-coded w-[150px] and left-[150px] in lineClearAnimation.tsx with dynamic values using cellWidth prop
+    content: Replace hard-coded w-[150px] and left-[150px] in lineClearAnimation.tsx (lines 46, 61) with dynamic values using cellWidth constant
     status: pending
-  - id: fix-react-rerender
-    content: (RESOLVED) Re-renders already work via syncUIState/scoreMultiplier - no changes needed
-    status: completed
+  - id: fix-positioning-bug
+    content: Fix row positioning issue mentioned in lineClearAnimation.tsx line 39 comment - verify visualRowPosition calculation is correct
+    status: pending
   - id: verify-build
     content: Run TypeScript build to ensure no type errors and all exports/imports are valid
     status: pending
@@ -42,7 +54,38 @@ todos:
 
 # Horizontal Slide-Out Line Clear Animation
 
-## Current Implementation
+## Current Implementation Status
+
+### ✅ Completed
+
+1. **Type Definition**: `LineClearAnimation` type exists in `src/types/tetris.d.ts` (lines 134-141) with all required fields
+2. **Constant**: `LINE_CLEAR_ANIMATION_DURATION = 0.3` exists in `src/constants/tetris.ts` (line 358)
+3. **React Component**: `LineClearAnimation` component exists in `src/components/lineClearAnimation.tsx` with correct structure
+4. **CSS Animations**: All CSS keyframes and classes exist in `src/styles/globals.css`:
+   - `@keyframes slide-out-left` (lines 342-351)
+   - `@keyframes slide-out-right` (lines 353-362)
+   - `.line-clear-row-left` class (lines 364-367)
+   - `.line-clear-row-right` class (lines 369-372)
+5. **Component Integration**: `LineClearAnimation` is imported and rendered in `GameBoard` component (line 35)
+
+### ❌ Not Yet Implemented
+
+1. **GameState Property**: `lineClearAnimation` property is NOT added to `GameState` type (still missing from lines 32-46 in tetris.d.ts)
+2. **Initial State**: `lineClearAnimation: null` is NOT initialized in `INITIAL_GAME_STATE`
+3. **clearLines Function**: Still returns `number` instead of row snapshots (lines 324-343 in gameUtils.ts)
+4. **updateLineClearAnimation Function**: Does NOT exist in gameUtils.ts
+5. **lockPieceAndSpawnNext**: Does NOT initialize `lineClearAnimation` when lines are cleared (line 213 still calls `clearLines` which returns number)
+6. **Render Loop Integration**: `updateLineClearAnimation` is NOT called in render/animate functions
+7. **GameBoard Props**: `GameBoard` does NOT accept or pass `animation` prop to `LineClearAnimation` component
+8. **Game Component Wiring**: `singlePlayerGame.tsx` and `hostGame.tsx` do NOT pass `lineClearAnimation` from `gameStateRef.current` to `GameBoard`
+
+### 🐛 Known Issues
+
+1. **Hard-coded Widths**: Lines 46 and 61 in `lineClearAnimation.tsx` use hard-coded `w-[150px]` and `left-[150px]` instead of dynamic `cellWidth * 5`
+2. **Positioning Bug**: Line 39 comment indicates a suspected bug: "this still sets them all to the same position. something is wrong here."
+3. **Missing Animation Prop**: `LineClearAnimation` component expects `animation` prop but `GameBoard` only passes `uiState` (line 35 of gameBoard.tsx)
+
+### Original Implementation
 
 The `clearLines` function in [`src/components/gameUtils.ts`](src/components/gameUtils.ts) (lines 324-343) immediately removes full rows using `splice` and `unshift`. The `render` function draws the board directly from `gameState.board`.
 
@@ -69,13 +112,16 @@ The animation runs **in parallel with gameplay** - pieces continue falling and s
 
 **Component Structure** (`src/components/lineClearAnimation.tsx`):
 
+**Current Implementation** (line 22-25):
+
 ```tsx
 <LineClearAnimation
-  animation={gameState.lineClearAnimation}
-  cellWidth={30}
-  cellHeight={30}
+  animation={animation} // ← Currently receives null (prop not passed from GameBoard)
+  uiState={uiState}
 />
 ```
+
+**Note**: Component calculates `cellWidth` and `cellHeight` from constants internally (lines 18-19), so these don't need to be passed as props. However, the `animation` prop is required but not currently being passed from `GameBoard`.
 
 **For each cleared row in `animation.rowSnapshots`:**
 
@@ -300,37 +346,51 @@ GameBoard (relative container, 300x600)
 
 ---
 
-## Code Review Findings (Post-Implementation)
+## Code Review Findings (Current State)
 
 ### Issues Identified
 
-#### 0. Unused Type Import 🔴 **BUILD ERROR**
+#### 0. Missing Animation Prop 🔴 **HIGH PRIORITY**
 
-**Location**: `src/components/gameUtils.ts` (line 12)
+**Location**: `src/components/gameBoard.tsx` (line 35)
 
-**Problem**: `LineClearAnimation` type is imported but not directly used (it's only used indirectly through `GameState`).
+**Problem**: `LineClearAnimation` component expects `animation` prop but `GameBoard` only passes `uiState`.
 
-**Build Error**:
+**Current code**:
 
+```tsx
+<LineClearAnimation uiState={uiState} />
 ```
-src/components/gameUtils.ts(12,3): error TS6196: 'LineClearAnimation' is declared but never used.
+
+**Required fix**: Component needs `animation` prop from gameState:
+
+```tsx
+<LineClearAnimation animation={animation} uiState={uiState} />
 ```
 
-**Fix**: Remove the unused import from line 12.
-
-```typescript
-// Current (problematic):
-import type {
-  // ...
-  LineClearAnimation, // ← Remove this
-} from "~/types";
-```
+**Impact**: Animation component receives `null` for animation prop, so no animation will ever render.
 
 ---
 
-#### 1. Hard-coded Width Values 🔴 **HIGH PRIORITY**
+#### 1. Component Not Wired to GameState 🔴 **HIGH PRIORITY**
 
-**Location**: `src/components/lineClearAnimation.tsx` (lines 35, 48)
+**Location**: `src/components/singlePlayerGame.tsx` (line 198), `src/components/hostGame.tsx` (line 329)
+
+**Problem**: `GameBoard` is not receiving `lineClearAnimation` prop from game components, and `GameBoard` doesn't accept it as a prop.
+
+**Required changes**:
+
+1. Add `lineClearAnimation` prop to `GameBoardProps` type
+2. Pass `gameStateRef.current.lineClearAnimation` from game components to `GameBoard`
+3. Pass `animation` prop from `GameBoard` to `LineClearAnimation` component
+
+**Impact**: Animation state exists in gameState but is never passed to the component.
+
+---
+
+#### 2. Hard-coded Width Values 🔴 **HIGH PRIORITY**
+
+**Location**: `src/components/lineClearAnimation.tsx` (lines 46, 61)
 
 **Problem**: The half-row container widths are hard-coded to `w-[150px]` and `left-[150px]` instead of using the `cellWidth` prop that's already passed in.
 
@@ -357,45 +417,27 @@ import type {
 
 ---
 
-#### 2. React Re-render Issue 🟢 **RESOLVED - Not an issue!**
+#### 3. Positioning Bug Comment 🟡 **NEEDS INVESTIGATION**
 
-**Locations** (all game components):
+**Location**: `src/components/lineClearAnimation.tsx` (line 39)
 
-- `src/components/singlePlayerGame.tsx` (line 200)
-- `src/components/hostGame.tsx` (line 331)
-- `src/components/opponentGame.tsx` (line 272)
+**Problem**: Comment on line 39 says "this still sets them all to the same position. something is wrong here."
 
-**Original Concern**: The `lineClearAnimation` is read from `gameStateRef.current`, which is a ref. Changes to refs don't trigger React re-renders.
+**Current code**:
 
-**Why It Actually Works**: The existing `syncUIState` flow already triggers re-renders at the right time!
-
-```
-Flow when lines are cleared:
-1. lockPieceAndSpawnNext() sets gameState.lineClearAnimation (line 221-225)
-2. lockPieceAndSpawnNext() calls onStateChange(gameState) (line 261)
-3. onStateChange → syncUIState → updates UIState.scoreMultiplier
-4. scoreMultiplier change triggers React re-render
-5. During re-render, gameStateRef.current.lineClearAnimation is read (now populated!)
-6. LineClearAnimation component renders with the animation data ✅
+```tsx
+top: `${visualRowPosition}px`, // this still sets them all to the same position. something is wrong here.
 ```
 
-**The `scoreMultiplier` in UIState already serves as the re-render trigger!** When lines are cleared:
+**Analysis**: The `visualRowPosition` calculation uses `snapshot.originalRowIndex - HIDDEN_ROWS`, which should be correct if `originalRowIndex` values differ. This may be a false alarm, or there could be an issue with how snapshots are created (if they're not yet implemented).
 
-- `scoreMultiplier` gets set to 1, 2, 3, or 4 (number of lines cleared)
-- This triggers a re-render
-- At that moment, `lineClearAnimation` has the row snapshot data
+**Status**: Cannot verify until `clearLines` is modified to return snapshots with correct `originalRowIndex` values.
 
-**Animation Cleanup**: When `updateLineClearAnimation` clears the animation after 300ms, it doesn't trigger a re-render, but:
-
-- CSS animation uses `forwards` fill mode, so divs stay off-screen
-- Component unmounts on next re-render (next line clear, score change, etc.)
-- This is acceptable behavior - no visual glitch
-
-**Conclusion**: No changes needed for re-render triggering. The existing `syncUIState` pattern works correctly because it's called AFTER `lineClearAnimation` is set
+**Action**: Investigate once core functionality is implemented.
 
 ---
 
-#### 3. CSS Animation Duration Sync 🟡 **MEDIUM PRIORITY**
+#### 4. CSS Animation Duration Sync 🟡 **LOW PRIORITY** (Optional)
 
 **Problem**: The CSS animation duration (`0.3s`) is hard-coded separately from the JavaScript constant (`LINE_CLEAR_ANIMATION_DURATION = 0.3`).
 
@@ -417,7 +459,7 @@ Flow when lines are cleared:
 
 ---
 
-#### 4. CSS Animation Slide Distance 🟡 **MEDIUM PRIORITY**
+#### 5. CSS Animation Slide Distance 🟡 **LOW PRIORITY** (Optional)
 
 **Problem**: The slide distance (`300px`) is hard-coded in CSS and matches the board width.
 
@@ -440,14 +482,21 @@ Flow when lines are cleared:
 
 ---
 
-### What Works Well ✅
+### What's Implemented Well ✅
 
-1. **Clean separation** - Animation state stored in game state, rendered by dedicated component
-2. **Row snapshot pattern** - Capturing cells before removal allows proper rendering during animation
-3. **Position calculation** - Correctly accounts for `HIDDEN_ROWS` offset for visual placement
-4. **CSS-only animation** - Uses `animation: ... forwards` pattern which is performant
-5. **Canvas overlay approach** - Allows canvas to continue updating while animation plays
-6. **Type safety** - `LineClearAnimation` type properly defined with all necessary fields
+1. **Type Definition** - `LineClearAnimation` type is properly defined with all necessary fields
+2. **Component Structure** - `LineClearAnimation` component has correct structure and layout
+3. **CSS Animations** - CSS keyframes and classes are correctly implemented with smooth animations
+4. **Position Calculation** - Code correctly accounts for `HIDDEN_ROWS` offset for visual placement (calculation looks correct)
+5. **CSS-only Animation** - Uses `animation: ... forwards` pattern which is performant
+6. **Canvas Overlay Approach** - Component is positioned as absolute overlay, allowing canvas to continue updating
+
+### What Still Needs Implementation ⚠️
+
+1. **GameState Integration** - `lineClearAnimation` property not yet added to `GameState` type
+2. **Core Logic** - `clearLines`, `updateLineClearAnimation`, and `lockPieceAndSpawnNext` modifications not implemented
+3. **Prop Wiring** - Components not wired together to pass animation state
+4. **Render Loop** - Animation update logic not called in game loop
 
 ---
 
@@ -481,40 +530,39 @@ The build should verify:
 
 ### New Types Added
 
-| Type                          | File                          | Used In                                                | Status                 |
-| ----------------------------- | ----------------------------- | ------------------------------------------------------ | ---------------------- |
-| `LineClearAnimation`          | `src/types/tetris.d.ts`       | `GameState`, `lineClearAnimation.tsx`, `gameBoard.tsx` | ✅ Used                |
-| `LineClearAnimation` (import) | `src/components/gameUtils.ts` | Not directly used (only through GameState)             | ❌ **Unused - Remove** |
+| Type                 | File                    | Used In                  | Status                              |
+| -------------------- | ----------------------- | ------------------------ | ----------------------------------- |
+| `LineClearAnimation` | `src/types/tetris.d.ts` | `lineClearAnimation.tsx` | ✅ **Exists, but NOT in GameState** |
 
 ### New Constants Added
 
-| Constant                        | File                      | Used In                            | Status  |
-| ------------------------------- | ------------------------- | ---------------------------------- | ------- |
-| `LINE_CLEAR_ANIMATION_DURATION` | `src/constants/tetris.ts` | `gameUtils.ts`, `opponentGame.tsx` | ✅ Used |
+| Constant                        | File                      | Used In | Status                    |
+| ------------------------------- | ------------------------- | ------- | ------------------------- |
+| `LINE_CLEAR_ANIMATION_DURATION` | `src/constants/tetris.ts` | None    | ✅ **Exists, but unused** |
 
 ### New Functions Added
 
-| Function                   | File                          | Used In                    | Status  |
-| -------------------------- | ----------------------------- | -------------------------- | ------- |
-| `updateLineClearAnimation` | `src/components/gameUtils.ts` | `render()` in gameUtils.ts | ✅ Used |
+| Function                   | File                          | Used In | Status                    |
+| -------------------------- | ----------------------------- | ------- | ------------------------- |
+| `updateLineClearAnimation` | `src/components/gameUtils.ts` | None    | ❌ **Does NOT exist yet** |
 
 ### New Components Added
 
-| Component            | File                                    | Used In         | Status  |
-| -------------------- | --------------------------------------- | --------------- | ------- |
-| `LineClearAnimation` | `src/components/lineClearAnimation.tsx` | `gameBoard.tsx` | ✅ Used |
+| Component            | File                                    | Used In         | Status                                               |
+| -------------------- | --------------------------------------- | --------------- | ---------------------------------------------------- |
+| `LineClearAnimation` | `src/components/lineClearAnimation.tsx` | `gameBoard.tsx` | ✅ **Exists, but missing required `animation` prop** |
 
 ### New Props Added
 
-| Prop                 | Component   | Used                                               | Status  |
-| -------------------- | ----------- | -------------------------------------------------- | ------- |
-| `lineClearAnimation` | `GameBoard` | Passed from `singlePlayerGame.tsx`, `hostGame.tsx` | ✅ Used |
+| Prop                 | Component   | Used In | Status                                             |
+| -------------------- | ----------- | ------- | -------------------------------------------------- |
+| `lineClearAnimation` | `GameBoard` | None    | ❌ **Does NOT exist yet - not in GameBoard props** |
 
 ### New GameState Properties
 
-| Property             | Type                         | Initialized                 | Updated                                             | Read                                        | Status  |
-| -------------------- | ---------------------------- | --------------------------- | --------------------------------------------------- | ------------------------------------------- | ------- |
-| `lineClearAnimation` | `LineClearAnimation \| null` | `INITIAL_GAME_STATE` (null) | `lockPieceAndSpawnNext`, `updateLineClearAnimation` | `GameBoard`, `LineClearAnimation` component | ✅ Used |
+| Property             | Type                         | Initialized | Updated | Read | Status                             |
+| -------------------- | ---------------------------- | ----------- | ------- | ---- | ---------------------------------- |
+| `lineClearAnimation` | `LineClearAnimation \| null` | None        | None    | None | ❌ **Does NOT exist in GameState** |
 
 ### CSS Classes Added
 
@@ -530,9 +578,11 @@ Check `gameUtils.ts` exports include:
 ```typescript
 export {
   // ... existing exports ...
-  updateLineClearAnimation, // ✅ Exported
+  updateLineClearAnimation, // ❌ NOT exported (function doesn't exist yet)
 };
 ```
+
+**Note**: `updateLineClearAnimation` function does not exist in gameUtils.ts yet.
 
 ---
 
@@ -560,21 +610,51 @@ grep -rn "LINE_CLEAR_ANIMATION_DURATION" src/
 
 ---
 
-## Summary of Required Fixes
+## Summary of Implementation Status
 
-| Priority             | Issue                                                | Fix Required                                 |
-| -------------------- | ---------------------------------------------------- | -------------------------------------------- |
-| 🔴 **Build Blocker** | Unused `LineClearAnimation` import in `gameUtils.ts` | Remove import from line 12                   |
-| 🔴 High              | Hard-coded widths in `lineClearAnimation.tsx`        | Use `cellWidth * 5` for dynamic sizing       |
-| ✅ Resolved          | React re-render issue                                | Already works via `syncUIState`/`scoreMultiplier` |
-| 🟡 Medium            | CSS duration not synced with JS constant             | Use CSS variable (optional)                  |
-| 🟡 Medium            | CSS slide distance hard-coded                        | Document or use CSS variable (optional)      |
+### ✅ What's Done
+
+- Type definition for `LineClearAnimation` exists
+- Constant `LINE_CLEAR_ANIMATION_DURATION` exists
+- React component `LineClearAnimation` exists and is structured correctly
+- CSS animations are implemented and working
+- Component is imported and rendered in `GameBoard` (but not wired up)
+
+### ❌ What's Missing (Core Functionality)
+
+1. **GameState Integration**: `lineClearAnimation` property not added to `GameState` type
+2. **Initial State**: Not initialized in `INITIAL_GAME_STATE`
+3. **clearLines Modification**: Still returns `number` instead of snapshots
+4. **updateLineClearAnimation Function**: Does not exist
+5. **lockPieceAndSpawnNext**: Does not initialize animation state
+6. **Render Loop**: Animation update not called in render loop
+7. **Prop Wiring**: `GameBoard` doesn't accept or pass `animation` prop
+8. **Game Components**: Don't pass `lineClearAnimation` from gameState to `GameBoard`
+
+### 🐛 Bugs to Fix
+
+1. **Hard-coded widths** - Lines 46, 61 in `lineClearAnimation.tsx` use `w-[150px]` instead of `cellWidth * 5`
+2. **Missing animation prop** - `GameBoard` line 35 passes only `uiState`, missing `animation` prop
+3. **Positioning issue** - Line 39 comment suggests rows may all render at same position
+
+### 🟡 Optional Improvements
+
+- CSS duration sync with JS constant (using CSS variable)
+- CSS slide distance made dynamic (using CSS variable)
 
 ---
 
-## Next Steps
+## Next Steps (Priority Order)
 
-1. **Fix build error first** - Remove unused `LineClearAnimation` import from `gameUtils.ts`
-2. **Fix hard-coded widths** - Update `lineClearAnimation.tsx` to use dynamic cell sizes
-4. **Run build verification** - `pnpm tsc --noEmit` should pass with no errors
-5. **Test visually** - Ensure animation appears reliably when clearing lines
+1. **Add `lineClearAnimation` to GameState type** - Add property to `GameState` in `tetris.d.ts`
+2. **Initialize in INITIAL_GAME_STATE** - Add `lineClearAnimation: null` to initial state
+3. **Modify `clearLines` function** - Return snapshots instead of just count
+4. **Create `updateLineClearAnimation` function** - Track animation progress and cleanup
+5. **Modify `lockPieceAndSpawnNext`** - Initialize animation state when lines cleared
+6. **Wire up GameBoard props** - Accept and pass `animation` prop to `LineClearAnimation`
+7. **Wire up game components** - Pass `gameStateRef.current.lineClearAnimation` to `GameBoard`
+8. **Integrate render loop** - Call `updateLineClearAnimation` in render/animate functions
+9. **Fix hard-coded widths** - Use dynamic `cellWidth * 5` in `lineClearAnimation.tsx`
+10. **Fix positioning bug** - Investigate and fix row positioning issue
+11. **Run build verification** - `pnpm tsc --noEmit` to check for type errors
+12. **Test visually** - Verify animation appears when clearing lines

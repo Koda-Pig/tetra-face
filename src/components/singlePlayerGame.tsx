@@ -12,6 +12,7 @@ import {
   render,
   restartGame,
   pollGamepadInput,
+  updateLineClearAnimation,
 } from "./gameUtils";
 import { getTimestamp } from "~/lib/utils";
 import type { GameState, AnimationLoop } from "~/types";
@@ -33,6 +34,8 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
   const gameStateRef = useRef<GameState | null>(null);
   const { uiState, setUiState, syncUIState } = useUIState();
   const [restartTrigger, setRestartTrigger] = useState(0);
+  const [lineClearAnimation, setLineClearAnimation] =
+    useState<GameState["lineClearAnimation"]>(null);
   const { gamepadConnected, gamepadStateRef } = useGamepad();
   const getNextPiece = useBag();
 
@@ -139,6 +142,13 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
           playerId: userId,
         });
       }
+      // update line clear animation state
+      updateLineClearAnimation(gameState);
+      // sync animation state to React for re-renders
+      if (gameState.lineClearAnimation !== lineClearAnimation) {
+        console.count(`${gameState.lineClearAnimation}`);
+        setLineClearAnimation(gameState.lineClearAnimation);
+      }
       // draw the game
       render({
         ctx,
@@ -195,7 +205,11 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
   }, [userId, getNextPiece, syncUIState, setUiState]);
 
   return (
-    <GameBoard uiState={uiState} ref={canvasRef}>
+    <GameBoard
+      uiState={uiState}
+      lineClearAnimation={lineClearAnimation}
+      ref={canvasRef}
+    >
       <div className="grid gap-4">
         {(uiState.isGameOver || uiState.isPaused) && (
           <Button onClick={handleRestart} size="lg" className="text-lg">

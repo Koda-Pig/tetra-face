@@ -30,6 +30,7 @@ import {
   GARBAGE_COLOR,
   GARBAGE_LINES,
   INITIAL_UI_STATE,
+  LINE_CLEAR_ANIMATION_DURATION,
 } from "~/constants";
 import { getTimestamp } from "~/lib/utils";
 
@@ -210,8 +211,19 @@ function lockPieceAndSpawnNext({
   onReceiveGarbage?: (garbageLines: BoardCell[][]) => void;
 }): BoardCell[][] | null {
   let garbage = null;
-  const linesCleared = clearLines(gameState.board);
+  const rowSnapshots = clearLines(gameState.board);
+  const linesCleared = rowSnapshots.length;
   gameState.linesCleared += linesCleared;
+
+  // Initialize line clear animation if rows were cleared
+  if (rowSnapshots.length > 0) {
+    gameState.lineClearAnimation = {
+      rowSnapshots,
+      startTime: getTimestamp(),
+      duration: LINE_CLEAR_ANIMATION_DURATION,
+    };
+  }
+
   if (linesCleared > 0) {
     const numLines = GARBAGE_LINES[linesCleared as keyof typeof GARBAGE_LINES];
     garbage = generateGarbageLines({ numLines });
@@ -321,25 +333,45 @@ function hardDrop({
   }
   return dropDistance;
 }
-function clearLines(board: GameState["board"]): number {
-  let linesCleared = 0;
+function clearLines(
+  board: GameState["board"],
+): Array<{ originalRowIndex: number; cells: BoardCell[] }> {
+  const rowSnapshots: Array<{ originalRowIndex: number; cells: BoardCell[] }> =
+    [];
 
   // check from bottom up
   for (let row = TOTAL_ROWS - 1; row >= 0; row--) {
     // check if row is full
     const isRowFull = board[row]!.every((cell) => cell.occupied);
     if (isRowFull) {
+      // Store snapshot before removing
+      rowSnapshots.push({
+        originalRowIndex: row,
+        cells: [...board[row]!], // deep copy of cells array
+      });
       board.splice(row, 1); // remove row
       board.unshift(
         Array(COLS)
           .fill(null)
           .map(() => ({ occupied: false })),
       ); // add empty row at top
-      linesCleared++;
       row++; // check same row index again since a row was removed
     }
   }
-  return linesCleared;
+  return rowSnapshots;
+}
+
+function updateLineClearAnimation(gameState: GameState): void {
+  if (!gameState.lineClearAnimation) return;
+
+  const now = getTimestamp();
+  const elapsed = (now - gameState.lineClearAnimation.startTime) / 1000; // convert to seconds
+  const progress = elapsed / gameState.lineClearAnimation.duration;
+
+  if (progress >= 1) {
+    // Animation complete, clear the state
+    gameState.lineClearAnimation = null;
+  }
 }
 // make sure this is generated to avoid shared object references
 const createEmptyBoard = () =>
@@ -826,4 +858,5 @@ export {
   render,
   restartGame,
   pollGamepadInput,
+  updateLineClearAnimation,
 };

@@ -43,6 +43,7 @@ export type GameState = {
   holdPiece: TetrominoType | null;
   canHold: boolean;
   pendingGarbage: BoardCell[][] | null; // lines of garbage queued to be added
+  lineClearAnimation: LineClearAnimation | null;
 };
 
 export type UIState = {
