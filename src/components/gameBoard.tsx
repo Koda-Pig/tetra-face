@@ -1,9 +1,10 @@
 import { forwardRef } from "react";
 import { cn } from "~/lib/utils";
 import type { UIState } from "~/types";
+import { CANVAS_ANIMATION_DURATION_MS } from "~/constants";
 import GameStats from "./gameStats";
 import GameUi from "./gameUi";
-import { CANVAS_ANIMATION_DURATION_MS } from "~/constants";
+import LineClearAnimation from "./lineClearAnimation";
 
 type GameBoardProps = {
   uiState: UIState;
@@ -12,7 +13,7 @@ type GameBoardProps = {
 
 const GameBoard = forwardRef<HTMLCanvasElement, GameBoardProps>(
   ({ uiState, children }, ref) => (
-    <div className="relative mx-auto h-[600px] w-[300px]">
+    <div className="relative mx-auto w-min">
       <canvas
         ref={ref}
         width={300}
@@ -25,6 +26,7 @@ const GameBoard = forwardRef<HTMLCanvasElement, GameBoardProps>(
           `game-canvas-score-multiplier-${uiState.scoreMultiplier}`,
         )}
       />
+      <LineClearAnimation uiState={uiState} />
       <GameStats uiState={uiState} />
       <GameUi uiState={uiState}>{children}</GameUi>
     </div>

@@ -90,7 +90,7 @@ const OpponentGame = forwardRef<
           gameStateRef.current.score = action.newScore;
           gameStateRef.current.level = action.newLevel;
           gameStateRef.current.previewPiece = action.nextPreviewPiece;
-          clearLines(gameStateRef.current.board);
+          clearLines(gameStateRef.current);
           syncUIState(gameStateRef.current);
           if (gameStateRef.current.pendingGarbage) {
             addGarbageLines({
@@ -114,7 +114,7 @@ const OpponentGame = forwardRef<
           gameStateRef.current.score = action.newScore;
           gameStateRef.current.level = action.newLevel;
           gameStateRef.current.previewPiece = action.nextPreviewPiece;
-          clearLines(gameStateRef.current.board);
+          clearLines(gameStateRef.current);
           syncUIState(gameStateRef.current);
           if (gameStateRef.current.pendingGarbage) {
             addGarbageLines({

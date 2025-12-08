@@ -1,6 +1,9 @@
 import type { GameState, Tetromino, TetrominoType, UIState } from "~/types";
 
 export const COLS = 10;
+export const CANVAS_WIDTH = 300;
+export const CANVAS_HEIGHT = 300;
+export const CELL_SIZE = CANVAS_WIDTH / COLS;
 export const TOTAL_ROWS = 40;
 // The main playfield players see and play on
 export const VISIBLE_ROWS = 20;
@@ -353,6 +356,7 @@ export const WALL_KICK_DATA_I: Record<
 
 export const FLASH_TRANSITION_DURATION_MS = 300;
 export const CANVAS_ANIMATION_DURATION_MS = 600;
+export const LINE_CLEAR_ANIMATION_DURATION_MS = 1000;
 
 export const INITIAL_GAME_STATE: Omit<
   GameState,
@@ -366,6 +370,7 @@ export const INITIAL_GAME_STATE: Omit<
   holdPiece: null,
   canHold: true,
   pendingGarbage: null,
+  lineClearSnapshots: null,
 };
 
 export const LINE_CLEAR_SCORES = {
@@ -396,6 +401,7 @@ export const INITIAL_UI_STATE: UIState = {
   previewPiece: null,
   scoreMultiplier: 0,
   prevLinesCleared: 0,
+  lineClearSnapshots: [],
 };
 
 export const INITIAL_ANIMATION_LOOP = {

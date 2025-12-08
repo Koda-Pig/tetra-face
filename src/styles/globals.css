@@ -336,5 +336,20 @@ main {
 }
 
 .gameover-bg {
-  background: radial-gradient(circle, black, rgba(0, 0, 0, 0.707), transparent);
+  background: radial-gradient(circle, black, rgba(0, 0, 0, 0.7), transparent);
+}
+
+@keyframes slide-out-right {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(200%);
+    scale: 0.5;
+    opacity: 0;
+  }
+}
+
+.line-clear-animation {
+  animation: slide-out-right 1s linear forwards;
 }

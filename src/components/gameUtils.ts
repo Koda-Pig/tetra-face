@@ -9,6 +9,7 @@ import type {
   TetrisEvent,
   BoardCell,
   NextPiece,
+  RowSnapshot,
 } from "~/types";
 import {
   TETRAMINOS,
@@ -210,10 +211,12 @@ function lockPieceAndSpawnNext({
   onReceiveGarbage?: (garbageLines: BoardCell[][]) => void;
 }): BoardCell[][] | null {
   let garbage = null;
-  const linesCleared = clearLines(gameState.board);
+  const rowSnapshots = clearLines(gameState);
+  const linesCleared = rowSnapshots.length;
   gameState.linesCleared += linesCleared;
   if (linesCleared > 0) {
     const numLines = GARBAGE_LINES[linesCleared as keyof typeof GARBAGE_LINES];
+    gameState.lineClearSnapshots = rowSnapshots;
     garbage = generateGarbageLines({ numLines });
   }
   // process incoming garbage
@@ -321,25 +324,39 @@ function hardDrop({
   }
   return dropDistance;
 }
-function clearLines(board: GameState["board"]): number {
-  let linesCleared = 0;
+// returns the cleared lines
+function clearLines(gameState: GameState): RowSnapshot[] {
+  const { board } = gameState;
+  const rowSnapshots: RowSnapshot[] = [];
+  const rowsToClear = [];
 
-  // check from bottom up
+  // check from bottom up, indentify which rows to clear
   for (let row = TOTAL_ROWS - 1; row >= 0; row--) {
     // check if row is full
     const isRowFull = board[row]!.every((cell) => cell.occupied);
-    if (isRowFull) {
-      board.splice(row, 1); // remove row
-      board.unshift(
-        Array(COLS)
-          .fill(null)
-          .map(() => ({ occupied: false })),
-      ); // add empty row at top
-      linesCleared++;
-      row++; // check same row index again since a row was removed
-    }
+    if (isRowFull) rowsToClear.push(row);
   }
-  return linesCleared;
+
+  // remove rows, and store snapshots with correct indices
+  // iterate in reverse order (highest index first) to avoid index shifting issues
+  for (let i = rowsToClear.length - 1; i >= 0; i--) {
+    const originalRowIndex = rowsToClear[i]!;
+    // store snapshot of row
+    rowSnapshots.push({
+      originalRowIndex,
+      cells: [...board[originalRowIndex]!],
+    });
+    // remove row
+    board.splice(originalRowIndex, 1);
+    // add empty row at top
+    board.unshift(
+      Array(COLS)
+        .fill(null)
+        .map(() => ({ occupied: false })),
+    );
+  }
+
+  return rowSnapshots;
 }
 // make sure this is generated to avoid shared object references
 const createEmptyBoard = () =>
