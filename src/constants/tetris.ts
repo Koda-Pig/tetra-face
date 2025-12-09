@@ -380,6 +380,13 @@ export const LINE_CLEAR_SCORES = {
   3: 500,
   4: 800,
 };
+
+export const T_SPIN_SCORES = {
+  1: 800,
+  2: 1200,
+  3: 1600,
+};
+
 export const GARBAGE_LINES = {
   1: 0,
   2: 1,

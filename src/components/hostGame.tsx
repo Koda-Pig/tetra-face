@@ -87,9 +87,6 @@ function handleAction(
   socket: Socket,
   roomId: string,
 ) {
-  if (action?.type === "game-over") {
-    console.log("game over event from handleaction");
-  }
   if (action?.type === "game-pause" || action?.type === "game-resume") {
     socket.emit("game-pause-event", { roomId, action });
   } else if (action?.type === "game-over") {

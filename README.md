@@ -48,7 +48,12 @@ https://play.tetris.com/
 - [x] Implement counter clockwise rotation (currently only clockwise with space key)
 - [x] Implement scoring system
   - [x] line clear scoring
-  - [ ] T-Spin scoring
+  - [x] T-Spin scoring
+    - References for this:
+      - https://katyscode.wordpress.com/2012/10/13/tetris-aside-coding-for-t-spins/
+      - https://tetris.wiki/T-Spin
+      - this seems to provide a helpful breakdown of detecing the T-spins
+      - If you want to award points for a T-spin, T-spin double and/or prevent impossible rotations for non-T-pieces, the solution is the same in all cases: add a boolean flag to each shape, true if it is the T-piece, false otherwise, only allow the additional bucket logic code to execute if the flag is true, and when a line is cleared, if the flag of the last fallen piece is true (the line was cleared by a T-piece), check the piece’s mobility to the left, right and up: if none are possible, it’s a T-spin lock and you can award bonus points (another way to check for a T-spin lock is to see if at least 3 of the 4 corners diagonal to the center of the T-piece are occupied when the piece comes to rest).
 - [x] Implement the game reset
 - [x] Add leveling system
 - [x] Implement the game pause / resume. Consider the way unity handles this with a time scale. Noted here: https://github.com/Koda-Pig/hadeez/blob/f2a531ec9eda007310b538d309b30b79327c4277/README.md?plain=1#L38
@@ -75,12 +80,11 @@ https://play.tetris.com/
 - Triple: 500 × level
 - Tetris (4 lines): 800 × level
 -
-- T-Spins: [not-implemented]
+- T-Spins: [implemented]
 -
 - T-Spin Single: 800 × level
 - T-Spin Double: 1200 × level
 - T-Spin Triple: 1600 × level
-- Mini T-Spin variations exist with lower scores
 
 ### Multiplayer
 

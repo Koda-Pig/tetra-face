@@ -31,6 +31,7 @@ import {
   GARBAGE_COLOR,
   GARBAGE_LINES,
   INITIAL_UI_STATE,
+  T_SPIN_SCORES,
 } from "~/constants";
 import { getTimestamp } from "~/lib/utils";
 
@@ -211,6 +212,10 @@ function lockPieceAndSpawnNext({
   onReceiveGarbage?: (garbageLines: BoardCell[][]) => void;
 }): BoardCell[][] | null {
   let garbage = null;
+  const isTSpin = detectTSpin({
+    piece: gameState.currentPiece,
+    board: gameState.board,
+  });
   const rowSnapshots = clearLines(gameState);
   const linesCleared = rowSnapshots.length;
   gameState.linesCleared += linesCleared;
@@ -242,11 +247,14 @@ function lockPieceAndSpawnNext({
   }
 
   if (isGameOver(gameState)) gameState.isGameOver = true;
-  else {
-    const lineClearScore =
-      LINE_CLEAR_SCORES[linesCleared as keyof typeof LINE_CLEAR_SCORES];
-
-    gameState.score += lineClearScore * (gameState.level + 1); // +1 for zero index;
+  else if (linesCleared > 0) {
+    let score = 0;
+    if (isTSpin) {
+      score = T_SPIN_SCORES[linesCleared as keyof typeof T_SPIN_SCORES];
+    } else {
+      score = LINE_CLEAR_SCORES[linesCleared as keyof typeof LINE_CLEAR_SCORES];
+    }
+    gameState.score += score * (gameState.level + 1); // +1 for zero index
   }
 
   // reset 'canHold' after a new piece is spawned
@@ -367,6 +375,40 @@ const createEmptyBoard = () =>
         .fill(null)
         .map(() => ({ occupied: false })),
     );
+const createTSpinBoardSetup = () => {
+  const board = Array(TOTAL_ROWS)
+    .fill(null)
+    .map(() =>
+      Array(COLS)
+        .fill(null)
+        .map(() => ({ occupied: false, color: "transparent" })),
+    );
+
+  // row 1
+  board[39]![0]! = { occupied: true, color: "red" };
+  board[39]![1]! = { occupied: true, color: "red" };
+  board[39]![3]! = { occupied: true, color: "red" };
+  board[39]![4]! = { occupied: true, color: "red" };
+  board[39]![5]! = { occupied: true, color: "red" };
+  board[39]![6]! = { occupied: true, color: "red" };
+  board[39]![7]! = { occupied: true, color: "red" };
+  board[39]![8]! = { occupied: true, color: "red" };
+  board[39]![9]! = { occupied: true, color: "red" };
+
+  // row 2
+  board[38]![0]! = { occupied: true, color: "red" };
+  board[38]![4]! = { occupied: true, color: "red" };
+  board[38]![5]! = { occupied: true, color: "red" };
+  board[38]![6]! = { occupied: true, color: "red" };
+  board[38]![7]! = { occupied: true, color: "red" };
+  board[38]![8]! = { occupied: true, color: "red" };
+  board[38]![9]! = { occupied: true, color: "red" };
+
+  // row 3
+  board[37]![0]! = { occupied: true, color: "red" };
+  board[37]![3]! = { occupied: true, color: "red" };
+  return board;
+};
 
 function handleKeyDown({
   event,
@@ -830,7 +872,45 @@ function pollGamepadInput({
   return null;
 }
 
+// this works by checking if at least 3 of the 4 corners diagonal to the center of
+// the T-piece are occupied when the piece is placed
+function detectTSpin({
+  piece,
+  board,
+}: {
+  piece: GameState["currentPiece"];
+  board: GameState["board"];
+}): boolean {
+  if (piece.tetrominoType !== "T") return false;
+
+  const centerX = piece.x + 1;
+  const centerY = piece.y + 1;
+
+  const corners = [
+    { x: centerX - 1, y: centerY - 1 }, // top-left
+    { x: centerX + 1, y: centerY - 1 }, // top-right
+    { x: centerX - 1, y: centerY + 1 }, // bottom-left
+    { x: centerX + 1, y: centerY + 1 }, // bottom-right
+  ];
+
+  let occupiedCorners = 0;
+  for (const corner of corners) {
+    if (
+      corner.y >= 0 &&
+      corner.y < TOTAL_ROWS &&
+      corner.x >= 0 &&
+      corner.x < COLS &&
+      board[corner.y]![corner.x]!.occupied
+    ) {
+      occupiedCorners++;
+    }
+  }
+
+  return occupiedCorners >= 3;
+}
+
 export {
+  createTSpinBoardSetup,
   createEmptyBoard,
   calcDropSpeed,
   spawnPiece,
