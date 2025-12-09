@@ -125,7 +125,7 @@ https://play.tetris.com/
 - [ ] security checks
 - [x] Hide 'create room' button if a player has already created a room and is waiting for players to join
 - [x] add line clearing animation to the blocks
-  - [ ] improve line clear animations
+  - [x] improve line clear animations
 - [x] replace user ids with username in frontend
 - [x] add background animation for non-gameplay states. Tetris matrix
 - [x] fix bug where when a player leaves the match after winning, the opponents game will change from showing 'you lost' to 'you won'.

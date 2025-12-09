@@ -9,7 +9,7 @@ export default async function Home() {
   const session = await auth();
 
   return (
-    <main className="text-(--retro-green)">
+    <main className="text-(--retro-green)" style={{ contain: "paint" }}>
       <BackgroundAnimation />
       <div className="container mx-auto flex h-full min-h-svh flex-col px-4 py-8">
         <h1 className="text-center text-5xl font-bold tracking-wide">TETRUS</h1>

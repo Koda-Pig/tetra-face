@@ -20,6 +20,7 @@ function LineAnimation({
         <span
           key={`${color}-${index}`}
           style={{
+            color: color,
             backgroundColor: color,
             width: `${cellSize}px`,
             height: `${cellSize - 1}px`, // minus 1 to create spacing between
