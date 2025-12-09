@@ -385,28 +385,28 @@ const createTSpinBoardSetup = () => {
     );
 
   // row 1
-  board[39]![0]! = { occupied: true, color: "red" };
-  board[39]![1]! = { occupied: true, color: "red" };
-  board[39]![3]! = { occupied: true, color: "red" };
-  board[39]![4]! = { occupied: true, color: "red" };
-  board[39]![5]! = { occupied: true, color: "red" };
-  board[39]![6]! = { occupied: true, color: "red" };
-  board[39]![7]! = { occupied: true, color: "red" };
-  board[39]![8]! = { occupied: true, color: "red" };
-  board[39]![9]! = { occupied: true, color: "red" };
+  board[39]![0] = { occupied: true, color: "red" };
+  board[39]![1] = { occupied: true, color: "red" };
+  board[39]![3] = { occupied: true, color: "red" };
+  board[39]![4] = { occupied: true, color: "red" };
+  board[39]![5] = { occupied: true, color: "red" };
+  board[39]![6] = { occupied: true, color: "red" };
+  board[39]![7] = { occupied: true, color: "red" };
+  board[39]![8] = { occupied: true, color: "red" };
+  board[39]![9] = { occupied: true, color: "red" };
 
   // row 2
-  board[38]![0]! = { occupied: true, color: "red" };
-  board[38]![4]! = { occupied: true, color: "red" };
-  board[38]![5]! = { occupied: true, color: "red" };
-  board[38]![6]! = { occupied: true, color: "red" };
-  board[38]![7]! = { occupied: true, color: "red" };
-  board[38]![8]! = { occupied: true, color: "red" };
-  board[38]![9]! = { occupied: true, color: "red" };
+  board[38]![0] = { occupied: true, color: "red" };
+  board[38]![4] = { occupied: true, color: "red" };
+  board[38]![5] = { occupied: true, color: "red" };
+  board[38]![6] = { occupied: true, color: "red" };
+  board[38]![7] = { occupied: true, color: "red" };
+  board[38]![8] = { occupied: true, color: "red" };
+  board[38]![9] = { occupied: true, color: "red" };
 
   // row 3
-  board[37]![0]! = { occupied: true, color: "red" };
-  board[37]![3]! = { occupied: true, color: "red" };
+  board[37]![0] = { occupied: true, color: "red" };
+  board[37]![3] = { occupied: true, color: "red" };
   return board;
 };
 
