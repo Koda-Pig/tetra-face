@@ -5,13 +5,7 @@ import SinglePlayerGame from "./singlePlayerGame";
 import GameplayControls from "./gameplayControls";
 import GameVersus from "./gameVersus";
 import { Button } from "~/components/ui/button";
-import {
-  ArrowLeftFromLine,
-  LogOut,
-  BedSingle,
-  BedDouble,
-  Gamepad2,
-} from "lucide-react";
+import { ArrowLeftFromLine, LogOut, Gamepad2, User, Users } from "lucide-react";
 import Link from "next/link";
 import type { Session } from "next-auth";
 import {
@@ -21,6 +15,7 @@ import {
 } from "~/components/ui/tooltip";
 import { useGameInPlay } from "~/contexts/gameInPlayContext";
 import { useGamepad } from "~/hooks/useGamepad";
+import { cn } from "~/lib/utils";
 
 export default function GameSection({ session }: { session: Session }) {
   const [gameMode, setGameMode] = useState<"single-player" | "versus" | null>(
@@ -38,55 +33,60 @@ export default function GameSection({ session }: { session: Session }) {
               setGameMode(null);
               setIsGameInPlay(false);
             }}
-            className="border-background justify-between border"
           >
-            <p>back</p>
             <ArrowLeftFromLine />
+            back
           </Button>
         )}
-        <GameplayControls />
-        <Button asChild className="border-background justify-between border">
+        <Button asChild>
           <Link href="/api/auth/signout">
-            <p>sign out</p>
             <LogOut />
+            sign out
           </Link>
         </Button>
       </div>
+      <div className="fixed top-4 right-4 grid gap-2">
+        <GameplayControls />
+      </div>
 
-      {gameMode === null && (
-        <div className="mx-auto mt-6 grid h-full w-max grid-cols-2 items-center gap-4">
-          <Button
-            size="lg"
-            className="text-md w-full px-4 py-8 text-xl"
-            onClick={() => {
-              setGameMode("single-player");
-              setIsGameInPlay(true);
-            }}
-          >
-            SINGLE PLAYER
-            <BedSingle className="size-8" />
-          </Button>
+      <div
+        className={cn(
+          "game-option-buttons mx-auto mt-6 grid h-full w-max grid-cols-2 items-center gap-4",
+          gameMode === null ? "show" : "hide",
+        )}
+      >
+        <Button
+          size="lg"
+          className="text-md w-full px-4 py-8 text-xl"
+          onClick={() => {
+            setGameMode("single-player");
+            setIsGameInPlay(true);
+          }}
+        >
+          <User className="size-8" />
+          SINGLE PLAYER
+        </Button>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="lg"
-                className="text-md w-full px-4 py-8 text-xl"
-                onClick={() => {
-                  if (!session) return;
-                  setGameMode("versus");
-                }}
-              >
-                VERSUS
-                <BedDouble className="size-8" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              {session ? "good luck!" : <p>sign in first</p>}
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      )}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="lg"
+              className="text-md w-full px-4 py-8 text-xl"
+              onClick={() => {
+                if (!session) return;
+                setGameMode("versus");
+              }}
+            >
+              <Users className="size-8" />
+              VERSUS
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {session ? "good luck!" : <p>sign in first</p>}
+          </TooltipContent>
+        </Tooltip>
+      </div>
+
       {session?.user?.id && gameMode === "single-player" && (
         <SinglePlayerGame userId={session.user.id} />
       )}
@@ -94,12 +94,10 @@ export default function GameSection({ session }: { session: Session }) {
 
       {gamepadConnected && (
         <Tooltip>
-          <TooltipTrigger className="fixed top-4 right-4 rounded-full bg-(--retro-green) p-1 text-black">
+          <TooltipTrigger className="fixed right-4 bottom-4 rounded-full bg-(--retro-green-dullest) p-1 text-white">
             <Gamepad2 className="size-8" />
           </TooltipTrigger>
-          <TooltipContent className="text-base">
-            controller connected
-          </TooltipContent>
+          <TooltipContent>controller connected</TooltipContent>
         </Tooltip>
       )}
     </div>

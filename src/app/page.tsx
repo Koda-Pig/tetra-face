@@ -11,17 +11,17 @@ export default async function Home() {
   return (
     <main className="text-(--retro-green)" style={{ contain: "paint" }}>
       <BackgroundAnimation />
-      <div className="container mx-auto flex h-full min-h-svh flex-col px-4 py-8">
-        <h1 className="text-center text-5xl font-bold tracking-wide">TETRUS</h1>
-        <p className="mt-6 text-center text-lg">
-          Multiplayer online tetris.
-          <br />
-          {!session && "Sign in to start a versus match."}
+      <div className="container mx-auto flex h-full min-h-svh flex-col justify-center px-4">
+        <h1 className="text-center text-6xl font-bold tracking-wide">
+          TETR<span className="text-white">US</span>
+        </h1>
+        <p className="subtitle mt-6 mb-8 text-center text-xl">
+          Multiplayer online Tetris.
         </p>
         {session?.user && <GameSection session={session} />}
 
         {session ? (
-          <p className="mt-auto flex items-center justify-center gap-2 text-xl text-white">
+          <p className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center justify-center gap-2 text-lg text-white">
             Logged in as
             <span className="font-bold">{session.user?.name}</span>
             {session.user?.image && (
@@ -36,7 +36,7 @@ export default async function Home() {
           </p>
         ) : (
           <Button asChild size="lg" className="mx-auto mt-4 text-xl leading-0">
-            <Link href="/api/auth/signin">SIGN IN</Link>
+            <Link href="/api/auth/signin">sign in</Link>
           </Button>
         )}
       </div>

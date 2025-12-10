@@ -15,11 +15,12 @@ export default function WaitingForReady({
       <Button size="lg" onClick={onToggleReady} className="m-12 mx-auto flex">
         {isCurrentPlayerReady ? (
           <>
-            Ready <Play className="inline-block" />
+            <Play className="inline-block" />
+            ready and waiting...
           </>
         ) : (
           <>
-            Not Ready <HourglassIcon className="hourglass-icon inline-block" />
+            <HourglassIcon className="hourglass-icon inline-block" /> not ready
           </>
         )}
       </Button>

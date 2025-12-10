@@ -126,6 +126,20 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    scrollbar-width: thin;
+    scrollbar-color: var(--retro-green-dull) var(--retro-green-dark);
+    interpolate-size: allow-keywords;
+
+    &::-webkit-scrollbar {
+      width: 12px;
+    }
+    &::-webkit-scrollbar-track {
+      background: #2d333b;
+    }
+    &::-webkit-scrollbar-thumb {
+      background-color: #848484;
+      border-radius: 20px;
+    }
   }
   body {
     @apply bg-background text-foreground;
@@ -386,4 +400,59 @@ main {
     animation: explosion 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     animation-duration: inherit;
   }
+}
+
+.message-bubble {
+  --bg-color: #18230f;
+  /* --bg-color: #27391c; */
+  /* --bg-color: #255f38; */
+  /* --bg-color: #1f7d53; */
+  background-color: var(--bg-color);
+}
+.message-bubble::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 12px;
+  transform: translateY(100%);
+  border: solid transparent;
+  border-width: 20px 25px 0 0px;
+  border-top-color: var(--bg-color);
+}
+
+.message-bubble-opponent {
+  --bg-color: green;
+}
+.message-bubble-opponent::after {
+  left: unset;
+  scale: -1 1;
+  right: 12px;
+}
+
+.subtitle {
+  transition: 0.25s ease;
+  transition-property: margin, opacity;
+}
+/* hide subtitle when there's a game being played */
+.subtitle:has(~ * canvas) {
+  margin: -20px;
+  opacity: 0;
+}
+
+.game-option-buttons {
+  transition: margin 0.2s ease;
+}
+.game-option-buttons button {
+  position: relative;
+}
+.game-option-buttons.hide {
+  margin-block: -20px;
+  pointer-events: none;
+}
+.game-option-buttons.hide button {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+.game-option-buttons.hide button:last-child {
+  transform: translateX(100%);
 }

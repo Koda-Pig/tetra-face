@@ -18,7 +18,12 @@ export default function GameUi({
       )}
     >
       <div className="text-center">
-        <h6 className="text-shadow mb-8 text-5xl leading-14 font-bold text-shadow-[0_0_4px_var(--background),0_0_8px_var(--background)]">
+        <p
+          className={cn(
+            children ? "mb-8" : "mb-32",
+            "text-shadow text-5xl leading-14 font-bold text-shadow-[0_0_4px_var(--background),0_0_8px_var(--background)]",
+          )}
+        >
           {uiState.isGameOver ? (
             <span>
               GAME
@@ -28,7 +33,7 @@ export default function GameUi({
           ) : (
             <span>PAUSED</span>
           )}
-        </h6>
+        </p>
         {children}
       </div>
     </div>

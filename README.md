@@ -114,7 +114,7 @@ pnpm run dev
 
 ## TODO
 
-- [ ] Get UI looking decent. Refer to the oldschool UI to make sure I have everything required https://play.tetris.com/
+- [x] Get UI looking decent. Refer to the oldschool UI to make sure I have everything required https://play.tetris.com/
 - [ ] ensure implementation matches guidelines: https://tetris.wiki/Tetris_Guideline
 - [ ] (OPTIONAL) add sub-feature to click opponents hold piece to make it drop
 - [ ] replace restart button with resume + rematch buttons in host game
@@ -122,14 +122,9 @@ pnpm run dev
   - [x] add resume btn
   - [x] add surrender btn
   - [ ] add rematch btn
-- [ ] Update game events to only send over tetromino type, not the whole piece. It's unnecessary usage of bandwidth
-  - Actually need to double check this. I think the whole piece may need to be sent for most cases, as the whole piece is needed for the `placePiece` function in the opponent game. Maybe, maybe not.
 - [ ] performance checks
-- [x] add timeout for waiting for join room request response
-- [x] fix 'user joined' toast - should show different message for user that joined and the user that accepted the join request
-- [ ] toast notification when message is received from opponent in chat - with button that opens the chat window
-- [ ] reverse order of messages in chat (currently newest are at the top) - also make sure the container scrolls to the bottom when a new message is added
 - [ ] account for t-spins in garbage system
+- [ ] fix bug where it shows 'waiting for response' on EVERY single available room. not just the room the user is trying to join.
 
 ## Deployment
 
@@ -171,4 +166,4 @@ docker run -p 3000:3000 --env-file .env.docker tetra-face
 
 ## Other Notes
 
-I changed the name from `Tetra Face` to `Tetrus` because tetra face just isn't a good name.
+I changed the name from `Tetra Face` to `Tetrus` because Tetra Face just isn't a good name.

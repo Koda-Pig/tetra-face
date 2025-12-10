@@ -37,9 +37,9 @@ export default function GameplayControls() {
     <Drawer direction="right">
       <Button asChild>
         <DrawerTrigger className="flex flex-col">
-          <p className="flex items-center justify-between gap-4">
-            <span>controls</span>
+          <p className="flex items-center gap-4">
             <Gamepad2 className="size-6" />
+            <span>controls</span>
           </p>
         </DrawerTrigger>
       </Button>
@@ -48,7 +48,7 @@ export default function GameplayControls() {
         <DrawerHeader>
           <DrawerTitle className="mb-3 flex items-center justify-between text-3xl font-semibold">
             <span>Controls</span>
-            <DrawerClose className="size-6">
+            <DrawerClose className="size-6" title="Close">
               <X className="size-6" />
             </DrawerClose>
           </DrawerTitle>

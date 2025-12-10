@@ -12,34 +12,33 @@ export default function CurrentRoomInfo({
   onLeaveRoom: (roomId: string) => void;
 }) {
   return (
-    <div className="relative mb-4 rounded bg-gray-800/50 p-2">
-      <h4 className="text-xl font-semibold">Current Room</h4>
-      <p className="text-sm">
-        Room ID: <span className="text-white">{currentRoom.id}</span>
-      </p>
-      <p className="text-sm">
-        Players:{" "}
-        <span className="text-white">{currentRoom.players.length}/2</span>
-      </p>
-      <ul className="text-lg">
-        {currentRoom.players.map((player, idx) => (
-          <li key={idx}>
-            {player.username}
-            {player.ready ? (
-              <Play className="inline-block" />
-            ) : (
-              <HourglassIcon className="hourglass-icon inline-block" />
-            )}
-          </li>
-        ))}
-      </ul>
-      <Button
-        onClick={() => onLeaveRoom(currentRoom.id)}
-        className="absolute top-2 right-2 mt-2"
-        variant="outline"
-      >
-        leave room
-      </Button>
+    <div>
+      <h4 className="mb-4 text-center text-xl font-semibold">Current Room</h4>
+      <div className="relative mb-4 rounded border p-2">
+        <div className="bg-background/20 space-y-2 p-2 text-lg backdrop-blur-sm">
+          <p>Room ID</p>
+          <p className="text-white">{currentRoom.id}</p>
+          <p>Players ({currentRoom.players.length}/2)</p>
+          <ul className="text-white">
+            {currentRoom.players.map((player, idx) => (
+              <li key={idx} className="flex items-center gap-2">
+                {player.username}
+                {player.ready ? (
+                  <Play className="inline-block" />
+                ) : (
+                  <HourglassIcon className="hourglass-icon inline-block" />
+                )}
+              </li>
+            ))}
+          </ul>
+          <Button
+            onClick={() => onLeaveRoom(currentRoom.id)}
+            className="absolute top-2 right-2 mt-2"
+          >
+            leave room
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

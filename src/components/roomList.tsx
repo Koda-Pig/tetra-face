@@ -26,11 +26,11 @@ export default function RoomList({
   if (availableRooms.length === 0 && !currentRoom) {
     return (
       <div className="mb-4">
-        <h4 className="mb-2 text-center text-xl font-semibold">
+        {/* <h4 className="mb-2 text-center text-xl font-semibold">
           Available Rooms
-        </h4>
-        <div className="bg-background space-y-2 overflow-y-auto rounded border p-2">
-          <p className="mt-2 text-center text-sm">No available rooms.</p>
+        </h4> */}
+        <div className="space-y-2 rounded border p-2">
+          <p className="mt-2 text-center">No available rooms.</p>
           <Button
             variant="ghost"
             className="mx-auto block"
@@ -51,11 +51,11 @@ export default function RoomList({
       <h4 className="mb-2 text-center text-xl font-semibold">
         Available Rooms
       </h4>
-      <div className="space-y-2 overflow-y-auto rounded border p-2">
+      <div className="space-y-2 rounded border p-2">
         {availableRooms.map((room) => (
           <div
             key={room.id}
-            className="bg-background flex items-center justify-between rounded p-2 text-sm"
+            className="bg-background/20 flex items-center justify-between rounded p-2 text-sm backdrop-blur-sm"
           >
             <div>
               <p className="text-lg font-medium">Room ID: {room.id}</p>
@@ -80,6 +80,14 @@ export default function RoomList({
           </div>
         ))}
       </div>
+
+      <Button
+        onClick={onCreateRoom}
+        disabled={!isConnected || !session?.user}
+        className="mx-auto my-8 flex"
+      >
+        create room
+      </Button>
     </div>
   );
 }

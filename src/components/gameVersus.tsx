@@ -32,6 +32,7 @@ export default function GameVersus({ session }: { session: Session }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [gamePaused, setGamePaused] = useState(false); // in versus mode, pause state must be synced
   const [isGameOver, setIsGameOver] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [winner, setWinner] = useState<Winner>(null);
   const [outgoingJoinRequest, setOutgoingJoinRequest] =
     useState<JoinRoomRequest>(null);
@@ -152,6 +153,37 @@ export default function GameVersus({ session }: { session: Session }) {
     setIncomingJoinRequest("accepted");
   }
 
+  const handleMessageSent = useCallback(
+    (data: {
+      roomId: string;
+      message: string;
+      username: string;
+      timestamp: number;
+    }) => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          timestamp: data.timestamp,
+          content: data.message,
+          username: data.username,
+        },
+      ]);
+
+      const showToast =
+        !isChatOpen &&
+        data.username !== "System" &&
+        data.username !== session.user.name;
+      if (!showToast) return;
+      toast.info(`${data.username} sent a message`, {
+        action: {
+          label: "Open Chat",
+          onClick: () => setIsChatOpen(true),
+        },
+      });
+    },
+    [isChatOpen, session?.user?.name],
+  );
+
   // socket logic
   useEffect(() => {
     if (!socket || !session?.user?.id) return;
@@ -260,16 +292,7 @@ export default function GameVersus({ session }: { session: Session }) {
         data.action.playerId === session?.user?.id ? "opponent" : "you",
       );
     });
-    socket.on("message-sent", (data) => {
-      setMessages((prev) => [
-        {
-          timestamp: data.timestamp,
-          content: data.message,
-          username: data.username,
-        },
-        ...prev,
-      ]);
-    });
+    socket.on("message-sent", (data) => handleMessageSent(data));
 
     // Cleanup listeners
     return () => {
@@ -292,7 +315,7 @@ export default function GameVersus({ session }: { session: Session }) {
         joinRoomRequestTimeoutIdRef.current = null;
       }
     };
-  }, [socket, session?.user?.id, isGameOver, addMessage]);
+  }, [socket, session?.user?.id, isGameOver, addMessage, handleMessageSent]);
 
   if (!socket) return null;
 
@@ -334,6 +357,8 @@ export default function GameVersus({ session }: { session: Session }) {
 
       {currentRoom && (
         <ChatWindow
+          isOpen={isChatOpen}
+          onOpenChange={setIsChatOpen}
           messages={messages}
           session={session}
           addMessage={addMessage}

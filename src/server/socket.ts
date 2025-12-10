@@ -34,21 +34,16 @@ function roomIdCheck(data: GameActionData) {
   }
 }
 
-function validate(
+function validateRoom(
   room: GameRoom | undefined,
   socket: Socket<ClientToServerEvents, ServerToClientEvents>,
 ): room is GameRoom {
   if (!room) {
     socket.emit("error", { message: "room not found" });
     return false;
+  } else {
+    return true;
   }
-
-  if (room.players.length >= 2) {
-    socket.emit("error", { message: "room is full" });
-    return false;
-  }
-
-  return true;
 }
 
 export function initializeSocket(httpServer: HttpServer) {
@@ -99,7 +94,12 @@ export function initializeSocket(httpServer: HttpServer) {
       const { roomId, userId, username } = data;
       const room = gameRooms.get(roomId);
 
-      if (!validate(room, socket)) return;
+      if (!validateRoom(room, socket)) return;
+
+      if (room.players.length >= 2) {
+        socket.emit("error", { message: "room is full" });
+        return false;
+      }
 
       pendingJoinRequests.set(userId, socket.id); // store requesting socket's ID
 
@@ -114,7 +114,7 @@ export function initializeSocket(httpServer: HttpServer) {
     socket.on("accept-join-room-request", (data) => {
       const { roomId, userId, username } = data;
       const room = gameRooms.get(roomId);
-      if (!validate(room, socket)) return;
+      if (!validateRoom(room, socket)) return;
 
       const requestingSocketId = pendingJoinRequests.get(userId);
       if (!requestingSocketId) {
@@ -137,7 +137,7 @@ export function initializeSocket(httpServer: HttpServer) {
     socket.on("decline-join-request", (data) => {
       const { roomId, userId, message } = data;
       const room = gameRooms.get(roomId);
-      if (!validate(room, socket)) return;
+      if (!validateRoom(room, socket)) return;
 
       const requestingSocketId = pendingJoinRequests.get(userId);
       if (!requestingSocketId) {
@@ -164,10 +164,7 @@ export function initializeSocket(httpServer: HttpServer) {
         const { roomId, message, username, timestamp } = data;
         const room = gameRooms.get(roomId);
 
-        if (!room) {
-          socket.emit("error", { message: "room not found" });
-          return;
-        }
+        if (!validateRoom(room, socket)) return;
 
         io.to(roomId).emit("message-sent", {
           roomId,
@@ -182,10 +179,7 @@ export function initializeSocket(httpServer: HttpServer) {
       const { roomId, userId, username } = data;
       const room = gameRooms.get(roomId);
 
-      if (!room) {
-        socket.emit("error", { message: "room not found" });
-        return;
-      }
+      if (!validateRoom(room, socket)) return;
 
       const playerIndex = room.players.findIndex((p) => p.userId === userId);
       if (playerIndex === -1) {
@@ -210,10 +204,7 @@ export function initializeSocket(httpServer: HttpServer) {
       const { roomId, userId } = data;
       const room = gameRooms.get(roomId);
 
-      if (!room) {
-        socket.emit("error", { message: "Room not found" });
-        return;
-      }
+      if (!validateRoom(room, socket)) return;
 
       // Find and toggle the player's ready state
       const player = room.players.find((p) => p.userId === userId);
