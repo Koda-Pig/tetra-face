@@ -6,8 +6,8 @@ import type {
   GameActionData,
   ClientToServerEvents,
   ServerToClientEvents,
-} from "~/types";
-import { TETRIS_WORDS } from "~/constants";
+} from "../types";
+import { TETRIS_WORDS } from "../constants";
 
 const gameRooms = new Map<string, GameRoom>();
 const pendingJoinRequests = new Map<string, string>();
