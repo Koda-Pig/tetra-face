@@ -394,6 +394,12 @@ export const GARBAGE_LINES = {
   4: 4,
 };
 
+export const T_SPIN_GARBAGE_LINES = {
+  1: 2, // T-Spin Single: 2 garbage lines
+  2: 4, // T-Spin Double: 4 garbage lines
+  3: 6, // T-Spin Triple: 6 garbage lines
+};
+
 export const LINES_PER_LEVEL = 10;
 
 export const INITIAL_UI_STATE: UIState = {

@@ -32,6 +32,7 @@ import {
   GARBAGE_LINES,
   INITIAL_UI_STATE,
   T_SPIN_SCORES,
+  T_SPIN_GARBAGE_LINES,
 } from "~/constants";
 import { getTimestamp } from "~/lib/utils";
 
@@ -220,7 +221,9 @@ function lockPieceAndSpawnNext({
   const linesCleared = rowSnapshots.length;
   gameState.linesCleared += linesCleared;
   if (linesCleared > 0) {
-    const numLines = GARBAGE_LINES[linesCleared as keyof typeof GARBAGE_LINES];
+    const numLines = isTSpin
+      ? T_SPIN_GARBAGE_LINES[linesCleared as keyof typeof T_SPIN_GARBAGE_LINES]
+      : GARBAGE_LINES[linesCleared as keyof typeof GARBAGE_LINES];
     gameState.lineClearSnapshots = rowSnapshots;
     garbage = generateGarbageLines({ numLines });
   }

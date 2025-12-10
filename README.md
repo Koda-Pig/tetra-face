@@ -112,20 +112,6 @@ pnpm run dev
 - T-Spin Double: 1200 × level
 - T-Spin Triple: 1600 × level
 
-## TODO
-
-- [x] Get UI looking decent. Refer to the oldschool UI to make sure I have everything required https://play.tetris.com/
-- [ ] ensure implementation matches guidelines: https://tetris.wiki/Tetris_Guideline
-- [ ] (OPTIONAL) add sub-feature to click opponents hold piece to make it drop
-- [ ] replace restart button with resume + rematch buttons in host game
-  - [x] remove restart btn
-  - [x] add resume btn
-  - [x] add surrender btn
-  - [ ] add rematch btn
-- [ ] performance checks
-- [ ] account for t-spins in garbage system
-- [ ] fix bug where it shows 'waiting for response' on EVERY single available room. not just the room the user is trying to join.
-
 ## Deployment
 
 Deployed using fly.io here:
@@ -167,3 +153,11 @@ docker run -p 3000:3000 --env-file .env.docker tetra-face
 ## Other Notes
 
 I changed the name from `Tetra Face` to `Tetrus` because Tetra Face just isn't a good name.
+
+## TODO
+
+- [ ] bug: it shows 'waiting for response' on EVERY single available room. not just the room the user is trying to join.
+- [ ] chore: performance checks
+- [ ] feat: add rematch button
+- [ ] feat: high scores
+- [ ] feat: click opponents hold piece to make it drop
