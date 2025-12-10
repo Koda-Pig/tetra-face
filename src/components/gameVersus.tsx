@@ -80,7 +80,7 @@ export default function GameVersus({ session }: { session: Session }) {
 
   function joinRoomRequest(roomId: string) {
     if (!socket || !session?.user?.id || !session?.user?.name) return;
-    setOutgoingJoinRequest("pending");
+    setOutgoingJoinRequest(roomId);
     socket.emit("join-room-request", {
       roomId,
       userId: session.user.id,
@@ -128,7 +128,7 @@ export default function GameVersus({ session }: { session: Session }) {
       userId: incomingJoinRequestData.userId, // the user who is being rejected
       message,
     });
-    setIncomingJoinRequest("rejected");
+    setIncomingJoinRequest(null);
     setIncomingJoinRequestData(null);
   }
 
@@ -150,7 +150,7 @@ export default function GameVersus({ session }: { session: Session }) {
       userId: incomingJoinRequestData.userId,
       username: incomingJoinRequestData.username,
     });
-    setIncomingJoinRequest("accepted");
+    setIncomingJoinRequest(null);
   }
 
   const handleMessageSent = useCallback(
@@ -199,7 +199,7 @@ export default function GameVersus({ session }: { session: Session }) {
         ? `${data.username} joined your room`
         : `You joined ${hostUsername}'s room`;
       toast.success(toastMessage);
-      setOutgoingJoinRequest("accepted");
+      setOutgoingJoinRequest(null);
     });
     // this is an incoming join request
     socket.on("join-room-request", (data) => {
@@ -207,14 +207,14 @@ export default function GameVersus({ session }: { session: Session }) {
         clearTimeout(joinRoomRequestTimeoutIdRef.current);
         joinRoomRequestTimeoutIdRef.current = null;
       }
-      setIncomingJoinRequest("pending");
+      setIncomingJoinRequest(data.room.id);
       setIncomingJoinRequestData({
         room: data.room.id,
         userId: data.userId,
         username: data.username,
       });
       joinRoomRequestTimeoutIdRef.current = setTimeout(() => {
-        setIncomingJoinRequest("rejected");
+        setIncomingJoinRequest(null);
         toast.error("Join request timed out");
         if (socket && data.userId && data.room.id) {
           socket.emit("decline-join-request", {
@@ -228,7 +228,7 @@ export default function GameVersus({ session }: { session: Session }) {
     });
     socket.on("request-declined", (data) => {
       toast.error(data.message ?? "Join request rejected");
-      setOutgoingJoinRequest("rejected");
+      setOutgoingJoinRequest(null);
     });
     socket.on("player-ready-changed", (data) => {
       setCurrentRoom(data.room);
@@ -344,7 +344,7 @@ export default function GameVersus({ session }: { session: Session }) {
         </div>
       ) : (
         <RoomLobby
-          waitingForJoinRoomResponse={outgoingJoinRequest === "pending"}
+          outgoingJoinRequest={outgoingJoinRequest}
           currentRoom={currentRoom}
           availableRooms={availableRooms}
           isConnected={isConnected}
@@ -366,7 +366,7 @@ export default function GameVersus({ session }: { session: Session }) {
       )}
       {incomingJoinRequestData && (
         <JoinRoomRequestDialog
-          open={incomingJoinRequest === "pending"}
+          open={!!incomingJoinRequest}
           username={incomingJoinRequestData.username}
           onDecline={declineIncomingJoinRequest}
           onAccept={acceptIncomingJoinRequest}

@@ -156,7 +156,6 @@ I changed the name from `Tetra Face` to `Tetrus` because Tetra Face just isn't a
 
 ## TODO
 
-- [ ] bug: it shows 'waiting for response' on EVERY single available room. not just the room the user is trying to join.
 - [ ] chore: performance checks
 - [ ] feat: add rematch button
 - [ ] feat: high scores

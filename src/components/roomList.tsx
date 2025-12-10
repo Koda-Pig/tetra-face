@@ -1,6 +1,6 @@
 "use client";
 
-import type { GameRoom } from "~/types";
+import type { GameRoom, JoinRoomRequest } from "~/types";
 import type { Session } from "next-auth";
 import { Button } from "~/components/ui/button";
 
@@ -9,7 +9,7 @@ export default function RoomList({
   currentRoom,
   isConnected,
   session,
-  waitingForJoinRoomResponse,
+  outgoingJoinRequest,
   onJoinRoomRequest,
   onLeaveRoom,
   onCreateRoom,
@@ -18,7 +18,7 @@ export default function RoomList({
   currentRoom: GameRoom | null;
   isConnected: boolean;
   session: Session;
-  waitingForJoinRoomResponse: boolean;
+  outgoingJoinRequest: JoinRoomRequest | null;
   onJoinRoomRequest: (roomId: string) => void;
   onLeaveRoom: (roomId: string) => void;
   onCreateRoom: () => void;
@@ -73,7 +73,7 @@ export default function RoomList({
             >
               {currentRoom?.id === room.id
                 ? "leave"
-                : waitingForJoinRoomResponse
+                : outgoingJoinRequest === room.id
                   ? "waiting for response... "
                   : "join"}
             </Button>

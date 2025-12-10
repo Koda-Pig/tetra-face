@@ -1,6 +1,6 @@
 "use client";
 
-import type { GameRoom } from "~/types";
+import type { GameRoom, JoinRoomRequest } from "~/types";
 import type { Session } from "next-auth";
 import RoomList from "./roomList";
 import CurrentRoomInfo from "./currentRoomInfo";
@@ -10,7 +10,7 @@ export default function RoomLobby({
   availableRooms,
   isConnected,
   session,
-  waitingForJoinRoomResponse,
+  outgoingJoinRequest,
   onCreateRoom,
   onJoinRoomRequest,
   onLeaveRoom,
@@ -19,7 +19,7 @@ export default function RoomLobby({
   availableRooms: GameRoom[];
   isConnected: boolean;
   session: Session;
-  waitingForJoinRoomResponse: boolean;
+  outgoingJoinRequest: JoinRoomRequest | null;
   onCreateRoom: () => void;
   onJoinRoomRequest: (roomId: string) => void;
   onLeaveRoom: (roomId: string) => void;
@@ -38,7 +38,7 @@ export default function RoomLobby({
           currentRoom={currentRoom}
           isConnected={isConnected}
           session={session}
-          waitingForJoinRoomResponse={waitingForJoinRoomResponse}
+          outgoingJoinRequest={outgoingJoinRequest}
           onJoinRoomRequest={onJoinRoomRequest}
           onLeaveRoom={onLeaveRoom}
           onCreateRoom={onCreateRoom}

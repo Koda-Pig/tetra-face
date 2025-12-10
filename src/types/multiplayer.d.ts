@@ -30,4 +30,4 @@ export type JoinRoomRequestData = {
   username: string;
 };
 
-export type JoinRoomRequest = null | "pending" | "rejected" | "accepted";
+export type JoinRoomRequest = null | string; // pending === a string with the room id
