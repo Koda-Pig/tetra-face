@@ -1,27 +1,29 @@
 import { Server as SocketIOServer } from "socket.io";
 import type { Socket } from "socket.io";
 import type { Server as HttpServer } from "http";
-import type { GameRoom } from "~/types";
-// import type { SocketEvent } from "~/types";
+import type {
+  GameRoom,
+  GameActionData,
+  ClientToServerEvents,
+  ServerToClientEvents,
+} from "~/types";
+import { TETRIS_WORDS } from "~/constants";
 
 const gameRooms = new Map<string, GameRoom>();
 const pendingJoinRequests = new Map<string, string>();
 
-interface GameActionData {
-  roomId: string;
-  [key: string]: unknown;
-}
-
 // random enough
-// prettier-ignore
-const TETRIS_WORDS = ["block", "tetro", "piece", "mino", "drop", "spin", "rotate", "hold", "lock", "clear", "tspin", "twist", "tuck", "slide", "finesse", "combo", "tetris", "quad", "single", "double", "triple", "gravity", "sonic", "hyper", "fast", "instant", "stack", "well", "matrix", "queue", "ghost", "preview"];
+const randomTetrisWord = () =>
+  TETRIS_WORDS[Math.floor(Math.random() * TETRIS_WORDS.length)];
 
 const getAvailableRooms = (): GameRoom[] =>
   Array.from(gameRooms.values()).filter(
     (room) => room.players.length < 2 && !room.gameState?.isActive,
   );
 
-function broadcastRoomUpdate(io: SocketIOServer) {
+function broadcastRoomUpdate(
+  io: SocketIOServer<ClientToServerEvents, ServerToClientEvents>,
+) {
   io.emit("rooms-updated", getAvailableRooms());
 }
 
@@ -32,25 +34,33 @@ function roomIdCheck(data: GameActionData) {
   }
 }
 
-function validate(room: GameRoom | undefined, socket: Socket) {
+function validate(
+  room: GameRoom | undefined,
+  socket: Socket<ClientToServerEvents, ServerToClientEvents>,
+): room is GameRoom {
   if (!room) {
     socket.emit("error", { message: "room not found" });
-    return;
+    return false;
   }
 
   if (room.players.length >= 2) {
     socket.emit("error", { message: "room is full" });
-    return;
+    return false;
   }
+
+  return true;
 }
 
 export function initializeSocket(httpServer: HttpServer) {
-  const io = new SocketIOServer(httpServer, {
-    cors: {
-      origin: process.env.NEXTAUTH_URL ?? "http://localhost:3000",
-      methods: ["GET", "POST"], // for initial handshake
+  const io = new SocketIOServer<ClientToServerEvents, ServerToClientEvents>(
+    httpServer,
+    {
+      cors: {
+        origin: process.env.NEXTAUTH_URL ?? "http://localhost:3000",
+        methods: ["GET", "POST"], // for initial handshake
+      },
     },
-  });
+  );
 
   io.on("connection", (socket) => {
     console.log("client connected: ", socket.id);
@@ -63,8 +73,6 @@ export function initializeSocket(httpServer: HttpServer) {
     });
 
     socket.on("create-room", (userId: string, username: string) => {
-      const randomTetrisWord = () =>
-        TETRIS_WORDS[Math.floor(Math.random() * TETRIS_WORDS.length)];
       const roomId = `${randomTetrisWord()}-${randomTetrisWord()}-${randomTetrisWord()}-${randomTetrisWord()}`;
 
       const newRoom: GameRoom = {
@@ -83,7 +91,7 @@ export function initializeSocket(httpServer: HttpServer) {
 
       gameRooms.set(roomId, newRoom);
       void socket.join(roomId); // void for floating promise
-      socket.emit("room-created", { roomId, room: newRoom });
+      socket.emit("room-created", { room: newRoom });
       broadcastRoomUpdate(io);
     });
 
@@ -94,12 +102,16 @@ export function initializeSocket(httpServer: HttpServer) {
         const { roomId, userId, username } = data;
         const room = gameRooms.get(roomId);
 
-        validate(room, socket);
+        if (!validate(room, socket)) return;
 
         pendingJoinRequests.set(userId, socket.id); // store requesting socket's ID
 
         // this may actually only need to send the userid and username who wants to join
-        io.to(roomId).emit("join-room-request", { room, userId, username });
+        io.to(roomId).emit("join-room-request", {
+          room,
+          userId,
+          username,
+        });
       },
     );
 
@@ -108,7 +120,7 @@ export function initializeSocket(httpServer: HttpServer) {
       (data: { roomId: string; userId: string; username: string }) => {
         const { roomId, userId, username } = data;
         const room = gameRooms.get(roomId);
-        validate(room, socket);
+        if (!validate(room, socket)) return;
 
         const requestingSocketId = pendingJoinRequests.get(userId);
         if (!requestingSocketId) {
@@ -118,7 +130,7 @@ export function initializeSocket(httpServer: HttpServer) {
         const requestingSocket = io.sockets.sockets.get(requestingSocketId);
         void requestingSocket?.join(roomId);
 
-        room!.players.push({
+        room.players.push({
           userId,
           username,
           socketId: socket.id,
@@ -134,7 +146,7 @@ export function initializeSocket(httpServer: HttpServer) {
       (data: { roomId: string; userId: string }) => {
         const { roomId, userId } = data;
         const room = gameRooms.get(roomId);
-        validate(room, socket);
+        if (!validate(room, socket)) return;
 
         const requestingSocketId = pendingJoinRequests.get(userId);
         if (!requestingSocketId) {
@@ -245,7 +257,8 @@ export function initializeSocket(httpServer: HttpServer) {
         if (playerIndex === -1) continue;
 
         const disconnectedPlayer = room.players[playerIndex];
-        const userId = disconnectedPlayer!.userId;
+        if (!disconnectedPlayer) continue;
+        const userId = disconnectedPlayer.userId;
 
         room.players.splice(playerIndex, 1);
         if (room.players.length === 0) gameRooms.delete(roomId);

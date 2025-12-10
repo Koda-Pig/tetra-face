@@ -23,26 +23,3 @@ export type Message = {
   content: string;
   username: string;
 };
-
-export type SocketEvent =
-  | "rooms-updated"
-  | "connection"
-  | "get-rooms"
-  | "rooms-list"
-  | "create-room"
-  | "room-created"
-  | "join-room-request"
-  | "accept-join-room-request"
-  | "player-joined"
-  | "decline-join-request"
-  | "request-declined"
-  | "send-message"
-  | "message-sent"
-  | "leave-room"
-  | "toggle-ready"
-  | "player-ready-changed"
-  | "game-action"
-  | "game-over-event"
-  | "game-pause-event"
-  | "disconnect"
-  | "player-disconnected";

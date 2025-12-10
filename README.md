@@ -134,8 +134,8 @@ https://play.tetris.com/
 - [x] add background animation for non-gameplay states. Tetris matrix
 - [x] fix bug where when a player leaves the match after winning, the opponents game will change from showing 'you lost' to 'you won'.
 - [x] update controller support
-- [ ] handle socket errors with a toast or something
-- [ ] make socket events typed. Type has been created, but not used yet.
+- [x] handle socket errors with a toast or something
+- [x] make socket events typed. Type has been created, but not used yet.
 - [ ] add timeout for waiting for join room request response
 
 ---

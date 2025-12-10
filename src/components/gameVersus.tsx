@@ -5,9 +5,11 @@ import { useSocket } from "~/hooks/useSocket";
 import type {
   BoardCell,
   GameRoom,
-  TetrisEvent,
   Winner,
   Message,
+  ServerToClientEvents,
+  ClientToServerEvents,
+  GameActionData,
 } from "~/types";
 import type { Session } from "next-auth";
 import { Play, HourglassIcon } from "lucide-react";
@@ -83,7 +85,7 @@ function GameInProgress({
   winner: Winner;
   opponentPlayer: GameRoom["players"][number];
   currentRoom: GameRoom;
-  socket: Socket;
+  socket: Socket<ServerToClientEvents, ClientToServerEvents>;
   session: Session;
   gamePaused: boolean;
   opponentGameRef: React.RefObject<OpponentGameRef | null>;
@@ -396,15 +398,13 @@ export default function GameVersus({ session }: { session: Session }) {
   }
 
   function createRoom() {
-    if (!socket || !session?.user?.id) return;
+    if (!socket || !session?.user?.id || !session?.user?.name) return;
     setIsRoomHost(true);
     socket.emit("create-room", session.user.id, session.user.name);
   }
 
   function joinRoomRequest(roomId: string) {
-    if (!socket || !session?.user?.id) return;
-    // setIsRoomHost(false);
-    console.log("joinRoomRequest", roomId);
+    if (!socket || !session?.user?.id || !session?.user?.name) return;
     setOutgoingJoinRequest("pending");
     socket.emit("join-room-request", {
       roomId,
@@ -433,10 +433,16 @@ export default function GameVersus({ session }: { session: Session }) {
   }
 
   function declineIncomingJoinRequest() {
-    if (!socket || !session?.user?.id || !incomingJoinRequestData?.userId)
+    if (
+      !socket ||
+      !session?.user?.id ||
+      !incomingJoinRequestData?.userId ||
+      !currentRoom?.id
+    ) {
       return;
+    }
     socket.emit("decline-join-request", {
-      roomId: currentRoom?.id,
+      roomId: currentRoom.id,
       userId: incomingJoinRequestData.userId, // the user who is being rejected
     });
     setIncomingJoinRequest("rejected"); // or null? maybe I don't need rejected state
@@ -444,11 +450,16 @@ export default function GameVersus({ session }: { session: Session }) {
   }
 
   function acceptIncomingJoinRequest() {
-    if (!socket || !session?.user?.id || !incomingJoinRequestData?.userId) {
+    if (
+      !socket ||
+      !session?.user?.id ||
+      !incomingJoinRequestData?.userId ||
+      !currentRoom?.id
+    ) {
       return;
     }
     socket.emit("accept-join-room-request", {
-      roomId: currentRoom?.id,
+      roomId: currentRoom.id,
       userId: incomingJoinRequestData.userId,
       username: incomingJoinRequestData.username,
     });
@@ -461,73 +472,61 @@ export default function GameVersus({ session }: { session: Session }) {
 
     socket.on("rooms-list", (rooms: GameRoom[]) => setAvailableRooms(rooms));
     socket.on("rooms-updated", (rooms: GameRoom[]) => setAvailableRooms(rooms));
-    socket.on("room-created", (data: { roomId: string; room: GameRoom }) => {
+    socket.on("room-created", (data) => setCurrentRoom(data.room));
+    socket.on("player-joined", (data) => {
       setCurrentRoom(data.room);
+      toast.success(`${data.username} joined room`);
     });
-    socket.on(
-      "player-joined",
-      (data: { roomId: string; room: GameRoom; username: string }) => {
-        setCurrentRoom(data.room);
-        toast.success(`${data.username} joined room`);
-      },
-    );
     // this is an incoming join request
-    socket.on(
-      "join-room-request",
-      (data: { room: GameRoom; userId: string; username: string }) => {
-        console.log("incoming join room request registered");
-        setIncomingJoinRequest("pending");
-        setIncomingJoinRequestData({
-          room: data.room.id,
-          userId: data.userId,
-          username: data.username,
-        });
-      },
-    );
+    socket.on("join-room-request", (data) => {
+      console.log("incoming join room request registered");
+      setIncomingJoinRequest("pending");
+      setIncomingJoinRequestData({
+        room: data.room.id,
+        userId: data.userId,
+        username: data.username,
+      });
+    });
     socket.on("request-declined", () => {
       toast.error("Join request rejected");
       setOutgoingJoinRequest("rejected");
     });
-    socket.on(
-      "player-ready-changed",
-      (data: { roomId: string; room: GameRoom }) => {
-        setCurrentRoom(data.room);
-        if (
-          data.room.players.length === 2 &&
-          data.room.players.every((p) => p.ready)
-        ) {
-          setIsGameInPlay(true);
-        }
-      },
-    );
-    socket.on("error", (data: { message: string }) => {
+    socket.on("player-ready-changed", (data) => {
+      setCurrentRoom(data.room);
+      if (
+        data.room.players.length === 2 &&
+        data.room.players.every((p) => p.ready)
+      ) {
+        setIsGameInPlay(true);
+      }
+    });
+    socket.on("error", (data) => {
       addMessage({
         timestamp: getTimestamp(),
         content: `Error: ${data.message}`,
         username: "System",
       });
+      toast.error(data.message);
     });
-    socket.on(
-      "player-disconnected",
-      (data: { roomId: string; userId: string }) => {
-        addMessage({
+    socket.on("player-disconnected", (data) => {
+      addMessage({
+        timestamp: getTimestamp(),
+        content: `${session?.user?.name} disconnected from room`,
+        username: "System",
+      });
+      toast.info(`${session?.user?.name} disconnected from room`);
+      const { roomId, userId } = data;
+      if (isGameOver) return;
+      socket.emit("game-over-event", {
+        roomId,
+        action: {
+          type: "game-over",
+          playerId: userId,
           timestamp: getTimestamp(),
-          content: `${session?.user?.name} disconnected from room`,
-          username: "System",
-        });
-        const { roomId, userId } = data;
-        if (isGameOver) return;
-        socket.emit("game-over-event", {
-          roomId,
-          action: {
-            type: "game-over",
-            playerId: userId,
-            timestamp: getTimestamp(),
-          },
-        });
-      },
-    );
-    socket.on("opponent-action", (data: { action: TetrisEvent }) => {
+        },
+      });
+    });
+    socket.on("opponent-action", (data: GameActionData) => {
       if (data.action.type === "send-garbage") {
         // 'send-garbage' is the one event that needs to be handled by the host game, as it affects the host game's state
         hostGameReceiveGarbageRef.current?.(data?.action?.garbageLines);
@@ -535,10 +534,10 @@ export default function GameVersus({ session }: { session: Session }) {
         opponentGameRef.current?.triggerAction(data.action);
       }
     });
-    socket.on("game-pause-event", (data: { action: TetrisEvent }) => {
+    socket.on("game-pause-event", (data: GameActionData) => {
       setGamePaused(data.action.type === "game-pause" ? true : false);
     });
-    socket.on("game-over-event", (data: { action: TetrisEvent }) => {
+    socket.on("game-over-event", (data: GameActionData) => {
       if (isGameOver) return;
       setIsGameOver(true);
       setIsGameInPlay(false);
@@ -552,24 +551,16 @@ export default function GameVersus({ session }: { session: Session }) {
         data.action.playerId === session?.user?.id ? "opponent" : "you",
       );
     });
-    socket.on(
-      "message-sent",
-      (data: {
-        roomId: string;
-        message: string;
-        username: string;
-        timestamp: number;
-      }) => {
-        setMessages((prev) => [
-          {
-            timestamp: data.timestamp,
-            content: data.message,
-            username: data.username,
-          },
-          ...prev,
-        ]);
-      },
-    );
+    socket.on("message-sent", (data) => {
+      setMessages((prev) => [
+        {
+          timestamp: data.timestamp,
+          content: data.message,
+          username: data.username,
+        },
+        ...prev,
+      ]);
+    });
 
     // Cleanup listeners
     return () => {

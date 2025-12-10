@@ -24,8 +24,7 @@ app.prepare().then(() => {
   });
 
   // Initialize Socket.IO directly
-  initializeSocket(server);
-  console.log("Socket.IO initialized");
+  void initializeSocket(server);
 
   server
     .once("error", (error) => {
