@@ -15,7 +15,8 @@
 set -a
 source .env
 
-DB_PASSWORD=$(echo "$DATABASE_URL" | awk -F':' '{print $3}' | awk -F'@' '{print $1}')
+DB_USER=${POSTGRES_USER:-postgres}
+DB_PASSWORD=${POSTGRES_PASSWORD:-password}
 DB_PORT=$(echo "$DATABASE_URL" | awk -F':' '{print $4}' | awk -F'\/' '{print $1}')
 DB_NAME=$(echo "$DATABASE_URL" | awk -F'/' '{print $4}')
 DB_CONTAINER_NAME="$DB_NAME-postgres"
@@ -73,15 +74,17 @@ if [ "$DB_PASSWORD" = "password" ]; then
   DB_PASSWORD=$(openssl rand -base64 12 | tr '+/' '-_')
   if [[ "$(uname)" == "Darwin" ]]; then
     # macOS requires an empty string to be passed with the `i` flag
-    sed -i '' "s#:password@#:$DB_PASSWORD@#" .env
+    sed -i '' "s|POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=\"$DB_PASSWORD\"|" .env
+    sed -i '' "s|postgresql://\([^:]*\):[^@]*@|postgresql://\1:$DB_PASSWORD@|" .env
   else
-    sed -i "s#:password@#:$DB_PASSWORD@#" .env
+    sed -i "s|POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=\"$DB_PASSWORD\"|" .env
+    sed -i "s|postgresql://\([^:]*\):[^@]*@|postgresql://\1:$DB_PASSWORD@|" .env
   fi
 fi
 
 $DOCKER_CMD run -d \
   --name $DB_CONTAINER_NAME \
-  -e POSTGRES_USER="postgres" \
+  -e POSTGRES_USER="$DB_USER" \
   -e POSTGRES_PASSWORD="$DB_PASSWORD" \
   -e POSTGRES_DB="$DB_NAME" \
   -p "$DB_PORT":5432 \

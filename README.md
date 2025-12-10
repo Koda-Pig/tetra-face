@@ -126,7 +126,7 @@ https://play.tetris.com/
   - Actually need to double check this. I think the whole piece may need to be sent for most cases, as the whole piece is needed for the `placePiece` function in the opponent game. Maybe, maybe not.
 - [x] clean up this readme
 - [ ] performance checks
-- [ ] security checks
+- [x] security checks
 - [x] Hide 'create room' button if a player has already created a room and is waiting for players to join
 - [x] add line clearing animation to the blocks
   - [x] improve line clear animations
