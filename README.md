@@ -1,6 +1,6 @@
 # Tetrus
 
-The idea for this project is to create a multiplayer game where users can log in, chat, and play against each other.
+A multiplayer online Tetris game where users can log in, chat, and play against each other.
 
 Refer to this for the Tetris rules:
 https://tetris.wiki/Tetris_Guideline
@@ -11,8 +11,54 @@ https://tetris.wiki/Tetris_Guideline
 - [NextAuth.js](https://next-auth.js.org)
 - [Prisma](https://prisma.io)
 - [Tailwind CSS](https://tailwindcss.com)
+- [Socket.io](https://socket.io)
+
+## Technical Details
+
+### Socket.io Setup
+
+Socket.io is integrated directly into the Next.js server. This works as follows:
+
+- **Server config**: A custom HTTP server is created that wraps Next.js.
+- **Integration**: The Socket.io server shares the same HTTP server instance as the Next.js server, which lets them run on the same port.
+
+### Multiplayer Setup
+
+A client-server architecture is used (instead of peer-to-peer) because it provides better security, reliability, and simplicity for this application, and the higher latency cost of this choice is not a significant issue for this application.
+
+- **Server role**: acts as a relay between clients. It manages game rooms in-memory and broadcasts game events between players in the same room.
+- **Game state management**: Game state is managed on the client. This is because the game state is complex and requires a lot of computation, and it is not practical to manage it on the server. Each player maintains their own local game state, with the server relaying actions between them.
+- **Event flow**: When a player performs an action (move, rotate, drop, etc.), it's sent to the server, which then broadcasts it to the opponent.
+
+### Database
+
+Prisma is used for database management. After setting up the database using Docker Compose, you need to run migrations. For local development, run `pnpm run db:generate` (which runs `prisma migrate dev`). This will create and apply any pending migrations.
 
 ## Running the project
+
+### Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) Version 25^
+- [Node.js](https://nodejs.org) Version 20^
+- [PNPM](https://pnpm.io) Version 9^
+
+  ### Environment Variables
+
+  Copy `.env.example` to `.env` and configure:
+  - `DATABASE_URL`: PostgreSQL connection string (format: `postgresql://USER:PASSWORD@HOST:PORT/DATABASE`)
+    - Default for local development: `postgresql://postgres:password@localhost:5432/tetra-face`
+  - `NEXTAUTH_URL`: Your application URL (defaults to `http://localhost:3000` for local development)
+  - `AUTH_SECRET`: Secret for NextAuth.js (generate with `openssl rand -base64 32`)
+  - `GOOGLE_CLIENT_ID`: Google OAuth client ID
+  - `GOOGLE_CLIENT_SECRET`: Google OAuth client secret
+  - `AUTH_DISCORD_ID`: Discord OAuth application ID
+  - `AUTH_DISCORD_SECRET`: Discord OAuth application secret
+
+  Optional (for docker-compose):
+  - `POSTGRES_USER`: PostgreSQL user (defaults to `postgres`)
+  - `POSTGRES_PASSWORD`: PostgreSQL password (defaults to `password`)
+
+Run the following commands to get the project running locally:
 
 ```bash
 pnpm install
@@ -23,151 +69,95 @@ docker-compose up -d
 ```
 
 ```bash
+pnpm run db:generate
+```
+
+```bash
 pnpm run dev
 ```
 
-## TODO
+## Gameplay Features
 
-### User Interface
+- 7-bag randomizer method for selecting tetrominos
+- Leveling system: every 10 lines cleared, the level increases by 1. The higher the level, the faster the pieces fall.
+- T-spin detection and scoring (see [tetris.wiki/T-spin](https://tetris.wiki/T-Spin))
+  - The technical implementation for this is to check if at least 3 of the 4 corners diagonal to the center of the T-piece are occupied when the piece is placed.
+- Visual effects when rows are cleared
+- Hold piece feature: hold a piece to use it later, or to switch out for a different piece.
+- Next piece preview: see the next piece that will be spawned.
+- Ghost piece: see where the piece will land when it is placed.
+- Keyboard and controller support
+- Garbage system: when rows are cleared, garbage lines are sent to the opponent:
+  - Single line: 0 garbage lines
+  - Double: 1 garbage line
+  - Triple: 2 garbage lines
+  - Tetris (4 lines): 4 garbage lines
 
-- [ ] Get it looking decent
+## Other Features
 
-Refer to the oldschool UI to make sure I have everything I need. This is a convenient source for that.
-https://play.tetris.com/
+- Authentication: Google and Discord
 
-### Gameplay
+## Scoring System
 
-- [x] Implement the 7-bag randomizer method for selecting tetrominos
-- [x] Implement collision detection for moving the tetrominos
-- [x] Implement collision detection for rotating the tetrominos
-- [x] Implement the wall kicks for rotating tetrominos
-- [x] Implement the soft drop
-- [x] Implement the hard drop
-- [x] Implement the line clear
-- [x] Implement the game over
-- [x] Implement counter clockwise rotation (currently only clockwise with space key)
-- [x] Implement scoring system
-  - [x] line clear scoring
-  - [x] T-Spin scoring
-    - References for this:
-      - https://katyscode.wordpress.com/2012/10/13/tetris-aside-coding-for-t-spins/
-      - https://tetris.wiki/T-Spin
-      - this seems to provide a helpful breakdown of detecing the T-spins
-      - If you want to award points for a T-spin, T-spin double and/or prevent impossible rotations for non-T-pieces, the solution is the same in all cases: add a boolean flag to each shape, true if it is the T-piece, false otherwise, only allow the additional bucket logic code to execute if the flag is true, and when a line is cleared, if the flag of the last fallen piece is true (the line was cleared by a T-piece), check the piece’s mobility to the left, right and up: if none are possible, it’s a T-spin lock and you can award bonus points (another way to check for a T-spin lock is to see if at least 3 of the 4 corners diagonal to the center of the T-piece are occupied when the piece comes to rest).
-- [x] Implement the game reset
-- [x] Add leveling system
-- [x] Implement the game pause / resume. Consider the way unity handles this with a time scale. Noted here: https://github.com/Koda-Pig/hadeez/blob/f2a531ec9eda007310b538d309b30b79327c4277/README.md?plain=1#L38
-- [x] add visual effect when row is cleared
-- [x] add piece 'hold' feature
-  - [ ] add sub-feature to click opponents hold piece to make it drop
-- [ ] ensure implementation matches guidelines: https://tetris.fandom.com/wiki/Tetris_Guideline
-- [x] add controller support - refer to my implementation in [this repo](https://github.com/Koda-Pig/not-a-pig/blob/118776208c649313edd4dbf4d596bdd837a72aa4/src/input.ts#L53)
-- [x] add feature to send lines cleared to opponent - see: https://tetris.wiki/Garbage
-  - [x] Get base feature working
-  - [x] Add checks to see what the number of incoming garbage lines is, and determine how much to process based on how many lines the user cleared while the garbage Q was waiting.
-  - [x] Fix bug in opponent rendered game where the piece placed + garbage received events aren't being processed in the correct order.
-  - [ ] double check this meets all the requirements for the garbage system.
-  - [x] fix scenario where player browser window loses focus and their animation loop stops. This should pause the game or keep running, one of the two.
-- [x] implement ghost pieces
-- [x] implement 'next piece' preview
+### Basic Line Clears
 
-#### SCORING SYSTEM
-
-- Basic Line Clears: [implemented]
--
 - Single: 100 × level
 - Double: 300 × level
 - Triple: 500 × level
 - Tetris (4 lines): 800 × level
--
-- T-Spins: [implemented]
--
+
+### T-Spins
+
 - T-Spin Single: 800 × level
 - T-Spin Double: 1200 × level
 - T-Spin Triple: 1600 × level
 
-### Multiplayer
+## TODO
 
-- [x] set up multiplayer
-  - [x] use socket.io
-  - [x] set up `room` for game sessions?
-  - [x] Host creates room, invite single player to join.
-  - [x] add game ready state for players
-  - [x] fix bug where pieces dropped in either host or oopponent boards are placed in both boards (was caused by shared object reference to board)
-  - [x] send over other player data (current piece, etc. {atm just inputs being sent})
-    - [x] host player emits when new piece is spawned, with Piece data.
-    - [x] Opponent player reads that new piece that is spawned, and passes it to their own instance of the 'opponentGame' component.
-    - [x] OpponentGame has a way to use the piece that is spawned to it, instead of generating its own.
-    - [x] Game over and
-    - [x] play/ pause state
-  - [x] handle players leaving the room/ exiting the game
-- [x] setup chat
-- [x] set up way for host of room to accept or reject player joining
-
-### Auth
-
-- [x] attach user id to game session
-- [x] discord auth: https://discord.com/developers/applications
-- [x] add google auth using next auth. https://next-auth.js.org/providers/google
-
-### Deployment
-
-- [x] Deploy web app
-
-### Other
-
+- [ ] Get UI looking decent. Refer to the oldschool UI to make sure I have everything required https://play.tetris.com/
+- [ ] ensure implementation matches guidelines: https://tetris.wiki/Tetris_Guideline
+- [ ] (OPTIONAL) add sub-feature to click opponents hold piece to make it drop
 - [ ] replace restart button with resume + rematch buttons in host game
   - [x] remove restart btn
   - [x] add resume btn
   - [x] add surrender btn
   - [ ] add rematch btn
-- [x] re-implement single player (low priority)
 - [ ] Update game events to only send over tetromino type, not the whole piece. It's unnecessary usage of bandwidth
   - Actually need to double check this. I think the whole piece may need to be sent for most cases, as the whole piece is needed for the `placePiece` function in the opponent game. Maybe, maybe not.
-- [x] clean up this readme
 - [ ] performance checks
-- [x] security checks
-- [x] Hide 'create room' button if a player has already created a room and is waiting for players to join
-- [x] add line clearing animation to the blocks
-  - [x] improve line clear animations
-- [x] replace user ids with username in frontend
-- [x] add background animation for non-gameplay states. Tetris matrix
-- [x] fix bug where when a player leaves the match after winning, the opponents game will change from showing 'you lost' to 'you won'.
-- [x] update controller support
-- [x] handle socket errors with a toast or something
-- [x] make socket events typed. Type has been created, but not used yet.
 - [ ] add timeout for waiting for join room request response
-
----
+- [ ] fix 'user joined' toast - should show different message for user that joined and the user that accepted the join request
+- [ ] toast notification when message is received from opponent in chat - with button that opens the chat window
+- [ ] reverse order of messages in chat (currently newest are at the top) - also make sure the container scrolls to the bottom when a new message is added
+- [ ] account for t-spins in garbage system
 
 ## Deployment
 
 Deployed using fly.io here:
 https://tetra-face.fly.dev/
 
-Run to deploy:
+CI/CD is setup to deploy automatically when a new commit is pushed to the main branch.
 
-```bash
-fly deploy
-```
-
-don't use their ui it's crap
-
-## Troubleshooting
-
-check fly logs:
+### Check fly logs:
 
 ```bash
 fly logs -a tetra-face
 ```
 
-Make sure both tetra-face-db and tetra-face apps are running.
+Note about the `DATABASE_URL` var in fly.io deployment:
+
+This does not use localhost, host.docker.internal, or 0.0.0.0 in production - those are only for local Docker testing. Fly.io uses internal networking with .flycast domains for database connections.
+The fly postgres attach command will replace the current `DATABASE_URL` secret with the correct production value automatically.
+
+## Set environment variables on fly.io
 
 ```bash
-fly machine start --app YOUR_APP_NAME_HERE
+fly secrets set {SECRET=VALUE}
 ```
 
-check docker build locally
+## Troubleshooting
+
+### check docker build locally
 
 ```bash
 docker build -t tetra-face .
@@ -179,15 +169,6 @@ then
 docker run -p 3000:3000 --env-file .env.docker tetra-face
 ```
 
----
+## Other Notes
 
-Note about the `DATABASE_URL` var in fly.io deployment:
-
-Don't use localhost, host.docker.internal, or 0.0.0.0 for production - those are only for local Docker testing. Fly.io uses internal networking with .flycast domains for database connections.
-The fly postgres attach command will replace the current `DATABASE_URL` secret with the correct production value automatically.
-
-remember to set any new env secrets on fly.io using
-
-```bash
-fly secrets set {SECRET=VALUE}
-```
+I changed the name from `Tetra Face` to `Tetrus` because tetra face just isn't a good name.
