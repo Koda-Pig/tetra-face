@@ -23,3 +23,11 @@ export type Message = {
   content: string;
   username: string;
 };
+
+export type JoinRoomRequestData = {
+  room: string;
+  userId: string;
+  username: string;
+};
+
+export type JoinRoomRequest = null | "pending" | "rejected" | "accepted";

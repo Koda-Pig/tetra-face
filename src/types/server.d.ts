@@ -20,7 +20,7 @@ export interface ServerToClientEvents {
     userId: string;
     username: string;
   }) => void;
-  "request-declined": () => void;
+  "request-declined": (data: { message?: string }) => void;
   "player-ready-changed": (data: { roomId: string; room: GameRoom }) => void;
   "message-sent": (data: {
     roomId: string;
@@ -28,7 +28,12 @@ export interface ServerToClientEvents {
     username: string;
     timestamp: number;
   }) => void;
-  "player-disconnected": (data: { roomId: string; userId: string }) => void;
+  "player-disconnected": (data: {
+    room: GameRoom;
+    roomId: string;
+    userId: string;
+    username: string;
+  }) => void;
   "opponent-action": (data: GameActionData) => void;
   "game-over-event": (data: GameActionData) => void;
   "game-pause-event": (data: GameActionData) => void;
@@ -48,14 +53,22 @@ export interface ClientToServerEvents {
     userId: string;
     username: string;
   }) => void;
-  "decline-join-request": (data: { roomId: string; userId: string }) => void;
+  "decline-join-request": (data: {
+    roomId: string;
+    userId: string;
+    message?: string;
+  }) => void;
   "send-message": (data: {
     roomId: string;
     message: string;
     username: string;
     timestamp: number;
   }) => void;
-  "leave-room": (data: { roomId: string; userId: string }) => void;
+  "leave-room": (data: {
+    roomId: string;
+    userId: string;
+    username: string;
+  }) => void;
   "toggle-ready": (data: { roomId: string; userId: string }) => void;
   "game-action": (data: GameActionData) => void;
   "game-over-event": (data: GameActionData) => void;

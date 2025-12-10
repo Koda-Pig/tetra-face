@@ -125,8 +125,8 @@ pnpm run dev
 - [ ] Update game events to only send over tetromino type, not the whole piece. It's unnecessary usage of bandwidth
   - Actually need to double check this. I think the whole piece may need to be sent for most cases, as the whole piece is needed for the `placePiece` function in the opponent game. Maybe, maybe not.
 - [ ] performance checks
-- [ ] add timeout for waiting for join room request response
-- [ ] fix 'user joined' toast - should show different message for user that joined and the user that accepted the join request
+- [x] add timeout for waiting for join room request response
+- [x] fix 'user joined' toast - should show different message for user that joined and the user that accepted the join request
 - [ ] toast notification when message is received from opponent in chat - with button that opens the chat window
 - [ ] reverse order of messages in chat (currently newest are at the top) - also make sure the container scrolls to the bottom when a new message is added
 - [ ] account for t-spins in garbage system

@@ -423,3 +423,5 @@ export const GARBAGE_COLOR = "#808080";
 
 // prettier-ignore
 export const TETRIS_WORDS = ["block", "tetro", "piece", "mino", "drop", "spin", "rotate", "hold", "lock", "clear", "tspin", "twist", "tuck", "slide", "finesse", "combo", "tetris", "quad", "single", "double", "triple", "gravity", "sonic", "hyper", "fast", "instant", "stack", "well", "matrix", "queue", "ghost", "preview"];
+
+export const JOIN_ROOM_REQUEST_TIMEOUT_DURATION_MS = 30000; // 30 seconds

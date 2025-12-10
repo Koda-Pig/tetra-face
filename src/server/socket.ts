@@ -63,7 +63,7 @@ export function initializeSocket(httpServer: HttpServer) {
   );
 
   io.on("connection", (socket) => {
-    console.log("client connected: ", socket.id);
+    console.info("client connected: ", socket.id);
 
     // send list of rooms when client connects
     socket.emit("rooms-list", getAvailableRooms());
@@ -95,69 +95,63 @@ export function initializeSocket(httpServer: HttpServer) {
       broadcastRoomUpdate(io);
     });
 
-    socket.on(
-      "join-room-request",
-      (data: { roomId: string; userId: string; username: string }) => {
-        console.log("join room request received from socket.ts");
-        const { roomId, userId, username } = data;
-        const room = gameRooms.get(roomId);
+    socket.on("join-room-request", (data) => {
+      const { roomId, userId, username } = data;
+      const room = gameRooms.get(roomId);
 
-        if (!validate(room, socket)) return;
+      if (!validate(room, socket)) return;
 
-        pendingJoinRequests.set(userId, socket.id); // store requesting socket's ID
+      pendingJoinRequests.set(userId, socket.id); // store requesting socket's ID
 
-        // this may actually only need to send the userid and username who wants to join
-        io.to(roomId).emit("join-room-request", {
-          room,
-          userId,
-          username,
-        });
-      },
-    );
+      // this may actually only need to send the userid and username who wants to join
+      io.to(roomId).emit("join-room-request", {
+        room,
+        userId,
+        username,
+      });
+    });
 
-    socket.on(
-      "accept-join-room-request",
-      (data: { roomId: string; userId: string; username: string }) => {
-        const { roomId, userId, username } = data;
-        const room = gameRooms.get(roomId);
-        if (!validate(room, socket)) return;
+    socket.on("accept-join-room-request", (data) => {
+      const { roomId, userId, username } = data;
+      const room = gameRooms.get(roomId);
+      if (!validate(room, socket)) return;
 
-        const requestingSocketId = pendingJoinRequests.get(userId);
-        if (!requestingSocketId) {
-          console.error("ID of requesting socket not found");
-          return;
-        }
-        const requestingSocket = io.sockets.sockets.get(requestingSocketId);
-        void requestingSocket?.join(roomId);
+      const requestingSocketId = pendingJoinRequests.get(userId);
+      if (!requestingSocketId) {
+        console.error("ID of requesting socket not found");
+        return;
+      }
+      const requestingSocket = io.sockets.sockets.get(requestingSocketId);
+      void requestingSocket?.join(roomId);
 
-        room.players.push({
-          userId,
-          username,
-          socketId: socket.id,
-          ready: false,
-        });
-        io.to(roomId).emit("player-joined", { roomId, room, username });
-        broadcastRoomUpdate(io);
-      },
-    );
+      room.players.push({
+        userId,
+        username,
+        socketId: socket.id,
+        ready: false,
+      });
+      io.to(roomId).emit("player-joined", { roomId, room, username });
+      broadcastRoomUpdate(io);
+    });
 
-    socket.on(
-      "decline-join-request",
-      (data: { roomId: string; userId: string }) => {
-        const { roomId, userId } = data;
-        const room = gameRooms.get(roomId);
-        if (!validate(room, socket)) return;
+    socket.on("decline-join-request", (data) => {
+      const { roomId, userId, message } = data;
+      const room = gameRooms.get(roomId);
+      if (!validate(room, socket)) return;
 
-        const requestingSocketId = pendingJoinRequests.get(userId);
-        if (!requestingSocketId) {
-          console.error("ID of requesting socket not found");
-          return;
-        }
-        const requestingSocket = io.sockets.sockets.get(requestingSocketId);
-        void requestingSocket?.emit("request-declined");
-        broadcastRoomUpdate(io);
-      },
-    );
+      const requestingSocketId = pendingJoinRequests.get(userId);
+      if (!requestingSocketId) {
+        console.error("ID of requesting socket not found");
+        return;
+      }
+      const requestingSocket = io.sockets.sockets.get(requestingSocketId);
+      if (!requestingSocket) {
+        console.error("requesting socket not found");
+        return;
+      }
+      void requestingSocket.emit("request-declined", { message });
+      broadcastRoomUpdate(io);
+    });
 
     socket.on(
       "send-message",
@@ -184,8 +178,8 @@ export function initializeSocket(httpServer: HttpServer) {
       },
     );
 
-    socket.on("leave-room", (data: { roomId: string; userId: string }) => {
-      const { roomId, userId } = data;
+    socket.on("leave-room", (data) => {
+      const { roomId, userId, username } = data;
       const room = gameRooms.get(roomId);
 
       if (!room) {
@@ -203,7 +197,11 @@ export function initializeSocket(httpServer: HttpServer) {
       void socket.leave(roomId);
 
       if (room.players.length === 0) gameRooms.delete(roomId);
-      else socket.to(roomId).emit("player-disconnected", { roomId, userId });
+      else {
+        socket
+          .to(roomId)
+          .emit("player-disconnected", { room, roomId, userId, username });
+      }
 
       broadcastRoomUpdate(io);
     });
@@ -262,7 +260,14 @@ export function initializeSocket(httpServer: HttpServer) {
 
         room.players.splice(playerIndex, 1);
         if (room.players.length === 0) gameRooms.delete(roomId);
-        else socket.to(roomId).emit("player-disconnected", { roomId, userId });
+        else {
+          io.to(roomId).emit("player-disconnected", {
+            room,
+            roomId,
+            userId,
+            username: disconnectedPlayer.username,
+          });
+        }
 
         broadcastRoomUpdate(io);
       }

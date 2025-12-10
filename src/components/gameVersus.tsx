@@ -10,6 +10,8 @@ import type {
   ServerToClientEvents,
   ClientToServerEvents,
   GameActionData,
+  JoinRoomRequest,
+  JoinRoomRequestData,
 } from "~/types";
 import type { Session } from "next-auth";
 import { Play, HourglassIcon } from "lucide-react";
@@ -26,18 +28,13 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
+  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
 } from "~/components/ui/alert-dialog";
 import { toast } from "sonner";
-
-type JoinRoomRequestData = {
-  room: string;
-  userId: string;
-  username: string;
-};
-type JoinRoomRequest = null | "pending" | "rejected" | "accepted";
+import { JOIN_ROOM_REQUEST_TIMEOUT_DURATION_MS } from "~/constants";
 
 // host of room will see this dialog when a player requests to join their room
 function JoinRoomRequestDialog({
@@ -48,7 +45,7 @@ function JoinRoomRequestDialog({
 }: {
   open: boolean;
   username: string;
-  onDecline: () => void;
+  onDecline: ({ message }: { message?: string }) => void;
   onAccept: () => void;
 }) {
   return (
@@ -58,9 +55,16 @@ function JoinRoomRequestDialog({
           <AlertDialogTitle>
             {username} wants to join your room
           </AlertDialogTitle>
+          <AlertDialogDescription>
+            Accept or decline {username}&apos;s request to join your room.
+          </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onDecline}>Decline</AlertDialogCancel>
+          <AlertDialogCancel
+            onClick={() => onDecline({ message: "Declined by host" })}
+          >
+            Decline
+          </AlertDialogCancel>
           <AlertDialogAction onClick={onAccept}>Accept</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -361,7 +365,6 @@ export default function GameVersus({ session }: { session: Session }) {
   const [currentRoom, setCurrentRoom] = useState<GameRoom | null>(null);
   const [availableRooms, setAvailableRooms] = useState<GameRoom[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [isRoomHost, setIsRoomHost] = useState<boolean>(false);
   const [gamePaused, setGamePaused] = useState(false); // in versus mode, pause state must be synced
   const [isGameOver, setIsGameOver] = useState(false);
   const [winner, setWinner] = useState<Winner>(null);
@@ -375,15 +378,21 @@ export default function GameVersus({ session }: { session: Session }) {
   const hostGameReceiveGarbageRef = useRef<
     ((garbageLines: BoardCell[][]) => void) | null
   >(null);
+  const joinRoomRequestTimeoutIdRef = useRef<NodeJS.Timeout | null>(null);
   const bothPlayersReady =
     currentRoom?.players.length === 2 &&
     currentRoom?.players?.every((player) => player.ready);
   const currentPlayer = currentRoom?.players.find(
     (p) => p.userId === session?.user?.id,
   );
-  const opponentPlayer = useMemo(() => {
-    return currentRoom?.players.find((p) => p.userId !== session?.user?.id);
-  }, [currentRoom?.players, session?.user?.id]);
+  const opponentPlayer = useMemo(
+    () => currentRoom?.players.find((p) => p.userId !== session?.user?.id),
+    [currentRoom?.players, session?.user?.id],
+  );
+  const isRoomHost = useMemo(() => {
+    if (!currentRoom || !session.user.id) return false;
+    return currentRoom.players[0]?.userId === session.user.id;
+  }, [currentRoom, session.user.id]);
   const isCurrentPlayerReady = currentPlayer?.ready ?? false;
 
   function addMessage(message: Message) {
@@ -399,7 +408,6 @@ export default function GameVersus({ session }: { session: Session }) {
 
   function createRoom() {
     if (!socket || !session?.user?.id || !session?.user?.name) return;
-    setIsRoomHost(true);
     socket.emit("create-room", session.user.id, session.user.name);
   }
 
@@ -414,12 +422,15 @@ export default function GameVersus({ session }: { session: Session }) {
   }
 
   function leaveRoom(roomId: string) {
-    if (!socket || !session?.user?.id) return;
-    setIsRoomHost(false);
+    if (!socket || !session?.user?.id || !session?.user?.name) return;
     setCurrentRoom(null);
+    setOutgoingJoinRequest(null);
+    setIncomingJoinRequest(null);
+    setIncomingJoinRequestData(null);
     socket.emit("leave-room", {
       roomId,
       userId: session.user.id,
+      username: session.user.name,
     });
   }
 
@@ -432,7 +443,7 @@ export default function GameVersus({ session }: { session: Session }) {
     });
   }
 
-  function declineIncomingJoinRequest() {
+  function declineIncomingJoinRequest({ message }: { message?: string }) {
     if (
       !socket ||
       !session?.user?.id ||
@@ -441,11 +452,16 @@ export default function GameVersus({ session }: { session: Session }) {
     ) {
       return;
     }
+    if (joinRoomRequestTimeoutIdRef.current) {
+      clearTimeout(joinRoomRequestTimeoutIdRef.current);
+      joinRoomRequestTimeoutIdRef.current = null;
+    }
     socket.emit("decline-join-request", {
       roomId: currentRoom.id,
       userId: incomingJoinRequestData.userId, // the user who is being rejected
+      message,
     });
-    setIncomingJoinRequest("rejected"); // or null? maybe I don't need rejected state
+    setIncomingJoinRequest("rejected");
     setIncomingJoinRequestData(null);
   }
 
@@ -457,6 +473,10 @@ export default function GameVersus({ session }: { session: Session }) {
       !currentRoom?.id
     ) {
       return;
+    }
+    if (joinRoomRequestTimeoutIdRef.current) {
+      clearTimeout(joinRoomRequestTimeoutIdRef.current);
+      joinRoomRequestTimeoutIdRef.current = null;
     }
     socket.emit("accept-join-room-request", {
       roomId: currentRoom.id,
@@ -475,20 +495,41 @@ export default function GameVersus({ session }: { session: Session }) {
     socket.on("room-created", (data) => setCurrentRoom(data.room));
     socket.on("player-joined", (data) => {
       setCurrentRoom(data.room);
-      toast.success(`${data.username} joined room`);
+      const isHost = data.room.players[0]?.userId === session?.user?.id;
+      const hostUsername = data.room.players[0]?.username;
+      const toastMessage = isHost
+        ? `${data.username} joined your room`
+        : `You joined ${hostUsername}'s room`;
+      toast.success(toastMessage);
+      setOutgoingJoinRequest("accepted");
     });
     // this is an incoming join request
     socket.on("join-room-request", (data) => {
-      console.log("incoming join room request registered");
+      if (joinRoomRequestTimeoutIdRef.current) {
+        clearTimeout(joinRoomRequestTimeoutIdRef.current);
+        joinRoomRequestTimeoutIdRef.current = null;
+      }
       setIncomingJoinRequest("pending");
       setIncomingJoinRequestData({
         room: data.room.id,
         userId: data.userId,
         username: data.username,
       });
+      joinRoomRequestTimeoutIdRef.current = setTimeout(() => {
+        setIncomingJoinRequest("rejected");
+        toast.error("Join request timed out");
+        if (socket && data.userId && data.room.id) {
+          socket.emit("decline-join-request", {
+            roomId: data.room.id,
+            userId: data.userId,
+            message: "Join request timed out",
+          });
+        }
+        joinRoomRequestTimeoutIdRef.current = null;
+      }, JOIN_ROOM_REQUEST_TIMEOUT_DURATION_MS);
     });
-    socket.on("request-declined", () => {
-      toast.error("Join request rejected");
+    socket.on("request-declined", (data) => {
+      toast.error(data.message ?? "Join request rejected");
       setOutgoingJoinRequest("rejected");
     });
     socket.on("player-ready-changed", (data) => {
@@ -511,11 +552,13 @@ export default function GameVersus({ session }: { session: Session }) {
     socket.on("player-disconnected", (data) => {
       addMessage({
         timestamp: getTimestamp(),
-        content: `${session?.user?.name} disconnected from room`,
+        content: `${data.username} disconnected from room`,
         username: "System",
       });
-      toast.info(`${session?.user?.name} disconnected from room`);
-      const { roomId, userId } = data;
+      toast.info(`${data.username} disconnected from room`);
+
+      const { room, roomId, userId } = data;
+      if (room) setCurrentRoom(room);
       if (isGameOver) return;
       socket.emit("game-over-event", {
         roomId,
@@ -577,8 +620,13 @@ export default function GameVersus({ session }: { session: Session }) {
       socket.off("game-pause-event");
       socket.off("game-over-event");
       socket.off("message-sent");
+
+      if (joinRoomRequestTimeoutIdRef.current) {
+        clearTimeout(joinRoomRequestTimeoutIdRef.current);
+        joinRoomRequestTimeoutIdRef.current = null;
+      }
     };
-  }, [socket, session?.user?.id, isGameOver]);
+  }, [socket, session?.user?.id, isGameOver, isRoomHost]);
 
   if (!socket) return null;
 
