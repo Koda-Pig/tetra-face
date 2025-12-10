@@ -1,363 +1,28 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { toast } from "sonner";
 import { useSocket } from "~/hooks/useSocket";
 import type {
   BoardCell,
   GameRoom,
   Winner,
   Message,
-  ServerToClientEvents,
-  ClientToServerEvents,
   GameActionData,
   JoinRoomRequest,
   JoinRoomRequestData,
 } from "~/types";
 import type { Session } from "next-auth";
-import { Play, HourglassIcon } from "lucide-react";
-import HostGame from "./hostGame";
-import { getTimestamp } from "~/lib/utils";
-import OpponentGame, { type OpponentGameRef } from "./opponentGame";
-import ChatWindow from "./chatWindow";
-import { Button } from "~/components/ui/button";
-import { cn } from "~/lib/utils";
-import type { Socket } from "socket.io-client";
-import { useGameInPlay } from "~/contexts/gameInPlayContext";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "~/components/ui/alert-dialog";
-import { toast } from "sonner";
 import { JOIN_ROOM_REQUEST_TIMEOUT_DURATION_MS } from "~/constants";
-
-// host of room will see this dialog when a player requests to join their room
-function JoinRoomRequestDialog({
-  open,
-  username,
-  onDecline,
-  onAccept,
-}: {
-  open: boolean;
-  username: string;
-  onDecline: ({ message }: { message?: string }) => void;
-  onAccept: () => void;
-}) {
-  return (
-    <AlertDialog open={open}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>
-            {username} wants to join your room
-          </AlertDialogTitle>
-          <AlertDialogDescription>
-            Accept or decline {username}&apos;s request to join your room.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel
-            onClick={() => onDecline({ message: "Declined by host" })}
-          >
-            Decline
-          </AlertDialogCancel>
-          <AlertDialogAction onClick={onAccept}>Accept</AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-}
-
-function GameInProgress({
-  isRoomHost,
-  isGameOver,
-  winner,
-  opponentPlayer,
-  currentRoom,
-  socket,
-  session,
-  gamePaused,
-  opponentGameRef,
-  hostGameReceiveGarbageRef,
-}: {
-  isRoomHost: boolean;
-  isGameOver: boolean;
-  winner: Winner;
-  opponentPlayer: GameRoom["players"][number];
-  currentRoom: GameRoom;
-  socket: Socket<ServerToClientEvents, ClientToServerEvents>;
-  session: Session;
-  gamePaused: boolean;
-  opponentGameRef: React.RefObject<OpponentGameRef | null>;
-  hostGameReceiveGarbageRef: React.RefObject<
-    ((garbageLines: BoardCell[][]) => void) | null
-  >;
-}) {
-  return (
-    <div
-      className={cn(
-        "relative flex justify-center gap-36",
-        isRoomHost ? "flex-row" : "flex-row-reverse",
-      )}
-    >
-      <div
-        className={cn(
-          "gameover-bg absolute -inset-2 z-10 grid place-items-center rounded p-8 text-center text-8xl transition-opacity",
-          isGameOver ? "opacity-100" : "pointer-events-none opacity-0",
-          winner === null && "hidden",
-        )}
-      >
-        <p>YOU {winner === "you" ? "WON" : "LOST"}!</p>
-        {/* <Button className="p-8 text-5xl">rematch?</Button> */}
-      </div>
-      <div
-        className={cn(
-          "transition-opacity duration-300",
-          isGameOver ? "opacity-50" : "opacity-100",
-        )}
-      >
-        <h2 className="text-center text-xl font-bold">
-          {session.user.name} (YOU)
-        </h2>
-        <HostGame
-          userId={session.user.id}
-          socket={socket}
-          roomId={currentRoom.id}
-          externalPause={gamePaused}
-          externalGameOver={isGameOver}
-          onReceiveGarbageCallback={(callback) =>
-            (hostGameReceiveGarbageRef.current = callback)
-          }
-        />
-      </div>
-      <div
-        className={cn(
-          "transition-opacity duration-300",
-          isGameOver ? "opacity-50" : "opacity-100",
-        )}
-      >
-        <h2 className="text-center text-xl font-bold">
-          {opponentPlayer.username}
-        </h2>
-        <OpponentGame
-          ref={opponentGameRef}
-          userId={opponentPlayer.userId}
-          externalPause={gamePaused}
-          externalGameOver={isGameOver}
-        />
-      </div>
-    </div>
-  );
-}
-
-function WaitingForReady({
-  isCurrentPlayerReady,
-  onToggleReady,
-}: {
-  isCurrentPlayerReady: boolean;
-  onToggleReady: () => void;
-}) {
-  return (
-    <div className="flex flex-col items-center gap-4">
-      <Button size="lg" onClick={onToggleReady} className="m-12 mx-auto flex">
-        {isCurrentPlayerReady ? (
-          <>
-            Ready <Play className="inline-block" />
-          </>
-        ) : (
-          <>
-            Not Ready <HourglassIcon className="hourglass-icon inline-block" />
-          </>
-        )}
-      </Button>
-    </div>
-  );
-}
-
-function RoomList({
-  availableRooms,
-  currentRoom,
-  isConnected,
-  session,
-  waitingForJoinRoomResponse,
-  onJoinRoomRequest,
-  onLeaveRoom,
-  onCreateRoom,
-}: {
-  availableRooms: GameRoom[];
-  currentRoom: GameRoom | null;
-  isConnected: boolean;
-  session: Session;
-  waitingForJoinRoomResponse: boolean;
-  onJoinRoomRequest: (roomId: string) => void;
-  onLeaveRoom: (roomId: string) => void;
-  onCreateRoom: () => void;
-}) {
-  if (availableRooms.length === 0 && !currentRoom) {
-    return (
-      <div className="mb-4">
-        <h4 className="mb-2 text-center text-xl font-semibold">
-          Available Rooms
-        </h4>
-        <div className="bg-background space-y-2 overflow-y-auto rounded border p-2">
-          <p className="mt-2 text-center text-sm">No available rooms.</p>
-          <Button
-            variant="ghost"
-            className="mx-auto block"
-            onClick={onCreateRoom}
-            disabled={!isConnected || !session?.user}
-          >
-            make one!
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (availableRooms.length === 0) return null;
-
-  return (
-    <div className="mb-4">
-      <h4 className="mb-2 text-center text-xl font-semibold">
-        Available Rooms
-      </h4>
-      <div className="space-y-2 overflow-y-auto rounded border p-2">
-        {availableRooms.map((room) => (
-          <div
-            key={room.id}
-            className="bg-background flex items-center justify-between rounded p-2 text-sm"
-          >
-            <div>
-              <p className="text-lg font-medium">Room ID: {room.id}</p>
-              <p className="text-lg text-gray-600">
-                {room.players.length}/2 players
-              </p>
-            </div>
-
-            <Button
-              size="sm"
-              onClick={() => {
-                if (currentRoom?.id === room.id) onLeaveRoom(room.id);
-                else onJoinRoomRequest(room.id);
-              }}
-            >
-              {currentRoom?.id === room.id
-                ? "leave"
-                : waitingForJoinRoomResponse
-                  ? "waiting for response... "
-                  : "join"}
-            </Button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function CurrentRoomInfo({
-  currentRoom,
-  onLeaveRoom,
-}: {
-  currentRoom: GameRoom;
-  onLeaveRoom: (roomId: string) => void;
-}) {
-  return (
-    <div className="relative mb-4 rounded bg-gray-800/50 p-2">
-      <h4 className="text-xl font-semibold">Current Room</h4>
-      <p className="text-sm">
-        Room ID: <span className="text-white">{currentRoom.id}</span>
-      </p>
-      <p className="text-sm">
-        Players:{" "}
-        <span className="text-white">{currentRoom.players.length}/2</span>
-      </p>
-      <ul className="text-lg">
-        {currentRoom.players.map((player, idx) => (
-          <li key={idx}>
-            {player.username}
-            {player.ready ? (
-              <Play className="inline-block" />
-            ) : (
-              <HourglassIcon className="hourglass-icon inline-block" />
-            )}
-          </li>
-        ))}
-      </ul>
-      <Button
-        onClick={() => onLeaveRoom(currentRoom.id)}
-        className="absolute top-2 right-2 mt-2"
-        variant="outline"
-      >
-        leave room
-      </Button>
-    </div>
-  );
-}
-
-function RoomLobby({
-  currentRoom,
-  availableRooms,
-  isConnected,
-  session,
-  waitingForJoinRoomResponse,
-  onCreateRoom,
-  onJoinRoomRequest,
-  onLeaveRoom,
-}: {
-  currentRoom: GameRoom | null;
-  availableRooms: GameRoom[];
-  isConnected: boolean;
-  session: Session;
-  waitingForJoinRoomResponse: boolean;
-  onCreateRoom: () => void;
-  onJoinRoomRequest: (roomId: string) => void;
-  onLeaveRoom: (roomId: string) => void;
-}) {
-  return (
-    <div className="mx-auto max-w-2xl">
-      {!currentRoom && (
-        <h6 className="my-16 text-center text-xl">
-          Create or join a room to start
-        </h6>
-      )}
-
-      {currentRoom && (
-        <h6 className="my-16 text-center text-xl">
-          Waiting for second player to join...
-        </h6>
-      )}
-
-      <RoomList
-        availableRooms={availableRooms}
-        currentRoom={currentRoom}
-        isConnected={isConnected}
-        session={session}
-        waitingForJoinRoomResponse={waitingForJoinRoomResponse}
-        onJoinRoomRequest={onJoinRoomRequest}
-        onLeaveRoom={onLeaveRoom}
-        onCreateRoom={onCreateRoom}
-      />
-
-      {currentRoom && (
-        <CurrentRoomInfo currentRoom={currentRoom} onLeaveRoom={onLeaveRoom} />
-      )}
-
-      {!currentRoom && (
-        <Button
-          onClick={onCreateRoom}
-          disabled={!isConnected || !session?.user}
-          className="mx-auto my-8 flex"
-        >
-          create room
-        </Button>
-      )}
-    </div>
-  );
-}
+import { getTimestamp } from "~/lib/utils";
+import { useGameInPlay } from "~/contexts/gameInPlayContext";
+import GameInProgress from "./gameInProgress";
+import type { OpponentGameRef } from "./opponentGame";
+import ChatWindow from "./chatWindow";
+import JoinRoomRequestDialog from "./joinRoomRequestDialog";
+import WaitingForReady from "./waitingForReady";
+import CurrentRoomInfo from "./currentRoomInfo";
+import RoomLobby from "./roomLobby";
 
 export default function GameVersus({ session }: { session: Session }) {
   const { setIsGameInPlay } = useGameInPlay();
@@ -387,24 +52,25 @@ export default function GameVersus({ session }: { session: Session }) {
   );
   const opponentPlayer = useMemo(
     () => currentRoom?.players.find((p) => p.userId !== session?.user?.id),
-    [currentRoom?.players, session?.user?.id],
+    [currentRoom, session?.user?.id],
   );
   const isRoomHost = useMemo(() => {
-    if (!currentRoom || !session.user.id) return false;
-    return currentRoom.players[0]?.userId === session.user.id;
+    return currentRoom?.players[0]?.userId === session.user.id;
   }, [currentRoom, session.user.id]);
-  const isCurrentPlayerReady = currentPlayer?.ready ?? false;
 
-  function addMessage(message: Message) {
-    if (!socket || !session?.user?.id || !currentRoom) return;
+  const addMessage = useCallback(
+    (message: Message) => {
+      if (!socket || !session?.user?.id || !currentRoom) return;
 
-    socket.emit("send-message", {
-      roomId: currentRoom.id,
-      message: message.content,
-      username: message.username,
-      timestamp: message.timestamp,
-    });
-  }
+      socket.emit("send-message", {
+        roomId: currentRoom.id,
+        message: message.content,
+        username: message.username,
+        timestamp: message.timestamp,
+      });
+    },
+    [socket, session?.user?.id, currentRoom],
+  );
 
   function createRoom() {
     if (!socket || !session?.user?.id || !session?.user?.name) return;
@@ -626,7 +292,7 @@ export default function GameVersus({ session }: { session: Session }) {
         joinRoomRequestTimeoutIdRef.current = null;
       }
     };
-  }, [socket, session?.user?.id, isGameOver, isRoomHost]);
+  }, [socket, session?.user?.id, isGameOver, addMessage]);
 
   if (!socket) return null;
 
@@ -648,7 +314,7 @@ export default function GameVersus({ session }: { session: Session }) {
       ) : currentRoom?.players.length === 2 ? (
         <div className="mx-auto max-w-2xl">
           <WaitingForReady
-            isCurrentPlayerReady={isCurrentPlayerReady}
+            isCurrentPlayerReady={!!currentPlayer?.ready}
             onToggleReady={toggleReady}
           />
           <CurrentRoomInfo currentRoom={currentRoom} onLeaveRoom={leaveRoom} />
@@ -673,9 +339,9 @@ export default function GameVersus({ session }: { session: Session }) {
           addMessage={addMessage}
         />
       )}
-      {incomingJoinRequest === "pending" && incomingJoinRequestData && (
+      {incomingJoinRequestData && (
         <JoinRoomRequestDialog
-          open={!!incomingJoinRequest}
+          open={incomingJoinRequest === "pending"}
           username={incomingJoinRequestData.username}
           onDecline={declineIncomingJoinRequest}
           onAccept={acceptIncomingJoinRequest}
