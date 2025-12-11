@@ -1,5 +1,6 @@
 import "~/styles/globals.css";
 import { type Metadata } from "next";
+import Script from "next/script";
 import { Outfit } from "next/font/google";
 import { Silkscreen } from "next/font/google";
 import { GameInPlayProvider } from "~/contexts/gameInPlayContext";
@@ -42,12 +43,24 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${base_font.variable} ${retro_font.variable}`}>
-      {/* <head>
-        <script
+      <head>
+        {/* <script
           crossOrigin="anonymous"
           src="//unpkg.com/react-scan/dist/auto.global.js"
-        />
-      </head> */}
+        /> */}
+        <Script
+          id="GA-tag-manager"
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=G-QSRCNREBCN"
+        ></Script>
+        <Script strategy="afterInteractive" id="GA-script">
+          {`window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-QSRCNREBCN');
+          `}
+        </Script>
+      </head>
       <body className="dark">
         <GameInPlayProvider>{children}</GameInPlayProvider>
         <Toaster />
