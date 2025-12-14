@@ -29,6 +29,7 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<AnimationLoop>(INITIAL_ANIMATION_LOOP);
   const pauseMultiplierRef = useRef(1); //  0 = paused
+  const holdBtnRef = useRef<HTMLButtonElement>(null);
   // we're not using useState for this because we don't want to trigger re-renders while the game is playing
   const gameStateRef = useRef<GameState | null>(null);
   const { uiState, setUiState, syncUIState } = useUIState();
@@ -172,8 +173,11 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
 
   // Event listeners (keyboard + swipe events)
   useEffect(() => {
-    if (!gameStateRef.current || !canvasRef.current) return;
+    if (!gameStateRef.current || !canvasRef.current || !holdBtnRef.current) {
+      return;
+    }
     const canvas = canvasRef.current;
+    const holdBtn = holdBtnRef.current;
 
     function handleKeyDownWrapper(event: KeyboardEvent) {
       handleKeyDown({
@@ -240,31 +244,53 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
       }
     }
 
+    function handleHoldBtnClick() {
+      handleKeyDown({
+        currentKey: "ShiftLeft",
+        gameState: gameStateRef.current!,
+        getNextPiece,
+        onStateChange: syncUIState,
+        pauseMultiplierRef,
+        setUiState,
+        playerId: userId,
+      });
+    }
+
     window.addEventListener("keydown", handleKeyDownWrapper);
     canvas.addEventListener("touchstart", handleTouchStart);
     canvas.addEventListener("touchend", handleTouchEnd);
+    holdBtn.addEventListener("click", handleHoldBtnClick);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDownWrapper);
       canvas.removeEventListener("touchstart", handleTouchStart);
       canvas.removeEventListener("touchend", handleTouchEnd);
+      holdBtn.removeEventListener("click", handleHoldBtnClick);
     };
   }, [userId, getNextPiece, syncUIState, setUiState]);
 
   return (
-    <GameBoard uiState={uiState} ref={canvasRef}>
-      <div className="grid gap-4">
-        {(uiState.isGameOver || uiState.isPaused) && (
-          <Button onClick={handleRestart} size="lg" className="text-lg">
-            Restart
-          </Button>
-        )}
-        {uiState.isPaused && !uiState.isGameOver && (
-          <Button onClick={handleResume} size="lg" className="text-lg">
-            Resume
-          </Button>
-        )}
-      </div>
-    </GameBoard>
+    <div className="relative mx-auto w-min">
+      <GameBoard uiState={uiState} ref={canvasRef}>
+        <div className="grid gap-4">
+          {(uiState.isGameOver || uiState.isPaused) && (
+            <Button onClick={handleRestart} size="lg" className="text-lg">
+              Restart
+            </Button>
+          )}
+          {uiState.isPaused && !uiState.isGameOver && (
+            <Button onClick={handleResume} size="lg" className="text-lg">
+              Resume
+            </Button>
+          )}
+        </div>
+      </GameBoard>
+
+      <button
+        ref={holdBtnRef}
+        className="absolute top-4 left-0 z-20 h-20 w-20 -translate-x-full"
+        title="hold/ swap trigger"
+      />
+    </div>
   );
 }
