@@ -13,7 +13,7 @@ type GameBoardProps = {
 
 const GameBoard = forwardRef<HTMLCanvasElement, GameBoardProps>(
   ({ uiState, children }, ref) => (
-    <div className="relative mx-auto w-min">
+    <div className="game-board relative mx-auto w-min">
       <canvas
         ref={ref}
         width={300}

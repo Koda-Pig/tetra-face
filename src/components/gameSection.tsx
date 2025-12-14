@@ -25,7 +25,7 @@ export default function GameSection({ session }: { session: Session }) {
   const { gamepadConnected } = useGamepad();
 
   return (
-    <div className="my-8">
+    <div className="sm:my-8">
       <div className="fixed top-4 left-4 grid gap-2">
         {gameMode !== null && (
           <Button
@@ -51,7 +51,7 @@ export default function GameSection({ session }: { session: Session }) {
 
       <div
         className={cn(
-          "mx-auto mt-6 grid h-full w-max grid-cols-2 items-center gap-4 transition-[margin]",
+          "mx-auto mt-6 grid h-full w-max items-center gap-4 transition-[margin] sm:grid-cols-2",
           gameMode === null
             ? ""
             : "pointer-events-none -my-5 [&_button]:-translate-x-full [&_button]:opacity-0 [&_button:last-child]:translate-x-full",

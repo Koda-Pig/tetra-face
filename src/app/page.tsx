@@ -12,7 +12,7 @@ export default async function Home() {
     <main className="text-(--retro-green)" style={{ contain: "paint" }}>
       <BackgroundAnimation />
       <div className="container mx-auto flex h-full min-h-svh flex-col justify-center px-4">
-        <h1 className="text-center text-6xl font-bold tracking-wide">
+        <h1 className="title text-center text-6xl font-bold tracking-wide">
           TETR<span className="text-white">US</span>
         </h1>
         <p className="subtitle mt-6 mb-8 text-center text-xl">
@@ -21,7 +21,7 @@ export default async function Home() {
         {session?.user && <GameSection session={session} />}
 
         {session ? (
-          <p className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center justify-center gap-2 text-lg text-white">
+          <p className="absolute bottom-4 left-1/2 hidden w-max -translate-x-1/2 items-center justify-center gap-2 text-lg text-white sm:flex">
             Logged in as
             <span className="font-bold">{session.user?.name}</span>
             {session.user?.image && (
