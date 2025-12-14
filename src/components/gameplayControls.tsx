@@ -28,7 +28,7 @@ const Control = ({
 }) => (
   <div className="flex items-center justify-between gap-2 border-b pb-2 text-xl">
     <span className="font text-(--retro-green)">{label}</span>
-    <span className="font-bold">{value}</span>
+    <span className="text-right font-bold">{value}</span>
   </div>
 );
 
@@ -44,7 +44,7 @@ export default function GameplayControls() {
         </DrawerTrigger>
       </Button>
 
-      <DrawerContent className="max-w-[calc(min(600px,100%))]!">
+      <DrawerContent className="w-full! sm:w-[unset]! sm:max-w-[calc(min(600px,100%))]!">
         <DrawerHeader>
           <DrawerTitle className="mb-3 flex items-center justify-between text-3xl font-semibold">
             <span>Controls</span>
@@ -57,7 +57,7 @@ export default function GameplayControls() {
             gameplay controls
           </DrawerDescription>
         </DrawerHeader>
-        <DrawerFooter className="mt-2">
+        <DrawerFooter className="mt-2 overflow-y-scroll">
           <h4 className="mb-2 text-2xl">keyboard</h4>
           <div className="flex flex-col justify-center gap-x-6 gap-y-2 text-sm">
             <Control
@@ -102,6 +102,14 @@ export default function GameplayControls() {
               label="Pause / Resume:"
               value="Start (Xbox) | Options (PlayStation)"
             />
+          </div>
+          <h4 className="mt-6 mb-2 text-2xl">Mobile</h4>
+          <div className="flex flex-col justify-center gap-x-6 gap-y-2 text-sm">
+            <Control label="Move:" value="Swipe left/ right" />
+            <Control label="Soft Drop:" value="Swipe down" />
+            <Control label="Hard Drop:" value="Swipe up" />
+            <Control label="Rotate:" value="Tap" />
+            <Control label="Hold / Swap:" value="Tap hold piece" />
           </div>
         </DrawerFooter>
       </DrawerContent>
