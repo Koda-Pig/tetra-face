@@ -47,7 +47,7 @@ export default function GameInProgress({
     >
       <div
         className={cn(
-          "gameover-bg absolute -inset-2 z-10 grid place-items-center rounded p-8 text-center text-8xl transition-opacity",
+          "absolute -inset-2 z-10 grid place-items-center rounded bg-[radial-gradient(circle,black,rgba(0,0,0,0.7),transparent)] p-8 text-center text-8xl transition-opacity",
           isGameOver ? "opacity-100" : "pointer-events-none opacity-0",
           winner === null && "hidden",
         )}

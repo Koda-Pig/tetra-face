@@ -72,7 +72,7 @@ export default function ChatWindow({
         </DrawerHeader>
         <div className="mx-auto h-[calc(100%-10rem)] w-full px-4 sm:max-w-xl">
           {/* Message Log */}
-          <div className="flex h-full flex-col gap-3 overflow-y-auto rounded border bg-black p-2">
+          <div className="flex h-full flex-col gap-6 overflow-y-auto rounded border bg-black p-2">
             {messages.length === 0 && (
               <p className="text-center text-lg text-white/50">
                 No messages yet...
@@ -83,10 +83,10 @@ export default function ChatWindow({
                 <p
                   key={idx}
                   className={cn(
-                    "message-bubble relative max-w-[40ch] rounded p-4",
+                    "message-bubble relative max-w-[40ch] rounded bg-(--bg-color) p-4 [--bg-color:#27391c] [&:after]:absolute [&:after]:bottom-0 [&:after]:translate-y-full [&:after]:border-0 [&:after]:border-t-20 [&:after]:border-transparent [&:after]:border-t-(--bg-color) [&:after]:content-['']",
                     msg.username === session.user.name
-                      ? "mr-auto"
-                      : "message-bubble-opponent ml-auto",
+                      ? "mr-auto [&:after]:left-3 [&:after]:border-r-25"
+                      : "ml-auto [--bg-color:#255f38] [&:after]:right-3 [&:after]:border-l-25",
                   )}
                 >
                   <span className="opacity-50">{msg.username}: </span>

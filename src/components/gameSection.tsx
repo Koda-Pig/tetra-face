@@ -51,13 +51,15 @@ export default function GameSection({ session }: { session: Session }) {
 
       <div
         className={cn(
-          "game-option-buttons mx-auto mt-6 grid h-full w-max grid-cols-2 items-center gap-4",
-          gameMode === null ? "show" : "hide",
+          "mx-auto mt-6 grid h-full w-max grid-cols-2 items-center gap-4 transition-[margin]",
+          gameMode === null
+            ? ""
+            : "pointer-events-none -my-5 [&_button]:-translate-x-full [&_button]:opacity-0 [&_button:last-child]:translate-x-full",
         )}
       >
         <Button
           size="lg"
-          className="text-md w-full px-4 py-8 text-xl"
+          className="text-md relative w-full px-4 py-8 text-xl"
           onClick={() => {
             setGameMode("single-player");
             setIsGameInPlay(true);
@@ -71,7 +73,7 @@ export default function GameSection({ session }: { session: Session }) {
           <TooltipTrigger asChild>
             <Button
               size="lg"
-              className="text-md w-full px-4 py-8 text-xl"
+              className="text-md relative w-full px-4 py-8 text-xl"
               onClick={() => {
                 if (!session) return;
                 setGameMode("versus");
