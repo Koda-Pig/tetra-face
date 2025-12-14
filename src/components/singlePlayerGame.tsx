@@ -170,9 +170,10 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
     gamepadConnected,
   ]);
 
-  // Event listeners (keyboard events)
+  // Event listeners (keyboard + swipe events)
   useEffect(() => {
-    if (!gameStateRef.current) return;
+    if (!gameStateRef.current || !canvasRef.current) return;
+    const canvas = canvasRef.current;
 
     function handleKeyDownWrapper(event: KeyboardEvent) {
       handleKeyDown({
@@ -187,10 +188,66 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
       });
     }
 
+    // Swipe detection
+    let touchStartX = 0;
+    let touchStartY = 0;
+    const MIN_SWIPE_DISTANCE = 30;
+
+    function handleTouchStart(event: TouchEvent) {
+      event.preventDefault();
+      if (event.touches.length > 0) {
+        touchStartX = event.touches[0]!.clientX;
+        touchStartY = event.touches[0]!.clientY;
+      }
+    }
+
+    function handleTouchEnd(event: TouchEvent) {
+      if (event.changedTouches.length > 0) {
+        const touch = event.changedTouches[0]!;
+        const deltaX = touch.clientX - touchStartX;
+        const deltaY = touch.clientY - touchStartY;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+        if (distance >= MIN_SWIPE_DISTANCE) {
+          // It's a swipe
+          let activeKey = null;
+          if (Math.abs(deltaX) > Math.abs(deltaY)) {
+            activeKey = deltaX > 0 ? "ArrowRight" : "ArrowLeft";
+          } else {
+            activeKey = deltaY > 0 ? "ArrowDown" : "ArrowUp";
+          }
+          handleKeyDown({
+            currentKey: activeKey,
+            gameState: gameStateRef.current!,
+            getNextPiece,
+            onStateChange: syncUIState,
+            pauseMultiplierRef,
+            setUiState,
+            playerId: userId,
+          });
+        } else {
+          // It's a tap - trigger rotation
+          handleKeyDown({
+            currentKey: "Space",
+            gameState: gameStateRef.current!,
+            getNextPiece,
+            onStateChange: syncUIState,
+            pauseMultiplierRef,
+            setUiState,
+            playerId: userId,
+          });
+        }
+      }
+    }
+
     window.addEventListener("keydown", handleKeyDownWrapper);
+    canvas.addEventListener("touchstart", handleTouchStart);
+    canvas.addEventListener("touchend", handleTouchEnd);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDownWrapper);
+      canvas.removeEventListener("touchstart", handleTouchStart);
+      canvas.removeEventListener("touchend", handleTouchEnd);
     };
   }, [userId, getNextPiece, syncUIState, setUiState]);
 
