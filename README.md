@@ -160,3 +160,4 @@ I changed the name from `Tetra Face` to `Tetrus` because Tetra Face just isn't a
 - [ ] feat: add rematch button
 - [ ] feat: high scores
 - [ ] feat: click opponents hold piece to make it drop
+- [ ] bug: return focus to the canvas when closing a drawer
