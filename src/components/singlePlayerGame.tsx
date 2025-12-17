@@ -21,6 +21,7 @@ import {
   INITIAL_GAME_STATE,
   INITIAL_ANIMATION_LOOP,
 } from "~/constants";
+import { Pause, Play } from "lucide-react";
 import { useUIState } from "~/hooks/useUIState";
 import { useGamepad } from "~/hooks/useGamepad";
 import GameBoard from "./gameBoard";
@@ -30,6 +31,7 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
   const gameLoopRef = useRef<AnimationLoop>(INITIAL_ANIMATION_LOOP);
   const pauseMultiplierRef = useRef(1); //  0 = paused
   const holdBtnRef = useRef<HTMLButtonElement>(null);
+  const pauseBtnRef = useRef<HTMLButtonElement>(null);
   // we're not using useState for this because we don't want to trigger re-renders while the game is playing
   const gameStateRef = useRef<GameState | null>(null);
   const { uiState, setUiState, syncUIState } = useUIState();
@@ -42,6 +44,20 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
 
     pauseMultiplierRef.current = 1;
     setUiState((prev) => ({ ...prev, isPaused: false }));
+  }
+
+  function handlePauseBtnClick() {
+    if (!gameStateRef.current) return;
+
+    handleKeyDown({
+      currentKey: "Escape",
+      gameState: gameStateRef.current,
+      getNextPiece,
+      onStateChange: syncUIState,
+      pauseMultiplierRef,
+      setUiState,
+      playerId: userId,
+    });
   }
 
   const handleRestart = useCallback(() => {
@@ -288,9 +304,17 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
 
       <button
         ref={holdBtnRef}
-        className="absolute top-4 left-0 z-20 h-20 w-20 -translate-x-full"
+        className="absolute top-4 left-0 z-20 h-16 w-16 -translate-x-full"
         title="hold/ swap trigger"
       />
+      <button
+        ref={pauseBtnRef}
+        onClick={handlePauseBtnClick}
+        className="absolute top-3 right-0 z-20 grid h-15 w-15 translate-x-full place-items-center rounded-lg rounded-tl-none rounded-bl-none border-2 border-l-0 border-(--retro-green) bg-black"
+        title="play/ pause"
+      >
+        {uiState.isPaused ? <Play /> : <Pause />}
+      </button>
     </div>
   );
 }
