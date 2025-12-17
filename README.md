@@ -161,3 +161,4 @@ I changed the name from `Tetra Face` to `Tetrus` because Tetra Face just isn't a
 - [ ] feat: high scores
 - [ ] feat: click opponents hold piece to make it drop
 - [ ] bug: return focus to the canvas when closing a drawer
+- [ ] bug: fix issue where any games after the first one have instant game over

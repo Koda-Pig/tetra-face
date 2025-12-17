@@ -27,7 +27,7 @@ export default function RoomLobby({
   return (
     <div className="mx-auto my-18 max-w-2xl">
       {currentRoom && (
-        <h6 className="my-16 text-center text-xl">
+        <h6 className="my-16 text-center text-2xl">
           Waiting for second player to join...
         </h6>
       )}

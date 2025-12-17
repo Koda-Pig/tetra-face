@@ -3,6 +3,11 @@
 import { Play, HourglassIcon } from "lucide-react";
 import type { GameRoom } from "~/types";
 import { Button } from "~/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 
 export default function CurrentRoomInfo({
   currentRoom,
@@ -13,7 +18,7 @@ export default function CurrentRoomInfo({
 }) {
   return (
     <div>
-      <h4 className="mb-4 text-center text-xl font-semibold">Current Room</h4>
+      <h4 className="mb-4 text-center text-2xl font-semibold">Current Room</h4>
       <div className="relative mb-4 rounded border p-2">
         <div className="bg-background/20 space-y-2 p-2 text-lg backdrop-blur-sm">
           <p>Room ID</p>
@@ -22,12 +27,19 @@ export default function CurrentRoomInfo({
           <ul className="text-white">
             {currentRoom.players.map((player, idx) => (
               <li key={idx} className="flex items-center gap-2">
-                {player.username}
-                {player.ready ? (
-                  <Play className="inline-block" />
-                ) : (
-                  <HourglassIcon className="hourglass-icon inline-block" />
-                )}
+                <Tooltip>
+                  <TooltipTrigger>
+                    {player.username}
+                    {player.ready ? (
+                      <Play className="inline-block" />
+                    ) : (
+                      <HourglassIcon className="hourglass-icon inline-block" />
+                    )}
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {player.ready ? "player is ready" : "player not ready"}
+                  </TooltipContent>
+                </Tooltip>
               </li>
             ))}
           </ul>

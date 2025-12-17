@@ -320,7 +320,7 @@ export default function GameVersus({ session }: { session: Session }) {
   if (!socket) return null;
 
   return (
-    <div>
+    <>
       {bothPlayersReady && currentRoom && opponentPlayer?.username ? (
         <GameInProgress
           isRoomHost={isRoomHost}
@@ -335,7 +335,7 @@ export default function GameVersus({ session }: { session: Session }) {
           hostGameReceiveGarbageRef={hostGameReceiveGarbageRef}
         />
       ) : currentRoom?.players.length === 2 ? (
-        <div className="mx-auto max-w-2xl">
+        <div className="w-full max-w-2xl">
           <WaitingForReady
             isCurrentPlayerReady={!!currentPlayer?.ready}
             onToggleReady={toggleReady}
@@ -372,6 +372,6 @@ export default function GameVersus({ session }: { session: Session }) {
           onAccept={acceptIncomingJoinRequest}
         />
       )}
-    </div>
+    </>
   );
 }
