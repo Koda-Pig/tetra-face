@@ -21,7 +21,8 @@ import {
   INITIAL_GAME_STATE,
   INITIAL_ANIMATION_LOOP,
 } from "~/constants";
-import { Pause, Play } from "lucide-react";
+import type { GAME_INPUT_KEYS } from "~/constants";
+import { Pause, Play, ArrowLeft, ArrowRight, RotateCw } from "lucide-react";
 import { useUIState } from "~/hooks/useUIState";
 import { useGamepad } from "~/hooks/useGamepad";
 import GameBoard from "./gameBoard";
@@ -30,8 +31,6 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<AnimationLoop>(INITIAL_ANIMATION_LOOP);
   const pauseMultiplierRef = useRef(1); //  0 = paused
-  const holdBtnRef = useRef<HTMLButtonElement>(null);
-  const pauseBtnRef = useRef<HTMLButtonElement>(null);
   // we're not using useState for this because we don't want to trigger re-renders while the game is playing
   const gameStateRef = useRef<GameState | null>(null);
   const { uiState, setUiState, syncUIState } = useUIState();
@@ -46,11 +45,11 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
     setUiState((prev) => ({ ...prev, isPaused: false }));
   }
 
-  function handlePauseBtnClick() {
+  function handleBtnClick(currentKey: (typeof GAME_INPUT_KEYS)[number]) {
     if (!gameStateRef.current) return;
 
     handleKeyDown({
-      currentKey: "Escape",
+      currentKey: currentKey,
       gameState: gameStateRef.current,
       getNextPiece,
       onStateChange: syncUIState,
@@ -189,11 +188,10 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
 
   // Event listeners (keyboard + swipe events)
   useEffect(() => {
-    if (!gameStateRef.current || !canvasRef.current || !holdBtnRef.current) {
+    if (!gameStateRef.current || !canvasRef.current) {
       return;
     }
     const canvas = canvasRef.current;
-    const holdBtn = holdBtnRef.current;
 
     function handleKeyDownWrapper(event: KeyboardEvent) {
       handleKeyDown({
@@ -260,28 +258,14 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
       }
     }
 
-    function handleHoldBtnClick() {
-      handleKeyDown({
-        currentKey: "ShiftLeft",
-        gameState: gameStateRef.current!,
-        getNextPiece,
-        onStateChange: syncUIState,
-        pauseMultiplierRef,
-        setUiState,
-        playerId: userId,
-      });
-    }
-
     window.addEventListener("keydown", handleKeyDownWrapper);
     canvas.addEventListener("touchstart", handleTouchStart);
     canvas.addEventListener("touchend", handleTouchEnd);
-    holdBtn.addEventListener("click", handleHoldBtnClick);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDownWrapper);
       canvas.removeEventListener("touchstart", handleTouchStart);
       canvas.removeEventListener("touchend", handleTouchEnd);
-      holdBtn.removeEventListener("click", handleHoldBtnClick);
     };
   }, [userId, getNextPiece, syncUIState, setUiState]);
 
@@ -303,17 +287,37 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
       </GameBoard>
 
       <button
-        ref={holdBtnRef}
+        onClick={() => handleBtnClick("ShiftLeft")}
         className="absolute top-4 left-0 z-20 h-16 w-16 -translate-x-full"
         title="hold/ swap trigger"
       />
       <button
-        ref={pauseBtnRef}
-        onClick={handlePauseBtnClick}
+        onClick={() => handleBtnClick("Escape")}
         className="absolute top-3 right-0 z-20 grid h-15 w-15 translate-x-full place-items-center rounded-lg rounded-tl-none rounded-bl-none border-2 border-l-0 border-(--retro-green) bg-black"
         title="play/ pause"
       >
         {uiState.isPaused ? <Play /> : <Pause />}
+      </button>
+      <button
+        onClick={() => handleBtnClick("ArrowLeft")}
+        className="absolute bottom-0 left-2 z-20 grid h-15 w-15 translate-y-full place-items-center rounded-lg rounded-tl-none rounded-tr-none border-2 border-t-0 border-(--retro-green) bg-black"
+        title="move left"
+      >
+        <ArrowLeft />
+      </button>
+      <button
+        onClick={() => handleBtnClick("Space")}
+        className="absolute bottom-0 left-1/2 z-20 grid h-15 w-15 -translate-x-1/2 translate-y-full place-items-center rounded-lg rounded-tl-none rounded-tr-none border-2 border-t-0 border-(--retro-green) bg-black"
+        title="rotate clockwise"
+      >
+        <RotateCw />
+      </button>
+      <button
+        onClick={() => handleBtnClick("ArrowRight")}
+        className="absolute right-2 bottom-0 z-20 grid h-15 w-15 translate-y-full place-items-center rounded-lg rounded-tl-none rounded-tr-none border-2 border-t-0 border-(--retro-green) bg-black"
+        title="move right"
+      >
+        <ArrowRight />
       </button>
     </div>
   );

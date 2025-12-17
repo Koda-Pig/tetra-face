@@ -54,7 +54,7 @@ export default function GameSection({ session }: { session: Session }) {
           "mx-auto mt-6 grid h-full w-max items-center gap-4 transition-[margin] sm:grid-cols-2",
           gameMode === null
             ? ""
-            : "pointer-events-none -my-5 [&_button]:-translate-x-full [&_button]:opacity-0 [&_button:last-child]:translate-x-full",
+            : "pointer-events-none -my-24 sm:-my-5 [&_button]:-translate-x-full [&_button]:opacity-0 [&_button:last-child]:translate-x-full",
         )}
       >
         <Button

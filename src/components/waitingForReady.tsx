@@ -24,7 +24,8 @@ export default function WaitingForReady({
           </>
         ) : (
           <>
-            <HourglassIcon className="hourglass-icon inline-block" /> I'm Ready
+            <HourglassIcon className="hourglass-icon inline-block" /> I&apos;m
+            Ready
           </>
         )}
       </Button>
