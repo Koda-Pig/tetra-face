@@ -12,15 +12,19 @@ export default function WaitingForReady({
 }) {
   return (
     <div className="flex flex-col items-center gap-4">
-      <Button size="lg" onClick={onToggleReady} className="m-12 mx-auto flex">
+      <Button
+        size="lg"
+        onClick={onToggleReady}
+        className="m-12 mx-auto flex px-10 py-8 text-xl"
+      >
         {isCurrentPlayerReady ? (
           <>
             <Play className="inline-block" />
-            ready and waiting...
+            Ready! Waiting for opponent...
           </>
         ) : (
           <>
-            <HourglassIcon className="hourglass-icon inline-block" /> not ready
+            <HourglassIcon className="hourglass-icon inline-block" /> I'm Ready
           </>
         )}
       </Button>
