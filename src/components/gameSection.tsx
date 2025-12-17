@@ -25,7 +25,7 @@ export default function GameSection({ session }: { session: Session }) {
   const { gamepadConnected } = useGamepad();
 
   return (
-    <div className="sm:my-8">
+    <div className="grid place-items-center sm:my-8 sm:block">
       <div className="fixed top-4 left-4 grid gap-2">
         {gameMode !== null && (
           <Button
@@ -38,7 +38,7 @@ export default function GameSection({ session }: { session: Session }) {
             back
           </Button>
         )}
-        <Button asChild>
+        <Button asChild className={gameMode !== null ? "hidden" : ""}>
           <Link href="/api/auth/signout">
             <LogOut />
             sign out

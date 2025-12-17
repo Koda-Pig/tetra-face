@@ -22,7 +22,16 @@ import {
   INITIAL_ANIMATION_LOOP,
 } from "~/constants";
 import type { GAME_INPUT_KEYS } from "~/constants";
-import { Pause, Play, ArrowLeft, ArrowRight, RotateCw } from "lucide-react";
+import {
+  Pause,
+  Play,
+  ArrowLeft,
+  ArrowRight,
+  ArrowDownToLine,
+  ArrowDown,
+  RotateCw,
+  Repeat,
+} from "lucide-react";
 import { useUIState } from "~/hooks/useUIState";
 import { useGamepad } from "~/hooks/useGamepad";
 import GameBoard from "./gameBoard";
@@ -45,7 +54,7 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
     setUiState((prev) => ({ ...prev, isPaused: false }));
   }
 
-  function handleBtnClick(currentKey: (typeof GAME_INPUT_KEYS)[number]) {
+  function mobileBtnClick(currentKey: (typeof GAME_INPUT_KEYS)[number]) {
     if (!gameStateRef.current) return;
 
     handleKeyDown({
@@ -57,6 +66,8 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
       setUiState,
       playerId: userId,
     });
+
+    navigator.vibrate(10);
   }
 
   const handleRestart = useCallback(() => {
@@ -270,7 +281,7 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
   }, [userId, getNextPiece, syncUIState, setUiState]);
 
   return (
-    <div className="relative mx-auto w-min">
+    <div className="absolute bottom-4 m-0 w-min sm:relative sm:mx-auto">
       <GameBoard uiState={uiState} ref={canvasRef}>
         <div className="grid gap-4">
           {(uiState.isGameOver || uiState.isPaused) && (
@@ -286,38 +297,59 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
         </div>
       </GameBoard>
 
+      <div className="justify-items-between grid grid-cols-3 sm:hidden [&_button]:rounded-lg [&_button]:p-4 [&_button]:outline [&_button]:-outline-offset-6 [&_button]:outline-(--retro-green)">
+        <button
+          className="grid place-items-center"
+          onClick={() => mobileBtnClick("ArrowLeft")}
+          title="move left"
+        >
+          <ArrowLeft />
+        </button>
+
+        <button
+          className="grid place-items-center"
+          onClick={() => mobileBtnClick("Space")}
+          title="rotate clockwise"
+        >
+          <RotateCw />
+        </button>
+        <button
+          className="grid place-items-center"
+          onClick={() => mobileBtnClick("ArrowRight")}
+          title="move right"
+        >
+          <ArrowRight />
+        </button>
+
+        <button
+          className="grid place-items-center"
+          onClick={() => mobileBtnClick("ShiftLeft")}
+          title="hold/ swap trigger"
+        >
+          <Repeat />
+        </button>
+        <button
+          className="grid place-items-center"
+          onClick={() => mobileBtnClick("ArrowDown")}
+          title="soft drop"
+        >
+          <ArrowDown />
+        </button>
+        <button
+          className="grid place-items-center"
+          onClick={() => mobileBtnClick("ArrowUp")}
+          title="hard drop"
+        >
+          <ArrowDownToLine />
+        </button>
+      </div>
+
       <button
-        onClick={() => handleBtnClick("ShiftLeft")}
-        className="absolute top-4 left-0 z-20 h-16 w-16 -translate-x-full"
-        title="hold/ swap trigger"
-      />
-      <button
-        onClick={() => handleBtnClick("Escape")}
-        className="absolute top-3 right-0 z-20 grid h-15 w-15 translate-x-full place-items-center rounded-lg rounded-tl-none rounded-bl-none border-2 border-l-0 border-(--retro-green) bg-black"
+        onClick={() => mobileBtnClick("Escape")}
         title="play/ pause"
+        className="absolute top-3 right-0 z-20 grid h-15 w-15 translate-x-full place-items-center rounded-lg rounded-tl-none rounded-bl-none border-2 border-l-0 border-(--retro-green) bg-black"
       >
         {uiState.isPaused ? <Play /> : <Pause />}
-      </button>
-      <button
-        onClick={() => handleBtnClick("ArrowLeft")}
-        className="absolute bottom-0 left-2 z-20 grid h-15 w-15 translate-y-full place-items-center rounded-lg rounded-tl-none rounded-tr-none border-2 border-t-0 border-(--retro-green) bg-black"
-        title="move left"
-      >
-        <ArrowLeft />
-      </button>
-      <button
-        onClick={() => handleBtnClick("Space")}
-        className="absolute bottom-0 left-1/2 z-20 grid h-15 w-15 -translate-x-1/2 translate-y-full place-items-center rounded-lg rounded-tl-none rounded-tr-none border-2 border-t-0 border-(--retro-green) bg-black"
-        title="rotate clockwise"
-      >
-        <RotateCw />
-      </button>
-      <button
-        onClick={() => handleBtnClick("ArrowRight")}
-        className="absolute right-2 bottom-0 z-20 grid h-15 w-15 translate-y-full place-items-center rounded-lg rounded-tl-none rounded-tr-none border-2 border-t-0 border-(--retro-green) bg-black"
-        title="move right"
-      >
-        <ArrowRight />
       </button>
     </div>
   );

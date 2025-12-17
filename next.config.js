@@ -7,6 +7,7 @@ import "./src/env.js";
 /** @type {import("next").NextConfig} */
 const config = {
   output: "standalone", // recommended for Docker builds
+  allowedDevOrigins: ["localhost", "192.168.68.106"],
   images: {
     remotePatterns: [
       {

@@ -51,7 +51,7 @@ export function initializeSocket(httpServer: HttpServer) {
     httpServer,
     {
       cors: {
-        origin: process.env.NEXTAUTH_URL ?? "http://localhost:3000",
+        origin: process.env.NEXTAUTH_URL ?? "http://0.0.0.0:3000",
         methods: ["GET", "POST"], // for initial handshake
       },
     },

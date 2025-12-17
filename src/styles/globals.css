@@ -278,8 +278,7 @@ main {
 }
 
 @media screen and (max-width: 768px) {
-  .title,
-  .subtitle {
+  .title:has(~ * canvas) {
     display: none;
   }
 }
