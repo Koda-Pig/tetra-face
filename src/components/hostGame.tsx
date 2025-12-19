@@ -168,7 +168,8 @@ export default function HostGame({
     setUiState((prev) => ({ ...prev, previewPiece: preview }));
 
     gameLoopRef.current.lastTime = getTimestamp();
-  }, [socket, getNextPiece, userId, roomId]);
+    // add externalGameOver so the game restarts
+  }, [socket, getNextPiece, userId, roomId, externalGameOver]);
 
   // game loop
   useEffect(() => {
