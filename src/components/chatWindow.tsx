@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { Message } from "~/types";
-import { cn } from "~/lib/utils";
 import { MessageCircleIcon, X } from "lucide-react";
 import {
   Drawer,
@@ -15,7 +14,7 @@ import {
 } from "~/components/ui/drawer";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
-import { getTimestamp } from "~/lib/utils";
+import { getTimestamp, cn } from "~/lib/utils";
 import type { Session } from "next-auth";
 
 export default function ChatWindow({
@@ -24,13 +23,13 @@ export default function ChatWindow({
   onOpenChange,
   messages,
   session,
-}: {
+}: Readonly<{
   addMessage: (message: Message) => void;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   messages: Message[];
   session: Session;
-}) {
+}>) {
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -73,15 +72,14 @@ export default function ChatWindow({
         <div className="mx-auto h-[calc(100%-10rem)] w-full px-4 sm:max-w-xl">
           {/* Message Log */}
           <div className="flex h-full flex-col gap-6 overflow-y-auto rounded border bg-black p-2">
-            {messages.length === 0 && (
+            {messages.length === 0 ? (
               <p className="text-center text-lg text-white/50">
                 No messages yet...
               </p>
-            )}
-            {messages.map((msg, idx) => {
-              return (
+            ) : (
+              messages.map((msg) => (
                 <p
-                  key={idx}
+                  key={msg.timestamp}
                   className={cn(
                     "message-bubble relative max-w-[40ch] rounded bg-(--bg-color) p-4 [--bg-color:#27391c] [&:after]:absolute [&:after]:bottom-0 [&:after]:translate-y-full [&:after]:border-0 [&:after]:border-t-20 [&:after]:border-transparent [&:after]:border-t-(--bg-color) [&:after]:content-['']",
                     msg.username === session.user.name
@@ -92,8 +90,8 @@ export default function ChatWindow({
                   <span className="opacity-50">{msg.username}: </span>
                   {msg.content}
                 </p>
-              );
-            })}
+              ))
+            )}
             <div ref={messagesEndRef} />
           </div>
 

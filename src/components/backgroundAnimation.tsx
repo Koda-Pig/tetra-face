@@ -81,7 +81,7 @@ class Effect {
     this.size = 25;
     this.columns = this.canvasWidth / this.size;
     this.accumulatedTime = 0;
-    this.updateIntervalSeconds = 1 / 1; // 1 update per second
+    this.updateIntervalSeconds = 1;
     this.tetrominoShapes = [];
     this.#initialize();
   }

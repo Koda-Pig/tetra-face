@@ -14,7 +14,7 @@ export default function RoomLobby({
   onCreateRoom,
   onJoinRoomRequest,
   onLeaveRoom,
-}: {
+}: Readonly<{
   currentRoom: GameRoom | null;
   availableRooms: GameRoom[];
   isConnected: boolean;
@@ -23,7 +23,7 @@ export default function RoomLobby({
   onCreateRoom: () => void;
   onJoinRoomRequest: (roomId: string) => void;
   onLeaveRoom: (roomId: string) => void;
-}) {
+}>) {
   return (
     <div className="mx-auto my-18 max-w-2xl">
       {currentRoom && (

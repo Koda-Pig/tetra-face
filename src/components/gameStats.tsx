@@ -5,7 +5,7 @@ import { cn } from "~/lib/utils";
 const gameStatClasses =
   "game-stat font-xl absolute top-4 left-0 z-10 grid aspect-square h-20 w-20 -translate-x-full place-items-center rounded-lg rounded-tr-none rounded-br-none border-2 border-r-0 border-(--retro-green) bg-black px-2 py-1 text-center text-xl";
 
-export default function GameStats({ uiState }: { uiState: UIState }) {
+export default function GameStats({ uiState }: Readonly<{ uiState: UIState }>) {
   return (
     <>
       <div className={gameStatClasses}>

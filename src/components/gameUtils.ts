@@ -181,7 +181,7 @@ function generateGarbageLines({
 }): BoardCell[][] {
   const garbageLines = [];
   for (let i = 0; i < numLines; i++) {
-    const garbageLine = Array(COLS)
+    const garbageLine = new Array(COLS)
       .fill(null)
       .map(() => ({ occupied: true, color: GARBAGE_COLOR }));
     const holePos = Math.floor(Math.random() * COLS); // random hole per line
@@ -301,15 +301,15 @@ function handleHoldPiece({
   const oldHold = gameState.holdPiece;
   const currentPiece = gameState.currentPiece;
 
-  // this'll only  happen the first hold event
-  if (!oldHold) {
+  if (oldHold) {
+    gameState.holdPiece = gameState.currentPiece.tetrominoType;
+    gameState.currentPiece = spawnPiece(oldHold);
+  } else {
+    // this'll only  happen the first hold event
     const { piece, preview } = getNextPiece();
     gameState.holdPiece = gameState.currentPiece.tetrominoType;
     gameState.currentPiece = spawnPiece(piece);
     gameState.previewPiece = preview;
-  } else {
-    gameState.holdPiece = gameState.currentPiece.tetrominoType;
-    gameState.currentPiece = spawnPiece(oldHold);
   }
 
   gameState.canHold = false;
@@ -360,29 +360,21 @@ function clearLines(gameState: GameState): RowSnapshot[] {
     // remove row
     board.splice(originalRowIndex, 1);
     // add empty row at top
-    board.unshift(
-      Array(COLS)
-        .fill(null)
-        .map(() => ({ occupied: false })),
-    );
+    board.unshift(new Array(COLS).fill(null).map(() => ({ occupied: false })));
   }
 
   return rowSnapshots;
 }
 // make sure this is generated to avoid shared object references
 const createEmptyBoard = () =>
-  Array(TOTAL_ROWS)
+  new Array(TOTAL_ROWS)
     .fill(null)
-    .map(() =>
-      Array(COLS)
-        .fill(null)
-        .map(() => ({ occupied: false })),
-    );
+    .map(() => new Array(COLS).fill(null).map(() => ({ occupied: false })));
 const createTSpinBoardSetup = () => {
-  const board = Array(TOTAL_ROWS)
+  const board = new Array(TOTAL_ROWS)
     .fill(null)
     .map(() =>
-      Array(COLS)
+      new Array(COLS)
         .fill(null)
         .map(() => ({ occupied: false, color: "transparent" })),
     );
@@ -452,7 +444,7 @@ function handleKeyDown({
   if (isPaused) return null;
 
   switch (currentKey) {
-    case "ArrowUp":
+    case "ArrowUp": {
       const lockedPiece = gameState.currentPiece;
       const dropDistance = hardDrop({
         piece: gameState.currentPiece,
@@ -487,7 +479,8 @@ function handleKeyDown({
         garbageToSend,
         timestamp: getTimestamp(),
       };
-    case "ArrowDown":
+    }
+    case "ArrowDown": {
       if (
         canPieceMove({
           piece: gameState.currentPiece,
@@ -530,7 +523,8 @@ function handleKeyDown({
           timestamp: getTimestamp(),
         };
       }
-    case "ArrowLeft":
+    }
+    case "ArrowLeft": {
       if (
         canPieceMove({
           piece: gameState.currentPiece,
@@ -546,7 +540,8 @@ function handleKeyDown({
         };
       }
       return null;
-    case "ArrowRight":
+    }
+    case "ArrowRight": {
       if (
         canPieceMove({
           piece: gameState.currentPiece,
@@ -562,7 +557,8 @@ function handleKeyDown({
         };
       }
       return null;
-    case "Space":
+    }
+    case "Space": {
       const didRotateClockwise = tryRotatePiece({
         piece: gameState.currentPiece,
         board: gameState.board,
@@ -577,7 +573,8 @@ function handleKeyDown({
       } else {
         return null;
       }
-    case "KeyZ":
+    }
+    case "KeyZ": {
       const didRotateAntiClockwise = tryRotatePiece({
         piece: gameState.currentPiece,
         board: gameState.board,
@@ -592,8 +589,9 @@ function handleKeyDown({
       } else {
         return null;
       }
+    }
     case "ShiftLeft":
-    case "ShiftRight":
+    case "ShiftRight": {
       const newHoldPiece = handleHoldPiece({ gameState, getNextPiece });
       if (newHoldPiece) {
         setUiState((prev) => ({ ...prev, holdPiece: newHoldPiece }));
@@ -607,6 +605,7 @@ function handleKeyDown({
       } else {
         return null;
       }
+    }
     default:
       return null;
   }
@@ -851,7 +850,7 @@ function pollGamepadInput({
   gamepadStateRef: RefObject<GamepadState>;
 }): string | null {
   const gamepads = navigator.getGamepads();
-  const activeGamepad = gamepads.find((gamepad) => gamepad);
+  const activeGamepad = gamepads.find(Boolean);
 
   if (!activeGamepad || !gamepadStateRef.current) return null;
   const gamepadState = gamepadStateRef.current;

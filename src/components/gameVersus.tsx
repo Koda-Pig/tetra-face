@@ -24,7 +24,9 @@ import WaitingForReady from "./waitingForReady";
 import CurrentRoomInfo from "./currentRoomInfo";
 import RoomLobby from "./roomLobby";
 
-export default function GameVersus({ session }: { session: Session }) {
+export default function GameVersus({
+  session,
+}: Readonly<{ session: Session }>) {
   const { setIsGameInPlay } = useGameInPlay();
   const { socket, isConnected } = useSocket();
   const [currentRoom, setCurrentRoom] = useState<GameRoom | null>(null);
@@ -276,7 +278,7 @@ export default function GameVersus({ session }: { session: Session }) {
       }
     });
     socket.on("game-pause-event", (data: GameActionData) => {
-      setGamePaused(data.action.type === "game-pause" ? true : false);
+      setGamePaused(data.action.type === "game-pause");
     });
     socket.on("game-over-event", (data: GameActionData) => {
       if (isGameOver) return;
@@ -319,22 +321,26 @@ export default function GameVersus({ session }: { session: Session }) {
 
   if (!socket) return null;
 
-  return (
-    <>
-      {bothPlayersReady && currentRoom && opponentPlayer?.username ? (
+  function getGameContent() {
+    if (bothPlayersReady && currentRoom && opponentPlayer?.username) {
+      return (
         <GameInProgress
           isRoomHost={isRoomHost}
           isGameOver={isGameOver}
           winner={winner}
           opponentPlayer={opponentPlayer}
           currentRoom={currentRoom}
-          socket={socket}
+          socket={socket!} // we know this is valid because of the null check for the socket before this code runs
           session={session}
           gamePaused={gamePaused}
           opponentGameRef={opponentGameRef}
           hostGameReceiveGarbageRef={hostGameReceiveGarbageRef}
         />
-      ) : currentRoom?.players.length === 2 ? (
+      );
+    }
+
+    if (currentRoom?.players.length === 2) {
+      return (
         <div className="w-full max-w-2xl">
           <WaitingForReady
             isCurrentPlayerReady={!!currentPlayer?.ready}
@@ -342,19 +348,26 @@ export default function GameVersus({ session }: { session: Session }) {
           />
           <CurrentRoomInfo currentRoom={currentRoom} onLeaveRoom={leaveRoom} />
         </div>
-      ) : (
-        <RoomLobby
-          outgoingJoinRequest={outgoingJoinRequest}
-          currentRoom={currentRoom}
-          availableRooms={availableRooms}
-          isConnected={isConnected}
-          session={session}
-          onCreateRoom={createRoom}
-          onJoinRoomRequest={joinRoomRequest}
-          onLeaveRoom={leaveRoom}
-        />
-      )}
+      );
+    }
 
+    return (
+      <RoomLobby
+        outgoingJoinRequest={outgoingJoinRequest}
+        currentRoom={currentRoom}
+        availableRooms={availableRooms}
+        isConnected={isConnected}
+        session={session}
+        onCreateRoom={createRoom}
+        onJoinRoomRequest={joinRoomRequest}
+        onLeaveRoom={leaveRoom}
+      />
+    );
+  }
+
+  return (
+    <>
+      {getGameContent()}
       {currentRoom && (
         <ChatWindow
           isOpen={isChatOpen}

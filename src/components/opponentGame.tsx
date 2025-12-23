@@ -132,12 +132,13 @@ const OpponentGame = forwardRef<
           pauseMultiplierRef.current = 1;
           setUiState((prev) => ({ ...prev, isPaused: false }));
           break;
-        case "player-hold-piece":
+        case "player-hold-piece": {
           const { pieceType, newPieceToHold, nextPreviewPiece } = action;
           gameStateRef.current.currentPiece = spawnPiece(pieceType);
           gameStateRef.current.previewPiece = nextPreviewPiece;
           setUiState((prev) => ({ ...prev, holdPiece: newPieceToHold }));
           break;
+        }
         case "receive-garbage":
           gameStateRef.current.pendingGarbage = action.garbageLines;
           break;
@@ -187,7 +188,7 @@ const OpponentGame = forwardRef<
       const pauseMultiplier = pauseMultiplierRef.current;
 
       if (!gameLoop || pauseMultiplier === undefined) {
-        const problemVar = !gameLoop ? gameLoop : pauseMultiplier;
+        const problemVar = gameLoop ? pauseMultiplier : gameLoop;
         console.error(`${problemVar} is not initialized`);
         return;
       }

@@ -6,10 +6,10 @@ import { Button } from "~/components/ui/button";
 export default function WaitingForReady({
   isCurrentPlayerReady,
   onToggleReady,
-}: {
+}: Readonly<{
   isCurrentPlayerReady: boolean;
   onToggleReady: () => void;
-}) {
+}>) {
   return (
     <div className="flex flex-col items-center gap-4">
       <Button

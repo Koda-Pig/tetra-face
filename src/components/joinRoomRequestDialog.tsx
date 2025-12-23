@@ -17,12 +17,12 @@ export default function JoinRoomRequestDialog({
   username,
   onDecline,
   onAccept,
-}: {
+}: Readonly<{
   open: boolean;
   username: string;
   onDecline: ({ message }: { message?: string }) => void;
   onAccept: () => void;
-}) {
+}>) {
   return (
     <AlertDialog open={open}>
       <AlertDialogContent>

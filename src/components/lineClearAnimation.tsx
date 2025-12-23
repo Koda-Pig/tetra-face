@@ -10,10 +10,10 @@ import type { UIState } from "~/types";
 function LineAnimation({
   colors,
   cellSize,
-}: {
+}: Readonly<{
   colors: string[];
   cellSize: number;
-}) {
+}>) {
   return (
     <div className="flex gap-px">
       {colors.map((color, index) => (
@@ -31,7 +31,9 @@ function LineAnimation({
   );
 }
 
-export default function LineClearAnimation({ uiState }: { uiState: UIState }) {
+export default function LineClearAnimation({
+  uiState,
+}: Readonly<{ uiState: UIState }>) {
   const actualSize = CELL_SIZE - 1; // minus border width
 
   const { lineClearSnapshots } = uiState;

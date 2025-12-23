@@ -1,8 +1,7 @@
 import "~/styles/globals.css";
 import { type Metadata } from "next";
 import Script from "next/script";
-import { Outfit } from "next/font/google";
-import { Silkscreen } from "next/font/google";
+import { Silkscreen, Outfit } from "next/font/google";
 import { GameInPlayProvider } from "~/contexts/gameInPlayContext";
 import { Toaster } from "~/components/ui/sonner";
 

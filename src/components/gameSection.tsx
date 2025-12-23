@@ -17,7 +17,9 @@ import { useGameInPlay } from "~/contexts/gameInPlayContext";
 import { useGamepad } from "~/hooks/useGamepad";
 import { cn } from "~/lib/utils";
 
-export default function GameSection({ session }: { session: Session }) {
+export default function GameSection({
+  session,
+}: Readonly<{ session: Session }>) {
   const [gameMode, setGameMode] = useState<"single-player" | "versus" | null>(
     null,
   );
@@ -38,7 +40,7 @@ export default function GameSection({ session }: { session: Session }) {
             back
           </Button>
         )}
-        <Button asChild className={gameMode !== null ? "hidden" : ""}>
+        <Button asChild className={cn(gameMode !== null && "hidden")}>
           <Link href="/api/auth/signout">
             <LogOut />
             sign out

@@ -24,12 +24,18 @@ export function useGamepad() {
       gamepadStateRef.current.previousBtnStates.fill(false);
     };
 
-    window.addEventListener("gamepadconnected", handleGamepadConnected);
-    window.addEventListener("gamepaddisconnected", handleGamepadDisconnected);
+    globalThis.addEventListener("gamepadconnected", handleGamepadConnected);
+    globalThis.addEventListener(
+      "gamepaddisconnected",
+      handleGamepadDisconnected,
+    );
 
     return () => {
-      window.removeEventListener("gamepadconnected", handleGamepadConnected);
-      window.removeEventListener(
+      globalThis.removeEventListener(
+        "gamepadconnected",
+        handleGamepadConnected,
+      );
+      globalThis.removeEventListener(
         "gamepaddisconnected",
         handleGamepadDisconnected,
       );

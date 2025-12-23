@@ -24,7 +24,7 @@ export default function GameInProgress({
   gamePaused,
   opponentGameRef,
   hostGameReceiveGarbageRef,
-}: {
+}: Readonly<{
   isRoomHost: boolean;
   isGameOver: boolean;
   winner: Winner;
@@ -37,7 +37,7 @@ export default function GameInProgress({
   hostGameReceiveGarbageRef: React.RefObject<
     ((garbageLines: BoardCell[][]) => void) | null
   >;
-}) {
+}>) {
   return (
     <div
       className={cn(

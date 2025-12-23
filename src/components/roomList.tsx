@@ -13,7 +13,7 @@ export default function RoomList({
   onJoinRoomRequest,
   onLeaveRoom,
   onCreateRoom,
-}: {
+}: Readonly<{
   availableRooms: GameRoom[];
   currentRoom: GameRoom | null;
   isConnected: boolean;
@@ -22,7 +22,13 @@ export default function RoomList({
   onJoinRoomRequest: (roomId: string) => void;
   onLeaveRoom: (roomId: string) => void;
   onCreateRoom: () => void;
-}) {
+}>) {
+  function getButtonText(room: GameRoom) {
+    if (currentRoom?.id === room.id) return "leave";
+    if (outgoingJoinRequest === room.id) return "waiting for response... ";
+    return "join";
+  }
+
   if (availableRooms.length === 0 && !currentRoom) {
     return (
       <div className="mb-4">
@@ -69,11 +75,7 @@ export default function RoomList({
                 else onJoinRoomRequest(room.id);
               }}
             >
-              {currentRoom?.id === room.id
-                ? "leave"
-                : outgoingJoinRequest === room.id
-                  ? "waiting for response... "
-                  : "join"}
+              {getButtonText(room)}
             </Button>
           </div>
         ))}

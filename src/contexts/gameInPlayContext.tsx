@@ -13,13 +13,15 @@ const GameInPlayContext = createContext<GameInPlayContextType | undefined>(
 
 export function GameInPlayProvider({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   const [isGameInPlay, setIsGameInPlay] = useState(false);
 
   return (
-    <GameInPlayContext.Provider value={{ isGameInPlay, setIsGameInPlay }}>
+    <GameInPlayContext.Provider
+      value={{ isGameInPlay, setIsGameInPlay }} // NOSONAR
+    >
       {children}
     </GameInPlayContext.Provider>
   );

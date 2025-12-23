@@ -6,13 +6,13 @@ export default function Image({
   width,
   height,
   className,
-}: {
+}: Readonly<{
   src: string;
   alt: string;
   width: number;
   height: number;
   className?: string;
-}) {
+}>) {
   return (
     <img
       src={src}

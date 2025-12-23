@@ -12,10 +12,10 @@ import {
 export default function CurrentRoomInfo({
   currentRoom,
   onLeaveRoom,
-}: {
+}: Readonly<{
   currentRoom: GameRoom;
   onLeaveRoom: (roomId: string) => void;
-}) {
+}>) {
   return (
     <div>
       <h4 className="mb-4 text-center text-2xl font-semibold">Current Room</h4>
@@ -25,8 +25,8 @@ export default function CurrentRoomInfo({
           <p className="text-white">{currentRoom.id}</p>
           <p>Players ({currentRoom.players.length}/2)</p>
           <ul className="text-white">
-            {currentRoom.players.map((player, idx) => (
-              <li key={idx} className="flex items-center gap-2">
+            {currentRoom.players.map((player) => (
+              <li key={player.userId} className="flex items-center gap-2">
                 <Tooltip>
                   <TooltipTrigger>
                     {player.username}

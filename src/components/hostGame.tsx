@@ -121,7 +121,7 @@ export default function HostGame({
   externalPause,
   externalGameOver,
   onReceiveGarbageCallback,
-}: HostGameProps) {
+}: Readonly<HostGameProps>) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<AnimationLoop>(INITIAL_ANIMATION_LOOP);
   const pauseMultiplierRef = useRef(1); //  0 = paused
@@ -190,7 +190,7 @@ export default function HostGame({
       const pauseMultiplier = pauseMultiplierRef.current;
 
       if (!gameLoop || pauseMultiplier === undefined) {
-        const problemVar = !gameLoop ? gameLoop : pauseMultiplier;
+        const problemVar = gameLoop ? pauseMultiplier : gameLoop;
         console.error(`${problemVar} is not initialized`);
         return;
       }
@@ -300,12 +300,12 @@ export default function HostGame({
       });
     }
 
-    window.addEventListener("keydown", handleKeyDownWrapper);
-    window.addEventListener("blur", handlePause);
+    globalThis.addEventListener("keydown", handleKeyDownWrapper);
+    globalThis.addEventListener("blur", handlePause);
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDownWrapper);
-      window.removeEventListener("blur", handlePause);
+      globalThis.removeEventListener("keydown", handleKeyDownWrapper);
+      globalThis.removeEventListener("blur", handlePause);
     };
   }, [socket, roomId, setUiState, userId, getNextPiece, syncUIState]);
 

@@ -4,10 +4,10 @@ import type { UIState } from "~/types";
 export default function GameUi({
   uiState,
   children,
-}: {
+}: Readonly<{
   uiState: UIState;
   children?: React.ReactNode;
-}) {
+}>) {
   return (
     <div
       className={cn(

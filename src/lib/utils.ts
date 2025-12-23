@@ -19,6 +19,6 @@ export function shuffleArray<T>(array: T[]): T[] {
 }
 
 export function getTimestamp() {
-  if (!window) return new Date().getTime();
-  return window?.performance?.now();
+  if (!globalThis) return Date.now();
+  return globalThis?.performance?.now();
 }

@@ -36,7 +36,9 @@ import { useUIState } from "~/hooks/useUIState";
 import { useGamepad } from "~/hooks/useGamepad";
 import GameBoard from "./gameBoard";
 
-export default function SinglePlayerGame({ userId }: { userId: string }) {
+export default function SinglePlayerGame({
+  userId,
+}: Readonly<{ userId: string }>) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<AnimationLoop>(INITIAL_ANIMATION_LOOP);
   const pauseMultiplierRef = useRef(1); //  0 = paused
@@ -119,7 +121,7 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
       const pauseMultiplier = pauseMultiplierRef.current;
 
       if (!gameLoop || pauseMultiplier === undefined) {
-        const problemVar = !gameLoop ? gameLoop : pauseMultiplier;
+        const problemVar = gameLoop ? pauseMultiplier : gameLoop;
         console.error(`${problemVar} is not initialized`);
         return;
       }
@@ -235,7 +237,7 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
         const touch = event.changedTouches[0]!;
         const deltaX = touch.clientX - touchStartX;
         const deltaY = touch.clientY - touchStartY;
-        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        const distance = Math.hypot(deltaX, deltaY);
 
         if (distance >= MIN_SWIPE_DISTANCE) {
           // It's a swipe
@@ -269,12 +271,12 @@ export default function SinglePlayerGame({ userId }: { userId: string }) {
       }
     }
 
-    window.addEventListener("keydown", handleKeyDownWrapper);
+    globalThis.addEventListener("keydown", handleKeyDownWrapper);
     canvas.addEventListener("touchstart", handleTouchStart);
     canvas.addEventListener("touchend", handleTouchEnd);
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDownWrapper);
+      globalThis.removeEventListener("keydown", handleKeyDownWrapper);
       canvas.removeEventListener("touchstart", handleTouchStart);
       canvas.removeEventListener("touchend", handleTouchEnd);
     };

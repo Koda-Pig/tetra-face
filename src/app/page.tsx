@@ -22,8 +22,7 @@ export default async function Home() {
 
         {session ? (
           <p className="absolute bottom-4 left-1/2 hidden w-max -translate-x-1/2 items-center justify-center gap-2 text-lg text-white sm:flex">
-            Logged in as
-            <span className="font-bold">{session.user?.name}</span>
+            Logged in as <span className="font-bold">{session.user?.name}</span>
             {session.user?.image && (
               <Image
                 src={session.user.image}

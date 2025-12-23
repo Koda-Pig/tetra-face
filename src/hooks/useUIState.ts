@@ -37,7 +37,6 @@ export function useUIState() {
       if (scoreChanged || levelChanged) {
         if (scoreLevelFlashTimeoutRef.current) {
           clearTimeout(scoreLevelFlashTimeoutRef.current);
-          scoreLevelFlashTimeoutRef.current = null;
         }
         scoreLevelFlashTimeoutRef.current = setTimeout(() => {
           setUiState((prev) => ({
@@ -52,7 +51,6 @@ export function useUIState() {
       if (scoreChanged) {
         if (canvasFlashTimeoutRef.current) {
           clearTimeout(canvasFlashTimeoutRef.current);
-          canvasFlashTimeoutRef.current = null;
         }
         canvasFlashTimeoutRef.current = setTimeout(() => {
           setUiState((prev) => ({
