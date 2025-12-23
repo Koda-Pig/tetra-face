@@ -277,6 +277,29 @@ main {
   opacity: 0;
 }
 
+.four-line-clear-animation {
+  position: absolute;
+  pointer-events: none;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 1;
+  opacity: 0;
+  font-size: 60px;
+  color: white;
+  font-family: var(--font-heading);
+  text-shadow:
+    0 0 10px var(--retro-green-dark),
+    0 0 20px var(--retro-green-dull),
+    0 0 30px var(--retro-green-dullest),
+    0 0 40px var(--retro-green-dull),
+    0 0 50px var(--retro-green);
+
+  &.active {
+    animation: four-line-clear ease forwards;
+  }
+}
+
 @media screen and (max-width: 768px) {
   .title:has(~ * canvas) {
     display: none;
@@ -398,6 +421,34 @@ main {
       -130px 0 23px 13px rgba(255, 255, 255, 0),
       110px 0 20px 12px rgba(255, 255, 255, 0);
     filter: blur(10px);
+    opacity: 0;
+  }
+}
+@keyframes four-line-clear {
+  0% {
+    transform: scale(0) rotate(-180deg);
+    opacity: 0;
+  }
+
+  30% {
+    transform: scale(1.2) rotate(15deg);
+    opacity: 1;
+  }
+
+  45% {
+    transform: scale(0.95) rotate(-5deg);
+  }
+
+  60% {
+    transform: scale(1.05) rotate(3deg);
+  }
+
+  75% {
+    transform: scale(1) rotate(0deg);
+  }
+
+  100% {
+    transform: scale(0) rotate(180deg);
     opacity: 0;
   }
 }

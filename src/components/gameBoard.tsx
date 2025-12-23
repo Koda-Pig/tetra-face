@@ -14,6 +14,15 @@ type GameBoardProps = {
 const GameBoard = forwardRef<HTMLCanvasElement, GameBoardProps>(
   ({ uiState, children }, ref) => (
     <div className="game-board relative mx-auto w-min">
+      <span
+        style={{ animationDuration: `${CANVAS_ANIMATION_DURATION_MS}ms` }}
+        className={cn(
+          "four-line-clear-animation",
+          uiState.scoreMultiplier === 4 && "active",
+        )}
+      >
+        TETRIS!
+      </span>
       <canvas
         ref={ref}
         width={300}
