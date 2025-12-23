@@ -55,7 +55,11 @@ export function useUIState() {
           canvasFlashTimeoutRef.current = null;
         }
         canvasFlashTimeoutRef.current = setTimeout(() => {
-          setUiState((prev) => ({ ...prev, canvasFlash: false }));
+          setUiState((prev) => ({
+            ...prev,
+            canvasFlash: false,
+            scoreMultiplier: 0,
+          }));
           canvasFlashTimeoutRef.current = null;
         }, CANVAS_ANIMATION_DURATION_MS);
       }
