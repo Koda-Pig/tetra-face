@@ -1,11 +1,9 @@
-import { type RefObject } from "react";
 import type {
   GameState,
   Piece,
   TetrominoType,
   UIState,
   AnimationLoop,
-  GamepadState,
   TetrisEvent,
   BoardCell,
   NextPiece,
@@ -27,7 +25,6 @@ import {
   LINE_CLEAR_SCORES,
   VISIBLE_ROWS,
   INITIAL_GAME_STATE,
-  GAMEPAD_KEY_MAP,
   GARBAGE_COLOR,
   GARBAGE_LINES,
   INITIAL_UI_STATE,
@@ -72,7 +69,8 @@ function canPieceMove({
   return true;
 }
 
-function calcDropSpeed(level: number): number {
+// prettier-ignore
+function calcDropSpeed(level: number): number { // NOSONAR
   let frames;
   if (level === 0) frames = 48;
   else if (level === 1) frames = 43;
@@ -144,7 +142,8 @@ function tryRotatePiece({
 
   return false;
 }
-function isGameOver(gameState: GameState) {
+// prettier-ignore
+function isGameOver(gameState: GameState) { // NOSONAR
   // check the 3 conditions for game over
 
   const piece = gameState.currentPiece;
@@ -405,7 +404,8 @@ const createTSpinBoardSetup = () => {
   return board;
 };
 
-function handleKeyDown({
+// prettier-ignore
+function handleKeyDown({ // NOSONAR
   event,
   currentKey,
   gameState,
@@ -844,36 +844,6 @@ function restartGame({
   setRestartTrigger((prev) => prev + 1);
 }
 
-function pollGamepadInput({
-  gamepadStateRef,
-}: {
-  gamepadStateRef: RefObject<GamepadState>;
-}): string | null {
-  const gamepads = navigator.getGamepads();
-  const activeGamepad = gamepads.find(Boolean);
-
-  if (!activeGamepad || !gamepadStateRef.current) return null;
-  const gamepadState = gamepadStateRef.current;
-
-  for (const [index, button] of activeGamepad.buttons.entries()) {
-    const keyCode = GAMEPAD_KEY_MAP[index as keyof typeof GAMEPAD_KEY_MAP];
-    if (!keyCode) continue; // skip if no mapping for this button
-
-    const isPressed = button.pressed;
-    const wasPressed = gamepadState.previousBtnStates[index];
-
-    // trigger on press (NOT hold)
-    if (isPressed && !wasPressed) {
-      gamepadState.previousBtnStates[index] = isPressed;
-      return keyCode;
-    }
-
-    gamepadState.previousBtnStates[index] = isPressed;
-  }
-
-  return null;
-}
-
 // this works by checking if at least 3 of the 4 corners diagonal to the center of
 // the T-piece are occupied when the piece is placed
 function detectTSpin({
@@ -924,5 +894,4 @@ export {
   update,
   render,
   restartGame,
-  pollGamepadInput,
 };

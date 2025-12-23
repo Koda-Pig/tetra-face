@@ -11,7 +11,6 @@ import {
   handleKeyDown,
   createEmptyBoard,
   render,
-  pollGamepadInput,
 } from "./gameUtils";
 import { getTimestamp } from "~/lib/utils";
 import type { GameState, AnimationLoop, TetrisEvent, BoardCell } from "~/types";
@@ -27,7 +26,6 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 import { useUIState } from "~/hooks/useUIState";
-import { useGamepad } from "~/hooks/useGamepad";
 import GameBoard from "./gameBoard";
 
 function handleReceiveGarbage(
@@ -128,7 +126,6 @@ export default function HostGame({
   // we're not using `useState` for this because we don't want to trigger re-renders while the game is playing
   const gameStateRef = useRef<GameState | null>(null);
   const { uiState, setUiState, syncUIState } = useUIState();
-  const { gamepadConnected, gamepadStateRef } = useGamepad();
   const getNextPiece = useBag();
 
   const receiveGarbage = useCallback((garbageLines: BoardCell[][]) => {
@@ -207,24 +204,6 @@ export default function HostGame({
         return;
       }
 
-      if (gamepadConnected) {
-        const gamepadKey = pollGamepadInput({ gamepadStateRef });
-        if (gamepadKey) {
-          const action = handleKeyDown({
-            currentKey: gamepadKey,
-            gameState: gameStateRef.current!,
-            getNextPiece,
-            onStateChange: syncUIState,
-            onReceiveGarbage: (garbageLines) =>
-              handleReceiveGarbage(garbageLines, socket, roomId),
-            pauseMultiplierRef,
-            setUiState,
-            playerId: userId,
-          });
-          handleAction(action, socket, roomId);
-        }
-      }
-
       gameLoop.now = getTimestamp();
       gameLoop.deltaTime =
         gameLoop.deltaTime +
@@ -264,15 +243,7 @@ export default function HostGame({
         gameLoop.animationId = null;
       }
     };
-  }, [
-    userId,
-    roomId,
-    socket,
-    canvasRef,
-    getNextPiece,
-    syncUIState,
-    gamepadConnected,
-  ]);
+  }, [userId, roomId, socket, canvasRef, getNextPiece, syncUIState]);
 
   // Event listeners (keyboard events)
   useEffect(() => {

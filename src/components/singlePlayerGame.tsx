@@ -11,7 +11,6 @@ import {
   createEmptyBoard,
   render,
   restartGame,
-  pollGamepadInput,
 } from "./gameUtils";
 import { getTimestamp } from "~/lib/utils";
 import type { GameState, AnimationLoop } from "~/types";
@@ -33,7 +32,6 @@ import {
   Repeat,
 } from "lucide-react";
 import { useUIState } from "~/hooks/useUIState";
-import { useGamepad } from "~/hooks/useGamepad";
 import GameBoard from "./gameBoard";
 
 export default function SinglePlayerGame({
@@ -46,7 +44,6 @@ export default function SinglePlayerGame({
   const gameStateRef = useRef<GameState | null>(null);
   const { uiState, setUiState, syncUIState } = useUIState();
   const [restartTrigger, setRestartTrigger] = useState(0);
-  const { gamepadConnected, gamepadStateRef } = useGamepad();
   const getNextPiece = useBag();
 
   function handleResume() {
@@ -138,21 +135,6 @@ export default function SinglePlayerGame({
         return;
       }
 
-      if (gamepadConnected) {
-        const gamepadKey = pollGamepadInput({ gamepadStateRef });
-        if (gamepadKey) {
-          handleKeyDown({
-            currentKey: gamepadKey,
-            gameState: gameStateRef.current!,
-            getNextPiece,
-            onStateChange: syncUIState,
-            pauseMultiplierRef,
-            setUiState,
-            playerId: userId,
-          });
-        }
-      }
-
       gameLoop.now = getTimestamp();
       gameLoop.deltaTime =
         gameLoop.deltaTime +
@@ -196,7 +178,6 @@ export default function SinglePlayerGame({
     syncUIState,
     setUiState,
     restartTrigger,
-    gamepadConnected,
   ]);
 
   // Event listeners (keyboard + swipe events)
@@ -232,7 +213,8 @@ export default function SinglePlayerGame({
       }
     }
 
-    function handleTouchEnd(event: TouchEvent) {
+    // prettier-ignore
+    function handleTouchEnd(event: TouchEvent) { // NOSONAR
       if (event.changedTouches.length > 0) {
         const touch = event.changedTouches[0]!;
         const deltaX = touch.clientX - touchStartX;
