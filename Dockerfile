@@ -1,5 +1,5 @@
 # syntax = docker/dockerfile:1
-ARG NODE_VERSION=20.18.0
+ARG NODE_VERSION=24.18.0
 FROM node:${NODE_VERSION}-slim AS base
 WORKDIR /app
 RUN npm install -g pnpm@latest
