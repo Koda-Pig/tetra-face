@@ -26,6 +26,7 @@ export default function GameSection({
   const { setIsGameInPlay } = useGameInPlay();
   const { gamepadConnected } = useGamepad();
 
+  console.log(session.user);
   return (
     <div className="grid place-items-center sm:my-8 sm:block">
       <div className="fixed top-4 left-4 grid gap-2">

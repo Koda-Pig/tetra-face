@@ -39,8 +39,8 @@ Prisma is used for database management. After setting up the database using Dock
 ### Prerequisites
 
 - [Docker](https://docs.docker.com/get-docker/) Version 25^
-- [Node.js](https://nodejs.org) Version 20^
-- [PNPM](https://pnpm.io) Version 9^
+- [Node.js](https://nodejs.org) Version 24^
+- [PNPM](https://pnpm.io) Version 11^
 
   ### Environment Variables
 

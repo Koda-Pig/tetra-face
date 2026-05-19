@@ -44,6 +44,21 @@ model Session {
     user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+enum Gamemode {
+    singleplayer
+    multiplayer
+}
+
+model HighScore {
+    id     String   @id @default(cuid())
+    mode   Gamemode
+    score  Int
+    userId String
+    user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId, mode])
+}
+
 model User {
     id            String    @id @default(cuid())
     name          String?
@@ -52,6 +67,7 @@ model User {
     image         String?
     accounts      Account[]
     sessions      Session[]
+    highScores    HighScore[]
 }
 
 model VerificationToken {

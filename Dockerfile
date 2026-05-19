@@ -9,7 +9,7 @@ FROM base AS build
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential node-gyp openssl pkg-config python-is-python3
 
-COPY .npmrc package.json pnpm-lock.yaml ./
+COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY prisma ./prisma
 RUN pnpm install --frozen-lockfile
 

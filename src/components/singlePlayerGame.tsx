@@ -281,7 +281,7 @@ export default function SinglePlayerGame({
         </div>
       </GameBoard>
 
-      <div className="justify-items-between grid grid-cols-3 sm:hidden [&_button]:rounded-lg [&_button]:p-4 [&_button]:outline [&_button]:-outline-offset-6 [&_button]:outline-(--retro-green)">
+      <div className="justify-items-between [&_button]:-outline-offset-6 [&_button]:outline-(--retro-green) grid grid-cols-3 sm:hidden [&_button]:rounded-lg [&_button]:p-4 [&_button]:outline">
         <button
           className="grid place-items-center"
           onClick={() => mobileBtnClick("ArrowLeft")}
@@ -331,7 +331,7 @@ export default function SinglePlayerGame({
       <button
         onClick={() => mobileBtnClick("Escape")}
         title="play/ pause"
-        className="absolute top-3 right-0 z-20 grid h-15 w-15 translate-x-full place-items-center rounded-lg rounded-tl-none rounded-bl-none border-2 border-l-0 border-(--retro-green) bg-black"
+        className="h-15 w-15 border-(--retro-green) absolute right-0 top-3 z-20 grid translate-x-full place-items-center rounded-lg rounded-bl-none rounded-tl-none border-2 border-l-0 bg-black"
       >
         {uiState.isPaused ? <Play /> : <Pause />}
       </button>
