@@ -32,6 +32,7 @@ import {
   Repeat,
 } from "lucide-react";
 import { useUIState } from "~/hooks/useUIState";
+import { useHighScore } from "~/hooks/useHighScore";
 import GameBoard from "./gameBoard";
 
 export default function SinglePlayerGame({
@@ -42,9 +43,24 @@ export default function SinglePlayerGame({
   const pauseMultiplierRef = useRef(1); //  0 = paused
   // we're not using useState for this because we don't want to trigger re-renders while the game is playing
   const gameStateRef = useRef<GameState | null>(null);
+  const hasSubmittedHighScoreRef = useRef(false);
   const { uiState, setUiState, syncUIState } = useUIState();
   const [restartTrigger, setRestartTrigger] = useState(0);
   const getNextPiece = useBag();
+  const {
+    highScore,
+    processState: highScoreProcessState,
+    submitScore,
+    achievedNewHighScore,
+    resetHighScoreStatus,
+  } = useHighScore();
+
+  const statusMessage = () => {
+    if (achievedNewHighScore) return `NEW HIGH SCORE! ${highScore?.score}`;
+    if (highScoreProcessState.isSubmitting) return "Saving score...";
+    if (highScoreProcessState.error) return highScoreProcessState.error;
+    return undefined;
+  };
 
   function handleResume() {
     if (!gameStateRef.current || pauseMultiplierRef.current === null) return;
@@ -56,7 +72,7 @@ export default function SinglePlayerGame({
   function mobileBtnClick(currentKey: (typeof GAME_INPUT_KEYS)[number]) {
     if (!gameStateRef.current) return;
 
-    handleKeyDown({
+    const action = handleKeyDown({
       currentKey: currentKey,
       gameState: gameStateRef.current,
       getNextPiece,
@@ -66,10 +82,27 @@ export default function SinglePlayerGame({
       playerId: userId,
     });
 
+    if (action?.type === "game-over") {
+      handleSinglePlayerGameOver(action.score);
+    }
+
     navigator.vibrate(10);
   }
 
+  const handleSinglePlayerGameOver = useCallback(
+    (score: number) => {
+      if (hasSubmittedHighScoreRef.current) return;
+
+      hasSubmittedHighScoreRef.current = true;
+      void submitScore(score);
+    },
+    [submitScore],
+  );
+
   const handleRestart = useCallback(() => {
+    hasSubmittedHighScoreRef.current = false;
+    resetHighScoreStatus();
+
     restartGame({
       gameStateRef,
       pauseMultiplierRef,
@@ -79,7 +112,7 @@ export default function SinglePlayerGame({
       getNextPiece,
       userId,
     });
-  }, [getNextPiece, userId, setUiState]);
+  }, [getNextPiece, resetHighScoreStatus, userId, setUiState]);
 
   // initialize the game state
   useEffect(() => {
@@ -142,13 +175,16 @@ export default function SinglePlayerGame({
       while (gameLoop.deltaTime > gameLoop.step) {
         gameLoop.deltaTime = gameLoop.deltaTime - gameLoop.step;
         // logic update
-        update({
+        const action = update({
           gameState,
           step: gameLoop.step * pauseMultiplier,
           getNextPiece,
           onStateChange: syncUIState,
           playerId: userId,
         });
+        if (action?.type === "game-over") {
+          handleSinglePlayerGameOver(action.score);
+        }
       }
       // draw the game
       render({
@@ -178,6 +214,7 @@ export default function SinglePlayerGame({
     syncUIState,
     setUiState,
     restartTrigger,
+    handleSinglePlayerGameOver,
   ]);
 
   // Event listeners (keyboard + swipe events)
@@ -188,7 +225,7 @@ export default function SinglePlayerGame({
     const canvas = canvasRef.current;
 
     function handleKeyDownWrapper(event: KeyboardEvent) {
-      handleKeyDown({
+      const action = handleKeyDown({
         event,
         currentKey: event.code,
         gameState: gameStateRef.current!,
@@ -198,6 +235,10 @@ export default function SinglePlayerGame({
         setUiState,
         playerId: userId,
       });
+
+      if (action?.type === "game-over") {
+        handleSinglePlayerGameOver(action.score);
+      }
     }
 
     // Swipe detection
@@ -229,7 +270,7 @@ export default function SinglePlayerGame({
           } else {
             activeKey = deltaY > 0 ? "ArrowDown" : "ArrowUp";
           }
-          handleKeyDown({
+          const action = handleKeyDown({
             currentKey: activeKey,
             gameState: gameStateRef.current!,
             getNextPiece,
@@ -238,9 +279,13 @@ export default function SinglePlayerGame({
             setUiState,
             playerId: userId,
           });
+
+          if (action?.type === "game-over") {
+            handleSinglePlayerGameOver(action.score);
+          }
         } else {
           // It's a tap - trigger rotation
-          handleKeyDown({
+          const action = handleKeyDown({
             currentKey: "Space",
             gameState: gameStateRef.current!,
             getNextPiece,
@@ -249,6 +294,10 @@ export default function SinglePlayerGame({
             setUiState,
             playerId: userId,
           });
+
+          if (action?.type === "game-over") {
+            handleSinglePlayerGameOver(action.score);
+          }
         }
       }
     }
@@ -262,11 +311,22 @@ export default function SinglePlayerGame({
       canvas.removeEventListener("touchstart", handleTouchStart);
       canvas.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [userId, getNextPiece, syncUIState, setUiState]);
+  }, [
+    userId,
+    getNextPiece,
+    syncUIState,
+    setUiState,
+    handleSinglePlayerGameOver,
+  ]);
 
   return (
     <div className="absolute bottom-4 m-0 w-min sm:relative sm:mx-auto">
-      <GameBoard uiState={uiState} ref={canvasRef}>
+      <GameBoard
+        uiState={uiState}
+        ref={canvasRef}
+        highScore={highScoreProcessState.isLoading ? null : highScore}
+        statusMessage={statusMessage()}
+      >
         <div className="grid gap-4">
           {(uiState.isGameOver || uiState.isPaused) && (
             <Button onClick={handleRestart} size="lg" className="text-lg">
@@ -281,7 +341,7 @@ export default function SinglePlayerGame({
         </div>
       </GameBoard>
 
-      <div className="justify-items-between [&_button]:-outline-offset-6 [&_button]:outline-(--retro-green) grid grid-cols-3 sm:hidden [&_button]:rounded-lg [&_button]:p-4 [&_button]:outline">
+      <div className="justify-items-between grid grid-cols-3 sm:hidden [&_button]:rounded-lg [&_button]:p-4 [&_button]:outline [&_button]:-outline-offset-6 [&_button]:outline-(--retro-green)">
         <button
           className="grid place-items-center"
           onClick={() => mobileBtnClick("ArrowLeft")}
@@ -331,7 +391,7 @@ export default function SinglePlayerGame({
       <button
         onClick={() => mobileBtnClick("Escape")}
         title="play/ pause"
-        className="h-15 w-15 border-(--retro-green) absolute right-0 top-3 z-20 grid translate-x-full place-items-center rounded-lg rounded-bl-none rounded-tl-none border-2 border-l-0 bg-black"
+        className="absolute top-3 right-0 z-20 grid h-15 w-15 translate-x-full place-items-center rounded-lg rounded-tl-none rounded-bl-none border-2 border-l-0 border-(--retro-green) bg-black"
       >
         {uiState.isPaused ? <Play /> : <Pause />}
       </button>
