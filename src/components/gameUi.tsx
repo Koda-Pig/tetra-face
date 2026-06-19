@@ -4,14 +4,16 @@ import type { UIState } from "~/types";
 export default function GameUi({
   uiState,
   children,
+  statusMessage,
 }: Readonly<{
   uiState: UIState;
   children?: React.ReactNode;
+  statusMessage?: string;
 }>) {
   return (
     <div
       className={cn(
-        "absolute inset-0 grid place-items-center",
+        "absolute inset-4 grid place-items-center",
         uiState.isGameOver || uiState.isPaused
           ? "opacity-100"
           : "pointer-events-none opacity-0",
@@ -24,16 +26,9 @@ export default function GameUi({
             "text-shadow text-5xl leading-14 font-bold text-shadow-[0_0_4px_var(--background),0_0_8px_var(--background)]",
           )}
         >
-          {uiState.isGameOver ? (
-            <span>
-              GAME
-              <br />
-              OVER
-            </span>
-          ) : (
-            <span>PAUSED</span>
-          )}
+          {uiState.isGameOver ? <span>GAME OVER</span> : <span>PAUSED</span>}
         </p>
+        {statusMessage && <p className="my-8">{statusMessage}</p>}
         {children}
       </div>
     </div>
