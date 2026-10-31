@@ -66,6 +66,8 @@ export default function SinglePlayerGame({
       playerId: userId,
     });
 
+    if (!("vibrate" in navigator)) return;
+
     navigator.vibrate(10);
   }
 
@@ -265,7 +267,7 @@ export default function SinglePlayerGame({
   }, [userId, getNextPiece, syncUIState, setUiState]);
 
   return (
-    <div className="absolute bottom-4 m-0 w-min sm:relative sm:mx-auto">
+    <div className="absolute inset-x-0 bottom-4 mx-auto w-min sm:relative">
       <GameBoard uiState={uiState} ref={canvasRef}>
         <div className="grid gap-4">
           {(uiState.isGameOver || uiState.isPaused) && (
@@ -281,7 +283,7 @@ export default function SinglePlayerGame({
         </div>
       </GameBoard>
 
-      <div className="justify-items-between [&_button]:-outline-offset-6 [&_button]:outline-(--retro-green) grid grid-cols-3 sm:hidden [&_button]:rounded-lg [&_button]:p-4 [&_button]:outline">
+      <div className="justify-items-between grid grid-cols-3 sm:hidden [&_button]:rounded-lg [&_button]:p-4 [&_button]:outline [&_button]:-outline-offset-6 [&_button]:outline-(--retro-green)">
         <button
           className="grid place-items-center"
           onClick={() => mobileBtnClick("ArrowLeft")}
@@ -331,7 +333,7 @@ export default function SinglePlayerGame({
       <button
         onClick={() => mobileBtnClick("Escape")}
         title="play/ pause"
-        className="h-15 w-15 border-(--retro-green) absolute right-0 top-3 z-20 grid translate-x-full place-items-center rounded-lg rounded-bl-none rounded-tl-none border-2 border-l-0 bg-black"
+        className="absolute top-3 right-0 z-20 grid h-15 w-15 translate-x-full place-items-center rounded-lg rounded-tl-none rounded-bl-none border-2 border-l-0 border-(--retro-green) bg-black"
       >
         {uiState.isPaused ? <Play /> : <Pause />}
       </button>
