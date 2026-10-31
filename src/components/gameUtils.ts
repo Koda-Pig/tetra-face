@@ -461,7 +461,7 @@ function handleKeyDown({ // NOSONAR
         onReceiveGarbage,
       });
       if (gameState.isGameOver) {
-        return { type: "game-over", playerId, timestamp: getTimestamp() };
+        return { type: "game-over", playerId, timestamp: getTimestamp(), score: gameState.score };
       }
       const nextPiece = gameState.currentPiece;
       const linesCleared = gameState.linesCleared;
@@ -504,7 +504,7 @@ function handleKeyDown({ // NOSONAR
           onReceiveGarbage,
         });
         if (gameState.isGameOver) {
-          return { type: "game-over", playerId, timestamp: getTimestamp() };
+          return { type: "game-over", playerId, timestamp: getTimestamp(), score: gameState.score };
         }
         const nextPiece = gameState.currentPiece;
         const linesCleared = gameState.linesCleared;
@@ -756,7 +756,12 @@ function update({
     // need to check here for gameover, as the above function is the only place
     // gameOver state is changed
     if (gameState.isGameOver) {
-      return { type: "game-over", playerId, timestamp: getTimestamp() };
+      return {
+        type: "game-over",
+        playerId,
+        timestamp: getTimestamp(),
+        score: gameState.score,
+      };
     }
     return {
       type: "gravity-lock",

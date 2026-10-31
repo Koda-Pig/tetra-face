@@ -50,13 +50,14 @@ enum Gamemode {
 }
 
 model HighScore {
-    id     String   @id @default(cuid())
-    mode   Gamemode
-    score  Int
-    userId String
-    user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id        String   @id @default(cuid())
+    mode      Gamemode
+    score     Int
+    createdAt DateTime @default(now())
+    userId    String
+    user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    @@index([userId, mode])
+    @@unique([userId, mode])
 }
 
 model User {

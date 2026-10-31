@@ -265,6 +265,7 @@ export default function GameVersus({
         action: {
           type: "game-over",
           playerId: userId,
+          score: 0,
           timestamp: getTimestamp(),
         },
       });

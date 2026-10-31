@@ -74,6 +74,7 @@ function handleSurrender(socket: Socket, roomId: string, userId: string) {
     roomId,
     action: {
       type: "game-over",
+      score: 0,
       playerId: userId,
       timestamp: getTimestamp(),
     },
